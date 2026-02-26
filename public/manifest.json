@@ -1,0 +1,24 @@
+{
+  "name": "Vantage Medical Office",
+  "short_name": "Vantage",
+  "description": "Medical office management made simple",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8F7F6",
+  "theme_color": "#55677A",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
