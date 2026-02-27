@@ -120,7 +120,7 @@ export default function LoginPage() {
                   Verification Required
                 </h2>
                 <p className="text-sm text-warm-gray">
-                  Enter the code sent to your device
+                  Enter the verification code sent to your email
                 </p>
               </div>
               <div>
@@ -179,7 +179,7 @@ export default function LoginPage() {
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
               <p className="text-xs text-warm-gray text-center mt-3">
-                MFA is required for all accounts.
+                A verification code will be sent to your email.
                 <br />
                 Contact your administrator for access.
               </p>

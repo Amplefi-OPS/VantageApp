@@ -50,8 +50,8 @@ export class AuthStack extends cdk.Stack {
       },
       mfa: cognito.Mfa.REQUIRED,
       mfaSecondFactor: {
-        sms: true,
-        otp: true,
+        sms: false,
+        otp: true, // CDK requires at least one; we override to EMAIL_OTP below
       },
       passwordPolicy: {
         minLength: 12,
@@ -61,12 +61,21 @@ export class AuthStack extends cdk.Stack {
         requireSymbols: true,
         tempPasswordValidity: cdk.Duration.days(1),
       },
-      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      accountRecovery: cognito.AccountRecovery.NONE, // Admin-only reset (email used for MFA)
       advancedSecurityMode: cognito.AdvancedSecurityMode.ENFORCED,
       lambdaTriggers: {
         preSignUp: preSignUpFn,
       },
       removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    // ── Override MFA to Email OTP (CDK L2 doesn't support EMAIL_OTP yet) ──
+    const cfnUserPool = this.userPool.node.defaultChild as cognito.CfnUserPool;
+    cfnUserPool.addPropertyOverride('EnabledMfas', ['EMAIL_OTP']);
+    cfnUserPool.addPropertyOverride('EmailConfiguration', {
+      EmailSendingAccount: 'DEVELOPER',
+      SourceArn: `arn:aws:ses:us-east-1:${this.account}:identity/vantagerefinery.com`,
+      From: 'noreply@vantagerefinery.com',
     });
 
     // ── User Pool Groups ──

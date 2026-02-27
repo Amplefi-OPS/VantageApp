@@ -167,7 +167,7 @@ export async function signIn(email: string, password: string): Promise<{
       };
     }
 
-    if (data.ChallengeName === 'SMS_MFA' || data.ChallengeName === 'SOFTWARE_TOKEN_MFA') {
+    if (data.ChallengeName === 'EMAIL_OTP' || data.ChallengeName === 'SMS_MFA' || data.ChallengeName === 'SOFTWARE_TOKEN_MFA') {
       pendingChallengeName = data.ChallengeName;
       return {
         success: false,
@@ -223,8 +223,8 @@ export async function completeNewPasswordChallenge(
 
     const data = await response.json();
 
-    // After setting new password, Cognito may require MFA setup
-    if (data.ChallengeName === 'MFA_SETUP' || data.ChallengeName === 'SMS_MFA' || data.ChallengeName === 'SOFTWARE_TOKEN_MFA') {
+    // After setting new password, Cognito may require MFA
+    if (data.ChallengeName === 'EMAIL_OTP' || data.ChallengeName === 'MFA_SETUP' || data.ChallengeName === 'SMS_MFA' || data.ChallengeName === 'SOFTWARE_TOKEN_MFA') {
       pendingChallengeName = data.ChallengeName;
       return {
         success: false,
@@ -259,8 +259,15 @@ export async function completeMfaChallenge(
     return { success: false, error: 'Cognito is not configured.' };
   }
 
-  const challengeName = pendingChallengeName === 'SOFTWARE_TOKEN_MFA' ? 'SOFTWARE_TOKEN_MFA' : 'SMS_MFA';
-  const codeKey = challengeName === 'SOFTWARE_TOKEN_MFA' ? 'SOFTWARE_TOKEN_MFA_CODE' : 'SMS_MFA_CODE';
+  let challengeName = 'EMAIL_OTP';
+  let codeKey = 'EMAIL_OTP_CODE';
+  if (pendingChallengeName === 'SOFTWARE_TOKEN_MFA') {
+    challengeName = 'SOFTWARE_TOKEN_MFA';
+    codeKey = 'SOFTWARE_TOKEN_MFA_CODE';
+  } else if (pendingChallengeName === 'SMS_MFA') {
+    challengeName = 'SMS_MFA';
+    codeKey = 'SMS_MFA_CODE';
+  }
 
   try {
     const endpoint = `https://cognito-idp.${config.region}.amazonaws.com/`;
