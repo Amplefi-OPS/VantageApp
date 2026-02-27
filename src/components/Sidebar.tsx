@@ -7,7 +7,6 @@ import {
   Send,
   Settings,
   Calendar,
-  Mic,
   LogOut,
 } from 'lucide-react'
 import { cn } from '../lib/utils'
@@ -18,7 +17,6 @@ const links = [
   { to: '/voicemails', label: 'Voicemails', icon: Phone },
   { to: '/todos', label: 'To-Do List', icon: ClipboardList },
   { to: '/appointments', label: 'Appointments', icon: Calendar },
-  { to: '/dictations', label: 'Dictations', icon: Mic },
   { to: '/patients', label: 'Patients', icon: Users },
   { to: '/fax', label: 'Fax', icon: Send },
   { to: '/settings', label: 'Settings', icon: Settings },

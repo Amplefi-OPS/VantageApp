@@ -18,6 +18,7 @@ export default function Dashboard() {
     queryKey: ['dashboard-counts'],
     queryFn: getDashboardCounts,
     refetchInterval: 30000,
+    retry: 1,
   })
 
   if (isLoading) return <LoadingSpinner />

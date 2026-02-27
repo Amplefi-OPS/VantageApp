@@ -139,6 +139,33 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadData(getPatientFn);
 
+    // ── Lambda: Create Note ──
+    const createNoteFn = new lambdaNode.NodejsFunction(this, 'CreateNoteFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-create-note-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'create-note.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadWriteData(createNoteFn);
+
+    // ── Lambda: List Notes ──
+    const listNotesFn = new lambdaNode.NodejsFunction(this, 'ListNotesFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-list-notes-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'list-notes.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadData(listNotesFn);
+
+    // ── Lambda: Dashboard Counts ──
+    const dashboardCountsFn = new lambdaNode.NodejsFunction(this, 'DashboardCountsFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-dashboard-counts-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'dashboard-counts.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadData(dashboardCountsFn);
+
     // ── Lambda: Billing Charge ──
     const billingChargeFn = new lambdaNode.NodejsFunction(this, 'BillingChargeFn', {
       ...lambdaDefaults,
@@ -229,6 +256,16 @@ export class ApiStack extends cdk.Stack {
     // GET /patients/{id}
     const patientById = patients.addResource('{id}');
     patientById.addMethod('GET', new apigateway.LambdaIntegration(getPatientFn), authMethodOptions);
+
+    // GET /patients/{id}/notes  &  POST /patients/{id}/notes
+    const patientNotes = patientById.addResource('notes');
+    patientNotes.addMethod('GET', new apigateway.LambdaIntegration(listNotesFn), authMethodOptions);
+    patientNotes.addMethod('POST', new apigateway.LambdaIntegration(createNoteFn), authMethodOptions);
+
+    // GET /dashboard/counts
+    const dashboard = this.api.root.addResource('dashboard');
+    const dashboardCounts = dashboard.addResource('counts');
+    dashboardCounts.addMethod('GET', new apigateway.LambdaIntegration(dashboardCountsFn), authMethodOptions);
 
     // POST /billing/charge
     const billing = this.api.root.addResource('billing');
