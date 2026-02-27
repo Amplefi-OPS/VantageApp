@@ -200,6 +200,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPendingSignUpEmail('')
     setPendingSignUpPassword('')
     setMfaSession(null)
+    // Reset URL so next login starts at dashboard
+    window.history.replaceState(null, '', '/dashboard')
   }, [])
 
   return (
