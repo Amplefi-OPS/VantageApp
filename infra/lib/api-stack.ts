@@ -101,6 +101,15 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadData(getAppointmentsFn);
 
+    // ── Lambda: Create Appointment ──
+    const createAppointmentFn = new lambdaNode.NodejsFunction(this, 'CreateAppointmentFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-create-appointment-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'create-appointment.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadWriteData(createAppointmentFn);
+
     // ── Lambda: Get Dictation ──
     const getDictationFn = new lambdaNode.NodejsFunction(this, 'GetDictationFn', {
       ...lambdaDefaults,
@@ -239,9 +248,10 @@ export class ApiStack extends cdk.Stack {
     const taskById = tasks.addResource('{task_id}');
     taskById.addMethod('PATCH', new apigateway.LambdaIntegration(updateTaskFn), authMethodOptions);
 
-    // GET /appointments
+    // GET /appointments  &  POST /appointments
     const appointments = this.api.root.addResource('appointments');
     appointments.addMethod('GET', new apigateway.LambdaIntegration(getAppointmentsFn), authMethodOptions);
+    appointments.addMethod('POST', new apigateway.LambdaIntegration(createAppointmentFn), authMethodOptions);
 
     // GET /dictations/{dictation_id}
     const dictations = this.api.root.addResource('dictations');

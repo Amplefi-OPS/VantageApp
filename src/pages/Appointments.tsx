@@ -6,7 +6,9 @@ import { Input } from '../components/ui/Input'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Tabs } from '../components/ui/Tabs'
-import { Calendar, Clock, MapPin, Video, Phone } from 'lucide-react'
+import { Calendar, CalendarPlus, Clock, MapPin, Video, Phone } from 'lucide-react'
+import { Button } from '../components/ui/Button'
+import { NewAppointmentModal } from '../components/NewAppointmentModal'
 import { useAuth } from '../auth/AuthProvider'
 import { getSettings } from '../lib/settings'
 import { getAuthHeader } from '../auth/cognito'
@@ -47,6 +49,7 @@ export default function Appointments() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10))
   const [filter, setFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
+  const [showNewAppt, setShowNewAppt] = useState(false)
 
   const { data: appointments = [], isLoading } = useQuery({
     queryKey: ['appointments', selectedDate, user?.providerId],
@@ -90,6 +93,9 @@ export default function Appointments() {
             onChange={(e) => setSelectedDate(e.target.value)}
             className="px-3 py-2 border border-light-gray rounded-lg text-sm bg-white"
           />
+          <Button onClick={() => setShowNewAppt(true)} icon={<CalendarPlus size={18} />}>
+            New Appointment
+          </Button>
         </div>
       </div>
 
@@ -145,6 +151,11 @@ export default function Appointments() {
           })
         )}
       </div>
+
+      <NewAppointmentModal
+        open={showNewAppt}
+        onClose={() => setShowNewAppt(false)}
+      />
     </div>
   )
 }

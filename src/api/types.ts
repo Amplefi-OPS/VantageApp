@@ -189,6 +189,17 @@ export interface CreateNoteRequest {
   body: string
 }
 
+export interface CreateAppointmentRequest {
+  patientId?: string
+  patientName: string
+  type: 'in_office' | 'telehealth' | 'phone'
+  startTime: string
+  endTime: string
+  reason: string
+  notes?: string
+  status?: string
+}
+
 export interface SendFaxRequest {
   patientId?: string
   pharmacyName: string

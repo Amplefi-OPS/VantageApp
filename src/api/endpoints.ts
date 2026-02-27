@@ -10,6 +10,7 @@ import type {
   Note,
   Fax,
   CreatePatientRequest,
+  CreateAppointmentRequest,
   AttachVoicemailRequest,
   UpdateTodoRequest,
   CreateNoteRequest,
@@ -37,6 +38,12 @@ export async function getPatient(id: string): Promise<Patient | undefined> {
 
 export async function createPatient(req: CreatePatientRequest): Promise<Patient> {
   return apiPost<Patient>('/patients', req)
+}
+
+// ── Appointments ──────────────────────────────────────
+
+export async function createAppointment(req: CreateAppointmentRequest) {
+  return apiPost('/appointments', req)
 }
 
 // ── Voicemails ─────────────────────────────────────────
