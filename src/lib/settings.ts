@@ -6,7 +6,7 @@ const defaults: AppSettings = {
   officeName: 'Vantage Medical Office',
   timezone: 'America/New_York',
   staffList: ['Dr. Sarah Chen', 'Dr. James Park', 'Nurse Amy', 'Front Desk Maria'],
-  apiBaseUrl: '',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '',
   s3BucketName: 'vantage-uploads',
   s3Region: 'us-east-1',
   zoomPhoneNumber: '(555) 100-2000',
