@@ -1,0 +1,94 @@
+import * as cdk from 'aws-cdk-lib';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+import { Construct } from 'constructs';
+
+interface AuthStackProps extends cdk.StackProps {
+  stageName: string;
+}
+
+export class AuthStack extends cdk.Stack {
+  public readonly userPool: cognito.UserPool;
+  public readonly userPoolClient: cognito.UserPoolClient;
+
+  constructor(scope: Construct, id: string, props: AuthStackProps) {
+    super(scope, id, props);
+
+    // ── Cognito User Pool ──
+    this.userPool = new cognito.UserPool(this, 'VantageUserPool', {
+      userPoolName: `vantage-providers-${props.stageName}`,
+      selfSignUpEnabled: false, // Admin-only creation for providers
+      signInAliases: {
+        email: true,
+        username: false,
+      },
+      standardAttributes: {
+        email: { required: true, mutable: true },
+        givenName: { required: true, mutable: true },
+        familyName: { required: true, mutable: true },
+      },
+      customAttributes: {
+        provider_id: new cognito.StringAttribute({ mutable: false }),
+        role: new cognito.StringAttribute({ mutable: true }), // provider | admin
+      },
+      mfa: cognito.Mfa.REQUIRED,
+      mfaSecondFactor: {
+        sms: true,
+        otp: true,
+      },
+      passwordPolicy: {
+        minLength: 12,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireDigits: true,
+        requireSymbols: true,
+        tempPasswordValidity: cdk.Duration.days(1),
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      advancedSecurityMode: cognito.AdvancedSecurityMode.ENFORCED,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    // ── User Pool Groups ──
+    new cognito.CfnUserPoolGroup(this, 'ProviderGroup', {
+      userPoolId: this.userPool.userPoolId,
+      groupName: 'providers',
+      description: 'Physician/provider users',
+    });
+
+    new cognito.CfnUserPoolGroup(this, 'AdminGroup', {
+      userPoolId: this.userPool.userPoolId,
+      groupName: 'admins',
+      description: 'Administrative users with cross-provider access',
+    });
+
+    // ── User Pool Client (for web portal) ──
+    this.userPoolClient = this.userPool.addClient('WebClient', {
+      userPoolClientName: `vantage-web-${props.stageName}`,
+      authFlows: {
+        userSrp: true,
+        custom: true,
+      },
+      generateSecret: false,
+      preventUserExistenceErrors: true,
+      accessTokenValidity: cdk.Duration.minutes(60),
+      idTokenValidity: cdk.Duration.minutes(60),
+      refreshTokenValidity: cdk.Duration.days(7),
+      enableTokenRevocation: true,
+      supportedIdentityProviders: [
+        cognito.UserPoolClientIdentityProvider.COGNITO,
+      ],
+    });
+
+    // ── Hosted UI Domain (for OAuth flows if needed) ──
+    this.userPool.addDomain('CognitoDomain', {
+      cognitoDomain: {
+        domainPrefix: `vantage-health-${props.stageName}`,
+      },
+    });
+
+    // ── Outputs ──
+    new cdk.CfnOutput(this, 'UserPoolId', { value: this.userPool.userPoolId });
+    new cdk.CfnOutput(this, 'UserPoolClientId', { value: this.userPoolClient.userPoolClientId });
+    new cdk.CfnOutput(this, 'UserPoolArn', { value: this.userPool.userPoolArn });
+  }
+}

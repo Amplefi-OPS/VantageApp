@@ -1,0 +1,241 @@
+import * as cdk from 'aws-cdk-lib';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambdaNode from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as kms from 'aws-cdk-lib/aws-kms';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as logs from 'aws-cdk-lib/aws-logs';
+import { Construct } from 'constructs';
+import * as path from 'path';
+
+interface ApiStackProps extends cdk.StackProps {
+  stageName: string;
+  table: dynamodb.Table;
+  audioBucket: s3.Bucket;
+  transcriptBucket: s3.Bucket;
+  kmsKey: kms.Key;
+  userPool: cognito.UserPool;
+  userPoolClient: cognito.UserPoolClient;
+}
+
+export class ApiStack extends cdk.Stack {
+  public readonly api: apigateway.RestApi;
+
+  constructor(scope: Construct, id: string, props: ApiStackProps) {
+    super(scope, id, props);
+
+    const lambdaDir = path.join(__dirname, '..', 'lambda');
+
+    // ── Shared environment variables for all Lambdas ──
+    const commonEnv: Record<string, string> = {
+      TABLE_NAME: props.table.tableName,
+      AUDIO_BUCKET: props.audioBucket.bucketName,
+      TRANSCRIPT_BUCKET: props.transcriptBucket.bucketName,
+      KMS_KEY_ARN: props.kmsKey.keyArn,
+      STAGE: props.stageName,
+      PRESIGN_EXPIRY_SECONDS: '900', // 15 min
+      MAX_UPLOAD_SIZE_MB: '100',
+    };
+
+    // ── Shared Lambda defaults ──
+    const lambdaDefaults: Partial<lambdaNode.NodejsFunctionProps> = {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 256,
+      timeout: cdk.Duration.seconds(30),
+      environment: commonEnv,
+      bundling: {
+        minify: true,
+        sourceMap: true,
+        target: 'node20',
+      },
+      logRetention: logs.RetentionDays.ONE_YEAR,
+    };
+
+    // ── Lambda: Presign Upload ──
+    const presignFn = new lambdaNode.NodejsFunction(this, 'PresignUploadFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-presign-upload-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'presign-upload.ts'),
+      handler: 'handler',
+    });
+    props.audioBucket.grantPut(presignFn);
+    props.kmsKey.grantEncrypt(presignFn);
+
+    // ── Lambda: Get Tasks ──
+    const getTasksFn = new lambdaNode.NodejsFunction(this, 'GetTasksFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-get-tasks-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'get-tasks.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadData(getTasksFn);
+
+    // ── Lambda: Update Task ──
+    const updateTaskFn = new lambdaNode.NodejsFunction(this, 'UpdateTaskFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-update-task-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'update-task.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadWriteData(updateTaskFn);
+
+    // ── Lambda: Create Task ──
+    const createTaskFn = new lambdaNode.NodejsFunction(this, 'CreateTaskFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-create-task-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'create-task.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadWriteData(createTaskFn);
+
+    // ── Lambda: Get Appointments ──
+    const getAppointmentsFn = new lambdaNode.NodejsFunction(this, 'GetAppointmentsFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-get-appointments-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'get-appointments.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadData(getAppointmentsFn);
+
+    // ── Lambda: Get Dictation ──
+    const getDictationFn = new lambdaNode.NodejsFunction(this, 'GetDictationFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-get-dictation-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'get-dictation.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadData(getDictationFn);
+    props.transcriptBucket.grantRead(getDictationFn);
+    props.kmsKey.grantDecrypt(getDictationFn);
+
+    // ── Lambda: Create Patient ──
+    const createPatientFn = new lambdaNode.NodejsFunction(this, 'CreatePatientFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-create-patient-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'create-patient.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadWriteData(createPatientFn);
+
+    // ── Lambda: List Patients ──
+    const listPatientsFn = new lambdaNode.NodejsFunction(this, 'ListPatientsFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-list-patients-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'list-patients.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadData(listPatientsFn);
+
+    // ── Lambda: Get Patient ──
+    const getPatientFn = new lambdaNode.NodejsFunction(this, 'GetPatientFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-get-patient-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'get-patient.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadData(getPatientFn);
+
+    // ── Lambda: Billing Charge ──
+    const billingChargeFn = new lambdaNode.NodejsFunction(this, 'BillingChargeFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-billing-charge-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'billing-charge.ts'),
+      handler: 'handler',
+      environment: {
+        ...commonEnv,
+        BILLING_EVENT_BUS: `vantage-billing-${props.stageName}`,
+      },
+    });
+    props.table.grantReadWriteData(billingChargeFn);
+
+    // Grant EventBridge put to billing Lambda
+    billingChargeFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['events:PutEvents'],
+      resources: [`arn:aws:events:${this.region}:${this.account}:event-bus/vantage-billing-${props.stageName}`],
+    }));
+
+    // ── API Gateway ──
+    this.api = new apigateway.RestApi(this, 'VantageApi', {
+      restApiName: `vantage-api-${props.stageName}`,
+      description: 'Vantage physician portal API',
+      deployOptions: {
+        stageName: props.stageName,
+        loggingLevel: apigateway.MethodLoggingLevel.INFO,
+        dataTraceEnabled: false, // Do not log request/response bodies (PHI)
+        metricsEnabled: true,
+        throttlingBurstLimit: 100,
+        throttlingRateLimit: 50,
+      },
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS, // Tighten in production
+        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowHeaders: [
+          'Content-Type',
+          'Authorization',
+          'X-Amz-Date',
+          'X-Api-Key',
+          'X-Idempotency-Key',
+        ],
+        maxAge: cdk.Duration.hours(1),
+      },
+    });
+
+    // ── Cognito Authorizer ──
+    const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'CognitoAuth', {
+      cognitoUserPools: [props.userPool],
+      authorizerName: `vantage-cognito-${props.stageName}`,
+      identitySource: 'method.request.header.Authorization',
+    });
+
+    const authMethodOptions: apigateway.MethodOptions = {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    };
+
+    // ── Routes ──
+
+    // POST /uploads/presign
+    const uploads = this.api.root.addResource('uploads');
+    const presign = uploads.addResource('presign');
+    presign.addMethod('POST', new apigateway.LambdaIntegration(presignFn), authMethodOptions);
+
+    // GET /tasks  &  POST /tasks
+    const tasks = this.api.root.addResource('tasks');
+    tasks.addMethod('GET', new apigateway.LambdaIntegration(getTasksFn), authMethodOptions);
+    tasks.addMethod('POST', new apigateway.LambdaIntegration(createTaskFn), authMethodOptions);
+
+    // PATCH /tasks/{task_id}
+    const taskById = tasks.addResource('{task_id}');
+    taskById.addMethod('PATCH', new apigateway.LambdaIntegration(updateTaskFn), authMethodOptions);
+
+    // GET /appointments
+    const appointments = this.api.root.addResource('appointments');
+    appointments.addMethod('GET', new apigateway.LambdaIntegration(getAppointmentsFn), authMethodOptions);
+
+    // GET /dictations/{dictation_id}
+    const dictations = this.api.root.addResource('dictations');
+    const dictationById = dictations.addResource('{dictation_id}');
+    dictationById.addMethod('GET', new apigateway.LambdaIntegration(getDictationFn), authMethodOptions);
+
+    // GET /patients  &  POST /patients
+    const patients = this.api.root.addResource('patients');
+    patients.addMethod('GET', new apigateway.LambdaIntegration(listPatientsFn), authMethodOptions);
+    patients.addMethod('POST', new apigateway.LambdaIntegration(createPatientFn), authMethodOptions);
+
+    // GET /patients/{id}
+    const patientById = patients.addResource('{id}');
+    patientById.addMethod('GET', new apigateway.LambdaIntegration(getPatientFn), authMethodOptions);
+
+    // POST /billing/charge
+    const billing = this.api.root.addResource('billing');
+    const charge = billing.addResource('charge');
+    charge.addMethod('POST', new apigateway.LambdaIntegration(billingChargeFn), authMethodOptions);
+
+    // ── Outputs ──
+    new cdk.CfnOutput(this, 'ApiUrl', { value: this.api.url });
+  }
+}

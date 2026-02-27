@@ -1,0 +1,16 @@
+{
+  "app": "npx ts-node --prefer-ts-exts bin/vantage-app.ts",
+  "watch": {
+    "include": ["**"],
+    "exclude": ["node_modules", "dist", "cdk.out"]
+  },
+  "context": {
+    "environment": "dev",
+    "region": "us-east-1",
+    "retentionAudioDays": 90,
+    "retentionTranscriptDays": 2555,
+    "maxUploadSizeMb": 100,
+    "acceptedAudioFormats": ["m4a", "mp3", "mp4", "wav", "flac"],
+    "cognitoDomain": "vantage-health"
+  }
+}

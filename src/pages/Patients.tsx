@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Users, Search, ChevronRight } from 'lucide-react'
+import { Users, Search, ChevronRight, UserPlus } from 'lucide-react'
 import { listPatients } from '../api/endpoints'
 import { Card } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { NewPatientModal } from '../components/NewPatientModal'
 import { formatDate } from '../lib/utils'
 
 export default function Patients() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
+  const [showNewPatient, setShowNewPatient] = useState(false)
 
   const { data: patients, isLoading } = useQuery({
     queryKey: ['patients'],
@@ -30,7 +33,12 @@ export default function Patients() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-charcoal mb-6">Patients</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-charcoal">Patients</h1>
+        <Button onClick={() => setShowNewPatient(true)} icon={<UserPlus size={18} />}>
+          New Patient
+        </Button>
+      </div>
 
       {/* Search */}
       <div className="relative mb-4">
@@ -89,6 +97,11 @@ export default function Patients() {
           </button>
         ))}
       </div>
+
+      <NewPatientModal
+        open={showNewPatient}
+        onClose={() => setShowNewPatient(false)}
+      />
     </div>
   )
 }

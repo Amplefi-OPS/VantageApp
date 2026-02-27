@@ -16,7 +16,6 @@ const defaults: AppSettings = {
     '3': 'Basic Questions',
     '4': 'Everything Else',
   },
-  demoMode: true,
 }
 
 export function getSettings(): AppSettings {

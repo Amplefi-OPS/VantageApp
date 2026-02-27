@@ -1,0 +1,1836 @@
+{
+  "version": "50.0.0",
+  "artifacts": {
+    "Vantage-Storage-dev.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "Vantage-Storage-dev.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "Vantage-Storage-dev": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://841722554807/us-east-1",
+      "properties": {
+        "templateFile": "Vantage-Storage-dev.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/63fb39954ecc5cf323d9f78151c39b3eb7751ad3967ed11ca2079df9229a67ff.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "Vantage-Storage-dev.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-lookup-role-841722554807-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "Vantage-Storage-dev.assets"
+      ],
+      "metadata": {
+        "/Vantage-Storage-dev/PhiEncryptionKey/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PhiEncryptionKey1BAC3520"
+          }
+        ],
+        "/Vantage-Storage-dev/PhiEncryptionKey/Alias/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PhiEncryptionKeyAliasF610C6BD"
+          }
+        ],
+        "/Vantage-Storage-dev/AudioBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AudioBucket96BEECBA"
+          }
+        ],
+        "/Vantage-Storage-dev/AudioBucket/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AudioBucketPolicy75597578"
+          }
+        ],
+        "/Vantage-Storage-dev/AudioBucket/Notifications/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AudioBucketNotifications4F5EEF09"
+          }
+        ],
+        "/Vantage-Storage-dev/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC"
+          }
+        ],
+        "/Vantage-Storage-dev/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36"
+          }
+        ],
+        "/Vantage-Storage-dev/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691"
+          }
+        ],
+        "/Vantage-Storage-dev/TranscriptBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TranscriptBucketB04D660A"
+          }
+        ],
+        "/Vantage-Storage-dev/TranscriptBucket/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TranscriptBucketPolicyA5891472"
+          }
+        ],
+        "/Vantage-Storage-dev/VantageTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "VantageTableA92A5E33"
+            }
+          }
+        ],
+        "/Vantage-Storage-dev/VantageTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageTableA92A5E33"
+          }
+        ],
+        "/Vantage-Storage-dev/DataTrail/S3/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DataTrailS3D94F1A33"
+          }
+        ],
+        "/Vantage-Storage-dev/DataTrail/S3/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DataTrailS3Policy8C21A493"
+          }
+        ],
+        "/Vantage-Storage-dev/DataTrail/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DataTrailA449DBA8"
+          }
+        ],
+        "/Vantage-Storage-dev/AudioBucketName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AudioBucketName"
+          }
+        ],
+        "/Vantage-Storage-dev/TranscriptBucketName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TranscriptBucketName"
+          }
+        ],
+        "/Vantage-Storage-dev/TableName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TableName"
+          }
+        ],
+        "/Vantage-Storage-dev/KmsKeyArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "KmsKeyArn"
+          }
+        ],
+        "/Vantage-Storage-dev/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/Vantage-Storage-dev/Exports/Output{\"Fn::GetAtt\":[\"AudioBucket96BEECBA\",\"Arn\"]}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputFnGetAttAudioBucket96BEECBAArnC8B7DB4B"
+          }
+        ],
+        "/Vantage-Storage-dev/Exports/Output{\"Fn::GetAtt\":[\"PhiEncryptionKey1BAC3520\",\"Arn\"]}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+          }
+        ],
+        "/Vantage-Storage-dev/Exports/Output{\"Ref\":\"VantageTableA92A5E33\"}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputRefVantageTableA92A5E33483C0F3E"
+          }
+        ],
+        "/Vantage-Storage-dev/Exports/Output{\"Ref\":\"AudioBucket96BEECBA\"}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputRefAudioBucket96BEECBAEFFB6375"
+          }
+        ],
+        "/Vantage-Storage-dev/Exports/Output{\"Ref\":\"TranscriptBucketB04D660A\"}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputRefTranscriptBucketB04D660A43F395AF"
+          }
+        ],
+        "/Vantage-Storage-dev/Exports/Output{\"Fn::GetAtt\":[\"VantageTableA92A5E33\",\"Arn\"]}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+          }
+        ],
+        "/Vantage-Storage-dev/Exports/Output{\"Fn::GetAtt\":[\"TranscriptBucketB04D660A\",\"Arn\"]}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputFnGetAttTranscriptBucketB04D660AArnB2171BF2"
+          }
+        ],
+        "/Vantage-Storage-dev/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/Vantage-Storage-dev/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "Vantage-Storage-dev"
+    },
+    "Vantage-Auth-dev.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "Vantage-Auth-dev.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "Vantage-Auth-dev": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://841722554807/us-east-1",
+      "properties": {
+        "templateFile": "Vantage-Auth-dev.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/acd6dff9640204023cecad84a27d1ade0015f94bc17805d4f723d642485fb335.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "Vantage-Auth-dev.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-lookup-role-841722554807-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "Vantage-Auth-dev.assets"
+      ],
+      "metadata": {
+        "/Vantage-Auth-dev/VantageUserPool/smsRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageUserPoolsmsRoleCD2AC892"
+          }
+        ],
+        "/Vantage-Auth-dev/VantageUserPool/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageUserPoolB4156E75"
+          }
+        ],
+        "/Vantage-Auth-dev/VantageUserPool/WebClient/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageUserPoolWebClient65DB70BE"
+          }
+        ],
+        "/Vantage-Auth-dev/VantageUserPool/CognitoDomain/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageUserPoolCognitoDomainDD28DFA5"
+          }
+        ],
+        "/Vantage-Auth-dev/ProviderGroup": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ProviderGroup"
+          }
+        ],
+        "/Vantage-Auth-dev/AdminGroup": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AdminGroup"
+          }
+        ],
+        "/Vantage-Auth-dev/UserPoolId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserPoolId"
+          }
+        ],
+        "/Vantage-Auth-dev/UserPoolClientId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserPoolClientId"
+          }
+        ],
+        "/Vantage-Auth-dev/UserPoolArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserPoolArn"
+          }
+        ],
+        "/Vantage-Auth-dev/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/Vantage-Auth-dev/Exports/Output{\"Fn::GetAtt\":[\"VantageUserPoolB4156E75\",\"Arn\"]}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputFnGetAttVantageUserPoolB4156E75Arn383BB50C"
+          }
+        ],
+        "/Vantage-Auth-dev/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/Vantage-Auth-dev/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "Vantage-Auth-dev"
+    },
+    "Vantage-Api-dev.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "Vantage-Api-dev.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "Vantage-Api-dev": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://841722554807/us-east-1",
+      "properties": {
+        "templateFile": "Vantage-Api-dev.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/26e4e95a80532096e450f4269935cec36c5674e72dbeb17f0e66111864d24ce8.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "Vantage-Api-dev.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-lookup-role-841722554807-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "Vantage-Storage-dev",
+        "Vantage-Auth-dev",
+        "Vantage-Api-dev.assets"
+      ],
+      "metadata": {
+        "/Vantage-Api-dev/PresignUploadFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PresignUploadFnServiceRole871B1191"
+          }
+        ],
+        "/Vantage-Api-dev/PresignUploadFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PresignUploadFnServiceRoleDefaultPolicy3B9BAA2A"
+          }
+        ],
+        "/Vantage-Api-dev/PresignUploadFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PresignUploadFnBB76DD3E"
+          }
+        ],
+        "/Vantage-Api-dev/PresignUploadFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PresignUploadFnLogRetention8ED87FDD"
+          }
+        ],
+        "/Vantage-Api-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+          }
+        ],
+        "/Vantage-Api-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB"
+          }
+        ],
+        "/Vantage-Api-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A"
+          }
+        ],
+        "/Vantage-Api-dev/GetTasksFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetTasksFnServiceRole542EFCA3"
+          }
+        ],
+        "/Vantage-Api-dev/GetTasksFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetTasksFnServiceRoleDefaultPolicyC44BA081"
+          }
+        ],
+        "/Vantage-Api-dev/GetTasksFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetTasksFn74FFA80E"
+          }
+        ],
+        "/Vantage-Api-dev/GetTasksFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetTasksFnLogRetentionFB63D708"
+          }
+        ],
+        "/Vantage-Api-dev/UpdateTaskFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UpdateTaskFnServiceRoleE51CF2CC"
+          }
+        ],
+        "/Vantage-Api-dev/UpdateTaskFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UpdateTaskFnServiceRoleDefaultPolicyBFFDB0B9"
+          }
+        ],
+        "/Vantage-Api-dev/UpdateTaskFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UpdateTaskFn712B0B9A"
+          }
+        ],
+        "/Vantage-Api-dev/UpdateTaskFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UpdateTaskFnLogRetention070610CF"
+          }
+        ],
+        "/Vantage-Api-dev/CreateTaskFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateTaskFnServiceRoleA93083DD"
+          }
+        ],
+        "/Vantage-Api-dev/CreateTaskFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateTaskFnServiceRoleDefaultPolicy1D2142EA"
+          }
+        ],
+        "/Vantage-Api-dev/CreateTaskFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateTaskFnF38CCD86"
+          }
+        ],
+        "/Vantage-Api-dev/CreateTaskFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateTaskFnLogRetentionC51DE418"
+          }
+        ],
+        "/Vantage-Api-dev/GetAppointmentsFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetAppointmentsFnServiceRoleCD56F362"
+          }
+        ],
+        "/Vantage-Api-dev/GetAppointmentsFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetAppointmentsFnServiceRoleDefaultPolicy66B43D81"
+          }
+        ],
+        "/Vantage-Api-dev/GetAppointmentsFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetAppointmentsFn66800E69"
+          }
+        ],
+        "/Vantage-Api-dev/GetAppointmentsFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetAppointmentsFnLogRetention54A345B3"
+          }
+        ],
+        "/Vantage-Api-dev/GetDictationFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetDictationFnServiceRole69FCCFF6"
+          }
+        ],
+        "/Vantage-Api-dev/GetDictationFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetDictationFnServiceRoleDefaultPolicy199DC2C7"
+          }
+        ],
+        "/Vantage-Api-dev/GetDictationFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetDictationFnEE66B640"
+          }
+        ],
+        "/Vantage-Api-dev/GetDictationFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetDictationFnLogRetentionBA7D8318"
+          }
+        ],
+        "/Vantage-Api-dev/CreatePatientFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreatePatientFnServiceRoleF9434C15"
+          }
+        ],
+        "/Vantage-Api-dev/CreatePatientFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreatePatientFnServiceRoleDefaultPolicy06AAB963"
+          }
+        ],
+        "/Vantage-Api-dev/CreatePatientFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreatePatientFn51C1D9F9"
+          }
+        ],
+        "/Vantage-Api-dev/CreatePatientFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreatePatientFnLogRetention272EEF42"
+          }
+        ],
+        "/Vantage-Api-dev/ListPatientsFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ListPatientsFnServiceRoleAC1A7D0A"
+          }
+        ],
+        "/Vantage-Api-dev/ListPatientsFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ListPatientsFnServiceRoleDefaultPolicy9806342F"
+          }
+        ],
+        "/Vantage-Api-dev/ListPatientsFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ListPatientsFnFEAFFF65"
+          }
+        ],
+        "/Vantage-Api-dev/ListPatientsFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ListPatientsFnLogRetentionAFD7DED5"
+          }
+        ],
+        "/Vantage-Api-dev/GetPatientFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetPatientFnServiceRoleB331A01C"
+          }
+        ],
+        "/Vantage-Api-dev/GetPatientFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetPatientFnServiceRoleDefaultPolicy9AE06F77"
+          }
+        ],
+        "/Vantage-Api-dev/GetPatientFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetPatientFn83F4B915"
+          }
+        ],
+        "/Vantage-Api-dev/GetPatientFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GetPatientFnLogRetention9E1F56DF"
+          }
+        ],
+        "/Vantage-Api-dev/BillingChargeFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BillingChargeFnServiceRoleAF627016"
+          }
+        ],
+        "/Vantage-Api-dev/BillingChargeFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BillingChargeFnServiceRoleDefaultPolicy02C041FA"
+          }
+        ],
+        "/Vantage-Api-dev/BillingChargeFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BillingChargeFn5EC740FA"
+          }
+        ],
+        "/Vantage-Api-dev/BillingChargeFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BillingChargeFnLogRetentionB66317C7"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApi795310AC"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/CloudWatchRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiCloudWatchRole8EE89272"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Account": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiAccountF4B1835E"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Deployment/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiDeployment89164B33c1386d4a79bd01140125409a107e5333"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/DeploymentStage.dev/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiDeploymentStagedevFF353021"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Endpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiEndpoint9B51F823"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiOPTIONSEE8EC6E0"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/uploads/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiuploads95A0E580"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/uploads/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiuploadsOPTIONSE1D56A98"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/uploads/presign/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiuploadspresign07C8D12D"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/uploads/presign/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiuploadspresignOPTIONS73A9426D"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/uploads/presign/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..uploads.presign": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiuploadspresignPOSTApiPermissionVantageApidevVantageApi61D49C06POSTuploadspresignBAA2DE8E"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/uploads/presign/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..uploads.presign": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiuploadspresignPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTuploadspresignC360E49B"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/uploads/presign/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiuploadspresignPOSTB450F2E2"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitasks794AD8B1"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitasksOPTIONSDF790675"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/GET/ApiPermission.VantageApidevVantageApi61D49C06.GET..tasks": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitasksGETApiPermissionVantageApidevVantageApi61D49C06GETtasksA90BDF33"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/GET/ApiPermission.Test.VantageApidevVantageApi61D49C06.GET..tasks": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitasksGETApiPermissionTestVantageApidevVantageApi61D49C06GETtasks201BE7FB"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitasksGET1BA56BB6"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..tasks": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitasksPOSTApiPermissionVantageApidevVantageApi61D49C06POSTtasksF1450F89"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..tasks": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitasksPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTtasks62C00B46"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitasksPOSTCB4F926A"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/{task_id}/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitaskstaskid26620D20"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/{task_id}/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitaskstaskidOPTIONS019B0305"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/{task_id}/PATCH/ApiPermission.VantageApidevVantageApi61D49C06.PATCH..tasks.{task_id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitaskstaskidPATCHApiPermissionVantageApidevVantageApi61D49C06PATCHtaskstaskid7BC2C39E"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/{task_id}/PATCH/ApiPermission.Test.VantageApidevVantageApi61D49C06.PATCH..tasks.{task_id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitaskstaskidPATCHApiPermissionTestVantageApidevVantageApi61D49C06PATCHtaskstaskid9CE58040"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/tasks/{task_id}/PATCH/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApitaskstaskidPATCHFB350542"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointments788107C2"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsOPTIONS39FF5F3F"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/GET/ApiPermission.VantageApidevVantageApi61D49C06.GET..appointments": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsGETApiPermissionVantageApidevVantageApi61D49C06GETappointments8A17EED2"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/GET/ApiPermission.Test.VantageApidevVantageApi61D49C06.GET..appointments": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsGETApiPermissionTestVantageApidevVantageApi61D49C06GETappointments783775DA"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsGETDF789897"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dictations/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidictations16B93FF8"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dictations/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidictationsOPTIONS860368CB"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dictations/{dictation_id}/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidictationsdictationid5E2459C2"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dictations/{dictation_id}/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidictationsdictationidOPTIONS0425A5C4"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dictations/{dictation_id}/GET/ApiPermission.VantageApidevVantageApi61D49C06.GET..dictations.{dictation_id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidictationsdictationidGETApiPermissionVantageApidevVantageApi61D49C06GETdictationsdictationidE02CECB3"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dictations/{dictation_id}/GET/ApiPermission.Test.VantageApidevVantageApi61D49C06.GET..dictations.{dictation_id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidictationsdictationidGETApiPermissionTestVantageApidevVantageApi61D49C06GETdictationsdictationid55BBCF1C"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dictations/{dictation_id}/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidictationsdictationidGET7166C48C"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsC44A0329"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsOPTIONS694BDB45"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/GET/ApiPermission.VantageApidevVantageApi61D49C06.GET..patients": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsGETApiPermissionVantageApidevVantageApi61D49C06GETpatients7581F3E1"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/GET/ApiPermission.Test.VantageApidevVantageApi61D49C06.GET..patients": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsGETApiPermissionTestVantageApidevVantageApi61D49C06GETpatientsA96446B5"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsGET682FDCB0"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..patients": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsPOSTApiPermissionVantageApidevVantageApi61D49C06POSTpatients0309102C"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..patients": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTpatientsD7D01F0F"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsPOST5BBDEF75"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsid852B40E6"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsidOPTIONS1DE95FEA"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/GET/ApiPermission.VantageApidevVantageApi61D49C06.GET..patients.{id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsidGETApiPermissionVantageApidevVantageApi61D49C06GETpatientsid6AB94238"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/GET/ApiPermission.Test.VantageApidevVantageApi61D49C06.GET..patients.{id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsidGETApiPermissionTestVantageApidevVantageApi61D49C06GETpatientsid61669B35"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsidGET22AEFD92"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/billing/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApibilling1CF654F0"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/billing/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApibillingOPTIONS2268B909"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/billing/charge/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApibillingcharge1CBE9F56"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/billing/charge/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApibillingchargeOPTIONS28DB1E45"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/billing/charge/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..billing.charge": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApibillingchargePOSTApiPermissionVantageApidevVantageApi61D49C06POSTbillingcharge48C95253"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/billing/charge/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..billing.charge": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApibillingchargePOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTbillingcharge01CCAA80"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/billing/charge/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApibillingchargePOST0747A9BA"
+          }
+        ],
+        "/Vantage-Api-dev/CognitoAuth/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoAuth8E818E2A"
+          }
+        ],
+        "/Vantage-Api-dev/ApiUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ApiUrl"
+          }
+        ],
+        "/Vantage-Api-dev/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/Vantage-Api-dev/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/Vantage-Api-dev/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "Vantage-Api-dev"
+    },
+    "Vantage-Pipeline-dev.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "Vantage-Pipeline-dev.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "Vantage-Pipeline-dev": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://841722554807/us-east-1",
+      "properties": {
+        "templateFile": "Vantage-Pipeline-dev.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/cf8410d54de6b78938eba2d74c71f0e4af4b1142c6e82914e06b25527f51f569.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "Vantage-Pipeline-dev.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-lookup-role-841722554807-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "Vantage-Storage-dev",
+        "Vantage-Pipeline-dev.assets"
+      ],
+      "metadata": {
+        "/Vantage-Pipeline-dev/StartTranscriptionFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StartTranscriptionFnServiceRoleCFD5A4A1"
+          }
+        ],
+        "/Vantage-Pipeline-dev/StartTranscriptionFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StartTranscriptionFnServiceRoleDefaultPolicy28AFA8ED"
+          }
+        ],
+        "/Vantage-Pipeline-dev/StartTranscriptionFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StartTranscriptionFn4929F9B0"
+          }
+        ],
+        "/Vantage-Pipeline-dev/StartTranscriptionFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StartTranscriptionFnLogRetention58507C9D"
+          }
+        ],
+        "/Vantage-Pipeline-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+          }
+        ],
+        "/Vantage-Pipeline-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB"
+          }
+        ],
+        "/Vantage-Pipeline-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A"
+          }
+        ],
+        "/Vantage-Pipeline-dev/CheckTranscriptionFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckTranscriptionFnServiceRole60C3FF4C"
+          }
+        ],
+        "/Vantage-Pipeline-dev/CheckTranscriptionFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckTranscriptionFnServiceRoleDefaultPolicy15F18524"
+          }
+        ],
+        "/Vantage-Pipeline-dev/CheckTranscriptionFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckTranscriptionFn9AE1875B"
+          }
+        ],
+        "/Vantage-Pipeline-dev/CheckTranscriptionFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckTranscriptionFnLogRetentionCBBA4530"
+          }
+        ],
+        "/Vantage-Pipeline-dev/CompleteTranscriptionFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CompleteTranscriptionFnServiceRole7B62D43C"
+          }
+        ],
+        "/Vantage-Pipeline-dev/CompleteTranscriptionFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CompleteTranscriptionFnServiceRoleDefaultPolicy1706573D"
+          }
+        ],
+        "/Vantage-Pipeline-dev/CompleteTranscriptionFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CompleteTranscriptionFn9373FE12"
+          }
+        ],
+        "/Vantage-Pipeline-dev/CompleteTranscriptionFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CompleteTranscriptionFnLogRetention8185633C"
+          }
+        ],
+        "/Vantage-Pipeline-dev/StateMachineLogs/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StateMachineLogs3CB16D3C"
+          }
+        ],
+        "/Vantage-Pipeline-dev/TranscriptionStateMachine/Role/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TranscriptionStateMachineRole85C37D21"
+          }
+        ],
+        "/Vantage-Pipeline-dev/TranscriptionStateMachine/Role/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TranscriptionStateMachineRoleDefaultPolicyC5AB5EF9"
+          }
+        ],
+        "/Vantage-Pipeline-dev/TranscriptionStateMachine/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TranscriptionStateMachineDB9F5878"
+          }
+        ],
+        "/Vantage-Pipeline-dev/S3TriggerFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "S3TriggerFnServiceRole2D4550D6"
+          }
+        ],
+        "/Vantage-Pipeline-dev/S3TriggerFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "S3TriggerFnServiceRoleDefaultPolicyC1E83961"
+          }
+        ],
+        "/Vantage-Pipeline-dev/S3TriggerFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "S3TriggerFn495C4C6F"
+          }
+        ],
+        "/Vantage-Pipeline-dev/S3TriggerFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "S3TriggerFnLogRetention2B0ED0FA"
+          }
+        ],
+        "/Vantage-Pipeline-dev/AudioUploadRule/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AudioUploadRule24CD58D2"
+          }
+        ],
+        "/Vantage-Pipeline-dev/AudioUploadRule/AllowEventRuleVantagePipelinedevS3TriggerFn21FCADAE": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AudioUploadRuleAllowEventRuleVantagePipelinedevS3TriggerFn21FCADAE9F60B1C4"
+          }
+        ],
+        "/Vantage-Pipeline-dev/StateMachineArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StateMachineArn"
+          }
+        ],
+        "/Vantage-Pipeline-dev/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/Vantage-Pipeline-dev/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/Vantage-Pipeline-dev/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "Vantage-Pipeline-dev"
+    },
+    "Vantage-Billing-dev.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "Vantage-Billing-dev.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "Vantage-Billing-dev": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://841722554807/us-east-1",
+      "properties": {
+        "templateFile": "Vantage-Billing-dev.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/4376d18c7449e310789b5d4c4a77012bbcc3db6c2a6d9e90579233723c20e403.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "Vantage-Billing-dev.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-lookup-role-841722554807-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "Vantage-Storage-dev",
+        "Vantage-Billing-dev.assets"
+      ],
+      "metadata": {
+        "/Vantage-Billing-dev/BillingDLQ/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BillingDLQCFC915B2"
+          }
+        ],
+        "/Vantage-Billing-dev/BillingEventBus/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BillingEventBus5F1B11EC"
+          }
+        ],
+        "/Vantage-Billing-dev/StripeProcessorFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeProcessorFnServiceRoleABA3775E"
+          }
+        ],
+        "/Vantage-Billing-dev/StripeProcessorFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeProcessorFnServiceRoleDefaultPolicy4C3A0D75"
+          }
+        ],
+        "/Vantage-Billing-dev/StripeProcessorFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeProcessorFn30AFA3C2"
+          }
+        ],
+        "/Vantage-Billing-dev/StripeProcessorFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeProcessorFnLogRetention90CD7C84"
+          }
+        ],
+        "/Vantage-Billing-dev/StripeProcessorFn/EventInvokeConfig/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeProcessorFnEventInvokeConfig5709DCF4"
+          }
+        ],
+        "/Vantage-Billing-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+          }
+        ],
+        "/Vantage-Billing-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB"
+          }
+        ],
+        "/Vantage-Billing-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A"
+          }
+        ],
+        "/Vantage-Billing-dev/QuickBooksProcessorFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "QuickBooksProcessorFnServiceRole0B38EF43"
+          }
+        ],
+        "/Vantage-Billing-dev/QuickBooksProcessorFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "QuickBooksProcessorFnServiceRoleDefaultPolicy6A429E1C"
+          }
+        ],
+        "/Vantage-Billing-dev/QuickBooksProcessorFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "QuickBooksProcessorFn698BFBDA"
+          }
+        ],
+        "/Vantage-Billing-dev/QuickBooksProcessorFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "QuickBooksProcessorFnLogRetention18657B26"
+          }
+        ],
+        "/Vantage-Billing-dev/QuickBooksProcessorFn/EventInvokeConfig/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "QuickBooksProcessorFnEventInvokeConfig528ABC6C"
+          }
+        ],
+        "/Vantage-Billing-dev/StripeChargeRule/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeChargeRule7B34B674"
+          }
+        ],
+        "/Vantage-Billing-dev/StripeChargeRule/AllowEventRuleVantageBillingdevStripeProcessorFn81114F4B": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeChargeRuleAllowEventRuleVantageBillingdevStripeProcessorFn81114F4B7E0EED05"
+          }
+        ],
+        "/Vantage-Billing-dev/QuickBooksRecordRule/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "QuickBooksRecordRuleAEDE9FB2"
+          }
+        ],
+        "/Vantage-Billing-dev/QuickBooksRecordRule/AllowEventRuleVantageBillingdevQuickBooksProcessorFn877DFEAA": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "QuickBooksRecordRuleAllowEventRuleVantageBillingdevQuickBooksProcessorFn877DFEAA47043B2B"
+          }
+        ],
+        "/Vantage-Billing-dev/BillingEventBusArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BillingEventBusArn"
+          }
+        ],
+        "/Vantage-Billing-dev/BillingDLQUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BillingDLQUrl"
+          }
+        ],
+        "/Vantage-Billing-dev/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/Vantage-Billing-dev/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/Vantage-Billing-dev/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "Vantage-Billing-dev"
+    },
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    },
+    "aws-cdk-lib/feature-flag-report": {
+      "type": "cdk:feature-flag-report",
+      "properties": {
+        "module": "aws-cdk-lib",
+        "flags": {
+          "@aws-cdk/aws-signer:signingProfileNamePassedToCfn": {
+            "recommendedValue": true,
+            "explanation": "Pass signingProfileName to CfnSigningProfile"
+          },
+          "@aws-cdk/core:newStyleStackSynthesis": {
+            "recommendedValue": true,
+            "explanation": "Switch to new stack synthesis method which enables CI/CD",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/core:stackRelativeExports": {
+            "recommendedValue": true,
+            "explanation": "Name exports based on the construct paths relative to the stack, rather than the global construct path",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/aws-ecs-patterns:secGroupsDisablesImplicitOpenListener": {
+            "recommendedValue": true,
+            "explanation": "Disable implicit openListener when custom security groups are provided"
+          },
+          "@aws-cdk/aws-rds:lowercaseDbIdentifier": {
+            "recommendedValue": true,
+            "explanation": "Force lowercasing of RDS Cluster names in CDK",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": {
+            "recommendedValue": true,
+            "explanation": "Allow adding/removing multiple UsagePlanKeys independently",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/aws-lambda:recognizeVersionProps": {
+            "recommendedValue": true,
+            "explanation": "Enable this feature flag to opt in to the updated logical id calculation for Lambda Version created using the  `fn.currentVersion`.",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/aws-lambda:recognizeLayerVersion": {
+            "recommendedValue": true,
+            "explanation": "Enable this feature flag to opt in to the updated logical id calculation for Lambda Version created using the `fn.currentVersion`."
+          },
+          "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": {
+            "recommendedValue": true,
+            "explanation": "Enable this feature flag to have cloudfront distributions use the security policy TLSv1.2_2021 by default.",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/core:checkSecretUsage": {
+            "recommendedValue": true,
+            "explanation": "Enable this flag to make it impossible to accidentally use SecretValues in unsafe locations"
+          },
+          "@aws-cdk/core:target-partitions": {
+            "recommendedValue": [
+              "aws",
+              "aws-cn"
+            ],
+            "explanation": "What regions to include in lookup tables of environment agnostic stacks"
+          },
+          "@aws-cdk-containers/ecs-service-extensions:enableDefaultLogDriver": {
+            "recommendedValue": true,
+            "explanation": "ECS extensions will automatically add an `awslogs` driver if no logging is specified"
+          },
+          "@aws-cdk/aws-ec2:uniqueImdsv2TemplateName": {
+            "recommendedValue": true,
+            "explanation": "Enable this feature flag to have Launch Templates generated by the `InstanceRequireImdsv2Aspect` use unique names."
+          },
+          "@aws-cdk/aws-ecs:arnFormatIncludesClusterName": {
+            "recommendedValue": true,
+            "explanation": "ARN format used by ECS. In the new ARN format, the cluster name is part of the resource ID."
+          },
+          "@aws-cdk/aws-iam:minimizePolicies": {
+            "recommendedValue": true,
+            "explanation": "Minimize IAM policies by combining Statements"
+          },
+          "@aws-cdk/core:validateSnapshotRemovalPolicy": {
+            "recommendedValue": true,
+            "explanation": "Error on snapshot removal policies on resources that do not support it."
+          },
+          "@aws-cdk/aws-codepipeline:crossAccountKeyAliasStackSafeResourceName": {
+            "recommendedValue": true,
+            "explanation": "Generate key aliases that include the stack name"
+          },
+          "@aws-cdk/aws-s3:createDefaultLoggingPolicy": {
+            "recommendedValue": true,
+            "explanation": "Enable this feature flag to create an S3 bucket policy by default in cases where an AWS service would automatically create the Policy if one does not exist."
+          },
+          "@aws-cdk/aws-sns-subscriptions:restrictSqsDescryption": {
+            "recommendedValue": true,
+            "explanation": "Restrict KMS key policy for encrypted Queues a bit more"
+          },
+          "@aws-cdk/aws-apigateway:disableCloudWatchRole": {
+            "recommendedValue": true,
+            "explanation": "Make default CloudWatch Role behavior safe for multiple API Gateways in one environment"
+          },
+          "@aws-cdk/core:enablePartitionLiterals": {
+            "recommendedValue": true,
+            "explanation": "Make ARNs concrete if AWS partition is known"
+          },
+          "@aws-cdk/aws-events:eventsTargetQueueSameAccount": {
+            "recommendedValue": true,
+            "explanation": "Event Rules may only push to encrypted SQS queues in the same account"
+          },
+          "@aws-cdk/aws-ecs:disableExplicitDeploymentControllerForCircuitBreaker": {
+            "recommendedValue": true,
+            "explanation": "Avoid setting the \"ECS\" deployment controller when adding a circuit breaker"
+          },
+          "@aws-cdk/aws-iam:importedRoleStackSafeDefaultPolicyName": {
+            "recommendedValue": true,
+            "explanation": "Enable this feature to create default policy names for imported roles that depend on the stack the role is in."
+          },
+          "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": {
+            "recommendedValue": true,
+            "explanation": "Use S3 Bucket Policy instead of ACLs for Server Access Logging"
+          },
+          "@aws-cdk/aws-route53-patters:useCertificate": {
+            "recommendedValue": true,
+            "explanation": "Use the official `Certificate` resource instead of `DnsValidatedCertificate`"
+          },
+          "@aws-cdk/customresources:installLatestAwsSdkDefault": {
+            "recommendedValue": false,
+            "explanation": "Whether to install the latest SDK by default in AwsCustomResource"
+          },
+          "@aws-cdk/aws-rds:databaseProxyUniqueResourceName": {
+            "recommendedValue": true,
+            "explanation": "Use unique resource name for Database Proxy"
+          },
+          "@aws-cdk/aws-codedeploy:removeAlarmsFromDeploymentGroup": {
+            "recommendedValue": true,
+            "explanation": "Remove CloudWatch alarms from deployment group"
+          },
+          "@aws-cdk/aws-apigateway:authorizerChangeDeploymentLogicalId": {
+            "recommendedValue": true,
+            "explanation": "Include authorizer configuration in the calculation of the API deployment logical ID."
+          },
+          "@aws-cdk/aws-ec2:launchTemplateDefaultUserData": {
+            "recommendedValue": true,
+            "explanation": "Define user data for a launch template by default when a machine image is provided."
+          },
+          "@aws-cdk/aws-secretsmanager:useAttachedSecretResourcePolicyForSecretTargetAttachments": {
+            "recommendedValue": true,
+            "explanation": "SecretTargetAttachments uses the ResourcePolicy of the attached Secret."
+          },
+          "@aws-cdk/aws-redshift:columnId": {
+            "recommendedValue": true,
+            "explanation": "Whether to use an ID to track Redshift column changes"
+          },
+          "@aws-cdk/aws-stepfunctions-tasks:enableEmrServicePolicyV2": {
+            "recommendedValue": true,
+            "explanation": "Enable AmazonEMRServicePolicy_v2 managed policies"
+          },
+          "@aws-cdk/aws-ec2:restrictDefaultSecurityGroup": {
+            "recommendedValue": true,
+            "explanation": "Restrict access to the VPC default security group"
+          },
+          "@aws-cdk/aws-apigateway:requestValidatorUniqueId": {
+            "recommendedValue": true,
+            "explanation": "Generate a unique id for each RequestValidator added to a method"
+          },
+          "@aws-cdk/aws-kms:aliasNameRef": {
+            "recommendedValue": true,
+            "explanation": "KMS Alias name and keyArn will have implicit reference to KMS Key"
+          },
+          "@aws-cdk/aws-kms:applyImportedAliasPermissionsToPrincipal": {
+            "recommendedValue": true,
+            "explanation": "Enable grant methods on Aliases imported by name to use kms:ResourceAliases condition"
+          },
+          "@aws-cdk/aws-autoscaling:generateLaunchTemplateInsteadOfLaunchConfig": {
+            "recommendedValue": true,
+            "explanation": "Generate a launch template when creating an AutoScalingGroup"
+          },
+          "@aws-cdk/core:includePrefixInUniqueNameGeneration": {
+            "recommendedValue": true,
+            "explanation": "Include the stack prefix in the stack name generation process"
+          },
+          "@aws-cdk/aws-efs:denyAnonymousAccess": {
+            "recommendedValue": true,
+            "explanation": "EFS denies anonymous clients accesses"
+          },
+          "@aws-cdk/aws-opensearchservice:enableOpensearchMultiAzWithStandby": {
+            "recommendedValue": true,
+            "explanation": "Enables support for Multi-AZ with Standby deployment for opensearch domains"
+          },
+          "@aws-cdk/aws-lambda-nodejs:useLatestRuntimeVersion": {
+            "recommendedValue": true,
+            "explanation": "Enables aws-lambda-nodejs.Function to use the latest available NodeJs runtime as the default"
+          },
+          "@aws-cdk/aws-efs:mountTargetOrderInsensitiveLogicalId": {
+            "recommendedValue": true,
+            "explanation": "When enabled, mount targets will have a stable logicalId that is linked to the associated subnet."
+          },
+          "@aws-cdk/aws-rds:auroraClusterChangeScopeOfInstanceParameterGroupWithEachParameters": {
+            "recommendedValue": true,
+            "explanation": "When enabled, a scope of InstanceParameterGroup for AuroraClusterInstance with each parameters will change."
+          },
+          "@aws-cdk/aws-appsync:useArnForSourceApiAssociationIdentifier": {
+            "recommendedValue": true,
+            "explanation": "When enabled, will always use the arn for identifiers for CfnSourceApiAssociation in the GraphqlApi construct rather than id."
+          },
+          "@aws-cdk/aws-rds:preventRenderingDeprecatedCredentials": {
+            "recommendedValue": true,
+            "explanation": "When enabled, creating an RDS database cluster from a snapshot will only render credentials for snapshot credentials."
+          },
+          "@aws-cdk/aws-codepipeline-actions:useNewDefaultBranchForCodeCommitSource": {
+            "recommendedValue": true,
+            "explanation": "When enabled, the CodeCommit source action is using the default branch name 'main'."
+          },
+          "@aws-cdk/aws-cloudwatch-actions:changeLambdaPermissionLogicalIdForLambdaAction": {
+            "recommendedValue": true,
+            "explanation": "When enabled, the logical ID of a Lambda permission for a Lambda action includes an alarm ID."
+          },
+          "@aws-cdk/aws-codepipeline:crossAccountKeysDefaultValueToFalse": {
+            "recommendedValue": true,
+            "explanation": "Enables Pipeline to set the default value for crossAccountKeys to false."
+          },
+          "@aws-cdk/aws-codepipeline:defaultPipelineTypeToV2": {
+            "recommendedValue": true,
+            "explanation": "Enables Pipeline to set the default pipeline type to V2."
+          },
+          "@aws-cdk/aws-kms:reduceCrossAccountRegionPolicyScope": {
+            "recommendedValue": true,
+            "explanation": "When enabled, IAM Policy created from KMS key grant will reduce the resource scope to this key only."
+          },
+          "@aws-cdk/pipelines:reduceAssetRoleTrustScope": {
+            "recommendedValue": true,
+            "explanation": "Remove the root account principal from PipelineAssetsFileRole trust policy",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/aws-eks:nodegroupNameAttribute": {
+            "recommendedValue": true,
+            "explanation": "When enabled, nodegroupName attribute of the provisioned EKS NodeGroup will not have the cluster name prefix."
+          },
+          "@aws-cdk/aws-eks:useNativeOidcProvider": {
+            "recommendedValue": true,
+            "explanation": "When enabled, EKS V2 clusters will use the native OIDC provider resource AWS::IAM::OIDCProvider instead of creating the OIDCProvider with a custom resource (iam.OpenIDConnectProvider)."
+          },
+          "@aws-cdk/aws-ec2:ebsDefaultGp3Volume": {
+            "recommendedValue": true,
+            "explanation": "When enabled, the default volume type of the EBS volume will be GP3"
+          },
+          "@aws-cdk/aws-ecs:removeDefaultDeploymentAlarm": {
+            "recommendedValue": true,
+            "explanation": "When enabled, remove default deployment alarm settings"
+          },
+          "@aws-cdk/custom-resources:logApiResponseDataPropertyTrueDefault": {
+            "recommendedValue": false,
+            "explanation": "When enabled, the custom resource used for `AwsCustomResource` will configure the `logApiResponseData` property as true by default"
+          },
+          "@aws-cdk/aws-s3:keepNotificationInImportedBucket": {
+            "recommendedValue": false,
+            "explanation": "When enabled, Adding notifications to a bucket in the current stack will not remove notification from imported stack."
+          },
+          "@aws-cdk/aws-stepfunctions-tasks:useNewS3UriParametersForBedrockInvokeModelTask": {
+            "recommendedValue": true,
+            "explanation": "When enabled, use new props for S3 URI field in task definition of state machine for bedrock invoke model.",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/core:explicitStackTags": {
+            "recommendedValue": true,
+            "explanation": "When enabled, stack tags need to be assigned explicitly on a Stack."
+          },
+          "@aws-cdk/aws-ecs:reduceEc2FargateCloudWatchPermissions": {
+            "recommendedValue": true,
+            "explanation": "When enabled, we will only grant the necessary permissions when users specify cloudwatch log group through logConfiguration"
+          },
+          "@aws-cdk/aws-dynamodb:resourcePolicyPerReplica": {
+            "recommendedValue": true,
+            "explanation": "When enabled will allow you to specify a resource policy per replica, and not copy the source table policy to all replicas"
+          },
+          "@aws-cdk/aws-ec2:ec2SumTImeoutEnabled": {
+            "recommendedValue": true,
+            "explanation": "When enabled, initOptions.timeout and resourceSignalTimeout values will be summed together."
+          },
+          "@aws-cdk/aws-appsync:appSyncGraphQLAPIScopeLambdaPermission": {
+            "recommendedValue": true,
+            "explanation": "When enabled, a Lambda authorizer Permission created when using GraphqlApi will be properly scoped with a SourceArn."
+          },
+          "@aws-cdk/aws-rds:setCorrectValueForDatabaseInstanceReadReplicaInstanceResourceId": {
+            "recommendedValue": true,
+            "explanation": "When enabled, the value of property `instanceResourceId` in construct `DatabaseInstanceReadReplica` will be set to the correct value which is `DbiResourceId` instead of currently `DbInstanceArn`"
+          },
+          "@aws-cdk/core:cfnIncludeRejectComplexResourceUpdateCreatePolicyIntrinsics": {
+            "recommendedValue": true,
+            "explanation": "When enabled, CFN templates added with `cfn-include` will error if the template contains Resource Update or Create policies with CFN Intrinsics that include non-primitive values."
+          },
+          "@aws-cdk/aws-lambda-nodejs:sdkV3ExcludeSmithyPackages": {
+            "recommendedValue": true,
+            "explanation": "When enabled, both `@aws-sdk` and `@smithy` packages will be excluded from the Lambda Node.js 18.x runtime to prevent version mismatches in bundled applications."
+          },
+          "@aws-cdk/aws-stepfunctions-tasks:fixRunEcsTaskPolicy": {
+            "recommendedValue": true,
+            "explanation": "When enabled, the resource of IAM Run Ecs policy generated by SFN EcsRunTask will reference the definition, instead of constructing ARN."
+          },
+          "@aws-cdk/aws-ec2:bastionHostUseAmazonLinux2023ByDefault": {
+            "recommendedValue": true,
+            "explanation": "When enabled, the BastionHost construct will use the latest Amazon Linux 2023 AMI, instead of Amazon Linux 2."
+          },
+          "@aws-cdk/core:aspectStabilization": {
+            "recommendedValue": true,
+            "explanation": "When enabled, a stabilization loop will be run when invoking Aspects during synthesis.",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/aws-route53-targets:userPoolDomainNameMethodWithoutCustomResource": {
+            "recommendedValue": true,
+            "explanation": "When enabled, use a new method for DNS Name of user pool domain target without creating a custom resource."
+          },
+          "@aws-cdk/aws-elasticloadbalancingV2:albDualstackWithoutPublicIpv4SecurityGroupRulesDefault": {
+            "recommendedValue": true,
+            "explanation": "When enabled, the default security group ingress rules will allow IPv6 ingress from anywhere"
+          },
+          "@aws-cdk/aws-iam:oidcRejectUnauthorizedConnections": {
+            "recommendedValue": true,
+            "explanation": "When enabled, the default behaviour of OIDC provider will reject unauthorized connections"
+          },
+          "@aws-cdk/core:enableAdditionalMetadataCollection": {
+            "recommendedValue": true,
+            "explanation": "When enabled, CDK will expand the scope of usage data collected to better inform CDK development and improve communication for security concerns and emerging issues."
+          },
+          "@aws-cdk/aws-lambda:createNewPoliciesWithAddToRolePolicy": {
+            "recommendedValue": false,
+            "explanation": "[Deprecated] When enabled, Lambda will create new inline policies with AddToRolePolicy instead of adding to the Default Policy Statement"
+          },
+          "@aws-cdk/aws-s3:setUniqueReplicationRoleName": {
+            "recommendedValue": true,
+            "explanation": "When enabled, CDK will automatically generate a unique role name that is used for s3 object replication."
+          },
+          "@aws-cdk/pipelines:reduceStageRoleTrustScope": {
+            "recommendedValue": true,
+            "explanation": "Remove the root account principal from Stage addActions trust policy",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/aws-events:requireEventBusPolicySid": {
+            "recommendedValue": true,
+            "explanation": "When enabled, grantPutEventsTo() will use resource policies with Statement IDs for service principals."
+          },
+          "@aws-cdk/core:aspectPrioritiesMutating": {
+            "recommendedValue": true,
+            "explanation": "When set to true, Aspects added by the construct library on your behalf will be given a priority of MUTATING."
+          },
+          "@aws-cdk/aws-dynamodb:retainTableReplica": {
+            "recommendedValue": true,
+            "explanation": "When enabled, table replica will be default to the removal policy of source table unless specified otherwise."
+          },
+          "@aws-cdk/cognito:logUserPoolClientSecretValue": {
+            "recommendedValue": false,
+            "explanation": "When disabled, the value of the user pool client secret will not be logged in the custom resource lambda function logs."
+          },
+          "@aws-cdk/pipelines:reduceCrossAccountActionRoleTrustScope": {
+            "recommendedValue": true,
+            "explanation": "When enabled, scopes down the trust policy for the cross-account action role",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/aws-stepfunctions:useDistributedMapResultWriterV2": {
+            "recommendedValue": true,
+            "explanation": "When enabled, the resultWriterV2 property of DistributedMap will be used insted of resultWriter"
+          },
+          "@aws-cdk/s3-notifications:addS3TrustKeyPolicyForSnsSubscriptions": {
+            "recommendedValue": true,
+            "explanation": "Add an S3 trust policy to a KMS key resource policy for SNS subscriptions."
+          },
+          "@aws-cdk/aws-ec2:requirePrivateSubnetsForEgressOnlyInternetGateway": {
+            "recommendedValue": true,
+            "explanation": "When enabled, the EgressOnlyGateway resource is only created if private subnets are defined in the dual-stack VPC."
+          },
+          "@aws-cdk/aws-ec2-alpha:useResourceIdForVpcV2Migration": {
+            "recommendedValue": false,
+            "explanation": "When enabled, use resource IDs for VPC V2 migration"
+          },
+          "@aws-cdk/aws-s3:publicAccessBlockedByDefault": {
+            "recommendedValue": true,
+            "explanation": "When enabled, setting any combination of options for BlockPublicAccess will automatically set true for any options not defined."
+          },
+          "@aws-cdk/aws-lambda:useCdkManagedLogGroup": {
+            "recommendedValue": true,
+            "explanation": "When enabled, CDK creates and manages loggroup for the lambda function"
+          },
+          "@aws-cdk/aws-elasticloadbalancingv2:networkLoadBalancerWithSecurityGroupByDefault": {
+            "recommendedValue": true,
+            "explanation": "When enabled, Network Load Balancer will be created with a security group by default."
+          },
+          "@aws-cdk/aws-stepfunctions-tasks:httpInvokeDynamicJsonPathEndpoint": {
+            "recommendedValue": true,
+            "explanation": "When enabled, allows using a dynamic apiEndpoint with JSONPath format in HttpInvoke tasks.",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          },
+          "@aws-cdk/aws-ecs-patterns:uniqueTargetGroupId": {
+            "recommendedValue": true,
+            "explanation": "When enabled, ECS patterns will generate unique target group IDs to prevent conflicts during load balancer replacement"
+          },
+          "@aws-cdk/aws-route53-patterns:useDistribution": {
+            "recommendedValue": true,
+            "explanation": "Use the `Distribution` resource instead of `CloudFrontWebDistribution`"
+          },
+          "@aws-cdk/core:automaticL1Traits": {
+            "recommendedValue": true,
+            "explanation": "Automatically use the default L1 traits for L1 constructs`",
+            "unconfiguredBehavesLike": {
+              "v2": true
+            }
+          }
+        }
+      }
+    }
+  },
+  "minimumCliVersion": "2.1105.0"
+}

@@ -1,0 +1,741 @@
+{
+ "Resources": {
+  "BillingDLQCFC915B2": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "MessageRetentionPeriod": 1209600,
+    "QueueName": "vantage-billing-dlq-dev",
+    "SqsManagedSseEnabled": true
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/BillingDLQ/Resource"
+   }
+  },
+  "BillingEventBus5F1B11EC": {
+   "Type": "AWS::Events::EventBus",
+   "Properties": {
+    "Name": "vantage-billing-dev"
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/BillingEventBus/Resource"
+   }
+  },
+  "StripeProcessorFnServiceRoleABA3775E": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/StripeProcessorFn/ServiceRole/Resource"
+   }
+  },
+  "StripeProcessorFnServiceRoleDefaultPolicy4C3A0D75": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sqs:SendMessage",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "BillingDLQCFC915B2",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "secretsmanager:GetSecretValue",
+       "Effect": "Allow",
+       "Resource": "arn:aws:secretsmanager:us-east-1:841722554807:secret:vantage/stripe-key-dev*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "StripeProcessorFnServiceRoleDefaultPolicy4C3A0D75",
+    "Roles": [
+     {
+      "Ref": "StripeProcessorFnServiceRoleABA3775E"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/StripeProcessorFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "StripeProcessorFn30AFA3C2": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "dbc405206bde7df0429d26f92e0546b64a743db420cb5cf3ab4440738e6224f6.zip"
+    },
+    "DeadLetterConfig": {
+     "TargetArn": {
+      "Fn::GetAtt": [
+       "BillingDLQCFC915B2",
+       "Arn"
+      ]
+     }
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_NAME": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefVantageTableA92A5E33483C0F3E"
+      },
+      "STAGE": "dev",
+      "STRIPE_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:841722554807:secret:vantage/stripe-key-dev"
+     }
+    },
+    "FunctionName": "vantage-stripe-processor-dev",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "StripeProcessorFnServiceRoleABA3775E",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "StripeProcessorFnServiceRoleDefaultPolicy4C3A0D75",
+    "StripeProcessorFnServiceRoleABA3775E"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/StripeProcessorFn/Resource",
+    "aws:asset:path": "asset.dbc405206bde7df0429d26f92e0546b64a743db420cb5cf3ab4440738e6224f6",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StripeProcessorFnLogRetention90CD7C84": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "StripeProcessorFn30AFA3C2"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/StripeProcessorFn/LogRetention/Resource"
+   }
+  },
+  "StripeProcessorFnEventInvokeConfig5709DCF4": {
+   "Type": "AWS::Lambda::EventInvokeConfig",
+   "Properties": {
+    "FunctionName": {
+     "Ref": "StripeProcessorFn30AFA3C2"
+    },
+    "MaximumRetryAttempts": 2,
+    "Qualifier": "$LATEST"
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/StripeProcessorFn/EventInvokeConfig/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:PutRetentionPolicy",
+        "logs:DeleteRetentionPolicy"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "Roles": [
+     {
+      "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Handler": "index.handler",
+    "Runtime": "nodejs22.x",
+    "Timeout": 900,
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip"
+    },
+    "Role": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource",
+    "aws:asset:path": "asset.2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "QuickBooksProcessorFnServiceRole0B38EF43": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/QuickBooksProcessorFn/ServiceRole/Resource"
+   }
+  },
+  "QuickBooksProcessorFnServiceRoleDefaultPolicy6A429E1C": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sqs:SendMessage",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "BillingDLQCFC915B2",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "secretsmanager:GetSecretValue",
+       "Effect": "Allow",
+       "Resource": "arn:aws:secretsmanager:us-east-1:841722554807:secret:vantage/quickbooks-dev*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "QuickBooksProcessorFnServiceRoleDefaultPolicy6A429E1C",
+    "Roles": [
+     {
+      "Ref": "QuickBooksProcessorFnServiceRole0B38EF43"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/QuickBooksProcessorFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "QuickBooksProcessorFn698BFBDA": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "7705fbc419913f424c0ff9ac0848f1517e2326d59b0ff416a30170ed1bd315e6.zip"
+    },
+    "DeadLetterConfig": {
+     "TargetArn": {
+      "Fn::GetAtt": [
+       "BillingDLQCFC915B2",
+       "Arn"
+      ]
+     }
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_NAME": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefVantageTableA92A5E33483C0F3E"
+      },
+      "STAGE": "dev",
+      "QB_CREDENTIALS_ARN": "arn:aws:secretsmanager:us-east-1:841722554807:secret:vantage/quickbooks-dev"
+     }
+    },
+    "FunctionName": "vantage-quickbooks-processor-dev",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "QuickBooksProcessorFnServiceRole0B38EF43",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "QuickBooksProcessorFnServiceRoleDefaultPolicy6A429E1C",
+    "QuickBooksProcessorFnServiceRole0B38EF43"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/QuickBooksProcessorFn/Resource",
+    "aws:asset:path": "asset.7705fbc419913f424c0ff9ac0848f1517e2326d59b0ff416a30170ed1bd315e6",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "QuickBooksProcessorFnLogRetention18657B26": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "QuickBooksProcessorFn698BFBDA"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/QuickBooksProcessorFn/LogRetention/Resource"
+   }
+  },
+  "QuickBooksProcessorFnEventInvokeConfig528ABC6C": {
+   "Type": "AWS::Lambda::EventInvokeConfig",
+   "Properties": {
+    "FunctionName": {
+     "Ref": "QuickBooksProcessorFn698BFBDA"
+    },
+    "MaximumRetryAttempts": 2,
+    "Qualifier": "$LATEST"
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/QuickBooksProcessorFn/EventInvokeConfig/Resource"
+   }
+  },
+  "StripeChargeRule7B34B674": {
+   "Type": "AWS::Events::Rule",
+   "Properties": {
+    "EventBusName": {
+     "Ref": "BillingEventBus5F1B11EC"
+    },
+    "EventPattern": {
+     "source": [
+      "vantage.billing"
+     ],
+     "detail-type": [
+      "ChargeRequested"
+     ],
+     "detail": {
+      "provider": [
+       "stripe"
+      ]
+     }
+    },
+    "Name": "vantage-stripe-charge-dev",
+    "State": "ENABLED",
+    "Targets": [
+     {
+      "Arn": {
+       "Fn::GetAtt": [
+        "StripeProcessorFn30AFA3C2",
+        "Arn"
+       ]
+      },
+      "Id": "Target0"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/StripeChargeRule/Resource"
+   }
+  },
+  "StripeChargeRuleAllowEventRuleVantageBillingdevStripeProcessorFn81114F4B7E0EED05": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripeProcessorFn30AFA3C2",
+      "Arn"
+     ]
+    },
+    "Principal": "events.amazonaws.com",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "StripeChargeRule7B34B674",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/StripeChargeRule/AllowEventRuleVantageBillingdevStripeProcessorFn81114F4B"
+   }
+  },
+  "QuickBooksRecordRuleAEDE9FB2": {
+   "Type": "AWS::Events::Rule",
+   "Properties": {
+    "EventBusName": {
+     "Ref": "BillingEventBus5F1B11EC"
+    },
+    "EventPattern": {
+     "source": [
+      "vantage.billing"
+     ],
+     "detail-type": [
+      "ChargeRequested",
+      "RefundRequested",
+      "RecordEvent"
+     ],
+     "detail": {
+      "provider": [
+       "quickbooks"
+      ]
+     }
+    },
+    "Name": "vantage-quickbooks-record-dev",
+    "State": "ENABLED",
+    "Targets": [
+     {
+      "Arn": {
+       "Fn::GetAtt": [
+        "QuickBooksProcessorFn698BFBDA",
+        "Arn"
+       ]
+      },
+      "Id": "Target0"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/QuickBooksRecordRule/Resource"
+   }
+  },
+  "QuickBooksRecordRuleAllowEventRuleVantageBillingdevQuickBooksProcessorFn877DFEAA47043B2B": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "QuickBooksProcessorFn698BFBDA",
+      "Arn"
+     ]
+    },
+    "Principal": "events.amazonaws.com",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "QuickBooksRecordRuleAEDE9FB2",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/QuickBooksRecordRule/AllowEventRuleVantageBillingdevQuickBooksProcessorFn877DFEAA"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/11QW07EMAw8y/6nZilwALoCCQnBUg5QZVNvlT4SqOMiFPXuONlVP/ia8WQ8tlNCeb+H/U7/UGHaoRjtCeJn0GZQIjWRvgniByOjOpxdJqvCBV0Q/SlhxZSeNl7zmL0JVzXq6dTqxvkWe4K3DM/sTLDeKasniLW/+hMe/WjNbyovbFV012gilHGPCaSGis2AodKE13iI0rCl5k1e3OIHPHh3tt223n/xiPNkiaRJFvUdwavvagzizFIeKH/RWZftNZLn2aDaiIjvHL44rCpdCD3dLOUDlHC768naYmaJmhDqC/4BegYm020BAAA="
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "BillingEventBusArn": {
+   "Value": {
+    "Fn::GetAtt": [
+     "BillingEventBus5F1B11EC",
+     "Arn"
+    ]
+   }
+  },
+  "BillingDLQUrl": {
+   "Value": {
+    "Ref": "BillingDLQCFC915B2"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

@@ -6,19 +6,27 @@ import {
   Users,
   Send,
   Settings,
+  Calendar,
+  Mic,
+  LogOut,
 } from 'lucide-react'
 import { cn } from '../lib/utils'
+import { useAuth } from '../auth/AuthProvider'
 
 const links = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/voicemails', label: 'Voicemails', icon: Phone },
   { to: '/todos', label: 'To-Do List', icon: ClipboardList },
+  { to: '/appointments', label: 'Appointments', icon: Calendar },
+  { to: '/dictations', label: 'Dictations', icon: Mic },
   { to: '/patients', label: 'Patients', icon: Users },
   { to: '/fax', label: 'Fax', icon: Send },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
 export function Sidebar() {
+  const { user, logout } = useAuth()
+
   return (
     <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 bg-white border-r border-light-gray z-30">
       {/* Logo */}
@@ -53,7 +61,23 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-6 py-4 border-t border-light-gray">
-        <p className="text-xs text-warm-gray">Demo Mode Active</p>
+        {user && (
+          <div className="flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-charcoal truncate">
+                {user.givenName} {user.familyName}
+              </p>
+              <p className="text-xs text-warm-gray truncate">{user.email}</p>
+            </div>
+            <button
+              onClick={logout}
+              className="p-2 text-warm-gray hover:text-red-500 transition-colors"
+              title="Sign out"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   )

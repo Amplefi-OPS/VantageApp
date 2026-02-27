@@ -37,8 +37,30 @@ export const PatientSchema = z.object({
   id: z.string(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  phone: z.string(),
   dob: z.string().optional(),
+  phone: z.string(),
+  email: z.string().optional(),
+  gender: z.string().optional(),
+  preferredLanguage: z.string().optional(),
+  // Address
+  addressStreet: z.string().optional(),
+  addressCity: z.string().optional(),
+  addressState: z.string().optional(),
+  addressZip: z.string().optional(),
+  // Emergency contact
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
+  emergencyContactRelationship: z.string().optional(),
+  // Medical
+  primaryCareProvider: z.string().optional(),
+  allergies: z.string().optional(),
+  // Insurance
+  insuranceProvider: z.string().optional(),
+  insuranceId: z.string().optional(),
+  insuranceGroupNumber: z.string().optional(),
+  insurancePolicyHolder: z.string().optional(),
+  // Notes
+  notes: z.string().optional(),
   createdAt: z.string(),
 })
 export type Patient = z.infer<typeof PatientSchema>
@@ -117,17 +139,34 @@ export interface AppSettings {
   s3Region: string
   zoomPhoneNumber: string
   ivrMapping: Record<string, string>
-  demoMode: boolean
 }
 
 // ── API request/response shapes ────────────────────────
 
-export interface CreatePatientRequest {
-  firstName: string
-  lastName: string
-  phone: string
-  dob?: string
-}
+export const CreatePatientSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  phone: z.string().min(1, 'Phone number is required'),
+  dob: z.string().optional(),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
+  gender: z.string().optional(),
+  preferredLanguage: z.string().optional(),
+  addressStreet: z.string().optional(),
+  addressCity: z.string().optional(),
+  addressState: z.string().optional(),
+  addressZip: z.string().regex(/^\d{5}(-\d{4})?$/, 'Invalid ZIP code').optional().or(z.literal('')),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
+  emergencyContactRelationship: z.string().optional(),
+  primaryCareProvider: z.string().optional(),
+  allergies: z.string().optional(),
+  insuranceProvider: z.string().optional(),
+  insuranceId: z.string().optional(),
+  insuranceGroupNumber: z.string().optional(),
+  insurancePolicyHolder: z.string().optional(),
+  notes: z.string().optional(),
+})
+export type CreatePatientRequest = z.infer<typeof CreatePatientSchema>
 
 export interface AttachVoicemailRequest {
   voicemailId: string

@@ -1,0 +1,21 @@
+{
+  "version": "50.0.0",
+  "files": {
+    "acd6dff9640204023cecad84a27d1ade0015f94bc17805d4f723d642485fb335": {
+      "displayName": "Vantage-Auth-dev Template",
+      "source": {
+        "path": "Vantage-Auth-dev.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "841722554807-us-east-1-91558c8c": {
+          "bucketName": "cdk-hnb659fds-assets-841722554807-us-east-1",
+          "objectKey": "acd6dff9640204023cecad84a27d1ade0015f94bc17805d4f723d642485fb335.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-file-publishing-role-841722554807-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Save, Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Save, Plus, Trash2 } from 'lucide-react'
 import { getSettings, saveSettings } from '../lib/settings'
 import type { AppSettings } from '../api/types'
 import { Card, CardTitle } from '../components/ui/Card'
@@ -67,31 +67,6 @@ export default function Settings() {
       </div>
 
       <div className="space-y-6">
-        {/* Demo Mode toggle */}
-        <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Demo Mode</CardTitle>
-              <p className="text-sm text-warm-gray mt-1">
-                When on, the app uses mock data instead of calling the real API.
-              </p>
-            </div>
-            <button
-              onClick={() =>
-                setSettings({ ...settings, demoMode: !settings.demoMode })
-              }
-              className="text-slate-blue p-2"
-              aria-label={settings.demoMode ? 'Turn off demo mode' : 'Turn on demo mode'}
-            >
-              {settings.demoMode ? (
-                <ToggleRight size={36} />
-              ) : (
-                <ToggleLeft size={36} className="text-warm-gray" />
-              )}
-            </button>
-          </div>
-        </Card>
-
         {/* Office info */}
         <Card>
           <CardTitle className="mb-4">Office Information</CardTitle>
@@ -161,7 +136,7 @@ export default function Settings() {
             }
           />
           <p className="text-xs text-warm-gray mt-2">
-            Leave empty while in Demo Mode. Backend engineer will provide this.
+            The API base URL for your backend.
           </p>
         </Card>
 

@@ -10,6 +10,14 @@ import {
   ClipboardList,
   FolderOpen,
   User,
+  Mail,
+  MapPin,
+  Heart,
+  Shield,
+  Languages,
+  Stethoscope,
+  AlertTriangle,
+  StickyNote,
 } from 'lucide-react'
 import {
   getPatient,
@@ -151,6 +159,33 @@ export default function PatientProfile() {
                     </div>
                   </div>
                 )}
+                {patient.email && (
+                  <div className="flex items-center gap-3">
+                    <Mail size={18} className="text-warm-gray" />
+                    <div>
+                      <p className="text-xs text-warm-gray">Email</p>
+                      <p className="font-medium">{patient.email}</p>
+                    </div>
+                  </div>
+                )}
+                {patient.gender && (
+                  <div className="flex items-center gap-3">
+                    <User size={18} className="text-warm-gray" />
+                    <div>
+                      <p className="text-xs text-warm-gray">Gender</p>
+                      <p className="font-medium">{patient.gender}</p>
+                    </div>
+                  </div>
+                )}
+                {patient.preferredLanguage && (
+                  <div className="flex items-center gap-3">
+                    <Languages size={18} className="text-warm-gray" />
+                    <div>
+                      <p className="text-xs text-warm-gray">Preferred Language</p>
+                      <p className="font-medium">{patient.preferredLanguage}</p>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center gap-3">
                   <User size={18} className="text-warm-gray" />
                   <div>
@@ -159,6 +194,107 @@ export default function PatientProfile() {
                   </div>
                 </div>
               </div>
+
+              {/* Address */}
+              {(patient.addressStreet || patient.addressCity) && (
+                <div className="pt-4 border-t border-light-gray">
+                  <div className="flex items-center gap-3">
+                    <MapPin size={18} className="text-warm-gray" />
+                    <div>
+                      <p className="text-xs text-warm-gray">Address</p>
+                      <p className="font-medium">
+                        {[patient.addressStreet, patient.addressCity, patient.addressState, patient.addressZip]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Emergency Contact */}
+              {patient.emergencyContactName && (
+                <div className="pt-4 border-t border-light-gray">
+                  <div className="flex items-center gap-3">
+                    <Heart size={18} className="text-warm-gray" />
+                    <div>
+                      <p className="text-xs text-warm-gray">Emergency Contact</p>
+                      <p className="font-medium">
+                        {patient.emergencyContactName}
+                        {patient.emergencyContactRelationship && ` (${patient.emergencyContactRelationship})`}
+                      </p>
+                      {patient.emergencyContactPhone && (
+                        <p className="text-sm text-warm-gray">{patient.emergencyContactPhone}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Medical */}
+              {(patient.primaryCareProvider || patient.allergies) && (
+                <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-light-gray">
+                  {patient.primaryCareProvider && (
+                    <div className="flex items-center gap-3">
+                      <Stethoscope size={18} className="text-warm-gray" />
+                      <div>
+                        <p className="text-xs text-warm-gray">Primary Care Provider</p>
+                        <p className="font-medium">{patient.primaryCareProvider}</p>
+                      </div>
+                    </div>
+                  )}
+                  {patient.allergies && (
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle size={18} className="text-warm-gray" />
+                      <div>
+                        <p className="text-xs text-warm-gray">Allergies</p>
+                        <p className="font-medium">{patient.allergies}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Insurance */}
+              {patient.insuranceProvider && (
+                <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-light-gray">
+                  <div className="flex items-center gap-3">
+                    <Shield size={18} className="text-warm-gray" />
+                    <div>
+                      <p className="text-xs text-warm-gray">Insurance</p>
+                      <p className="font-medium">{patient.insuranceProvider}</p>
+                      {patient.insuranceId && (
+                        <p className="text-sm text-warm-gray">ID: {patient.insuranceId}</p>
+                      )}
+                    </div>
+                  </div>
+                  {patient.insuranceGroupNumber && (
+                    <div className="flex items-center gap-3">
+                      <Shield size={18} className="text-warm-gray" />
+                      <div>
+                        <p className="text-xs text-warm-gray">Group / Policy Holder</p>
+                        <p className="font-medium">{patient.insuranceGroupNumber}</p>
+                        {patient.insurancePolicyHolder && (
+                          <p className="text-sm text-warm-gray">{patient.insurancePolicyHolder}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Notes */}
+              {patient.notes && (
+                <div className="pt-4 border-t border-light-gray">
+                  <div className="flex items-start gap-3">
+                    <StickyNote size={18} className="text-warm-gray mt-0.5" />
+                    <div>
+                      <p className="text-xs text-warm-gray">Notes</p>
+                      <p className="font-medium whitespace-pre-wrap">{patient.notes}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         )}
