@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [signUpMode, setSignUpMode] = useState(false)
   const [confirmationPending, setConfirmationPending] = useState(false)
   const [pendingSignUpEmail, setPendingSignUpEmail] = useState('')
+  const [pendingSignUpPassword, setPendingSignUpPassword] = useState('')
   const [mfaSession, setMfaSession] = useState<string | null>(null)
 
   // Check existing session on mount
@@ -136,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await cognitoSignUp(email, password, firstName, lastName)
       if (result.success) {
         setPendingSignUpEmail(email)
+        setPendingSignUpPassword(password)
         setConfirmationPending(true)
         setSignUpMode(false)
       }
@@ -154,7 +156,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await cognitoConfirmSignUp(pendingSignUpEmail, code)
       if (result.success) {
         setConfirmationPending(false)
+        // Auto-login: sign in immediately so the user goes straight to MFA
+        // instead of having to re-enter email/password
+        if (pendingSignUpPassword) {
+          const email = pendingSignUpEmail
+          const password = pendingSignUpPassword
+          setPendingSignUpEmail('')
+          setPendingSignUpPassword('')
+          const loginResult = await cognitoSignIn(email, password)
+          if (loginResult.mfaRequired) {
+            setMfaRequired(true)
+            setMfaSession(loginResult.session || null)
+            setIsLoading(false)
+            return { success: true }
+          }
+          if (loginResult.success) {
+            setUser(getCurrentUser())
+            setIsLoading(false)
+            return { success: true }
+          }
+          // If auto-login fails for any reason, fall through gracefully
+          setIsLoading(false)
+          return { success: true }
+        }
         setPendingSignUpEmail('')
+        setPendingSignUpPassword('')
       }
       setIsLoading(false)
       return result
@@ -162,7 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false)
       return { success: false, error: String(err) }
     }
-  }, [pendingSignUpEmail])
+  }, [pendingSignUpEmail, pendingSignUpPassword])
 
   const logout = useCallback(() => {
     cognitoSignOut()
@@ -172,6 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSignUpMode(false)
     setConfirmationPending(false)
     setPendingSignUpEmail('')
+    setPendingSignUpPassword('')
     setMfaSession(null)
   }, [])
 

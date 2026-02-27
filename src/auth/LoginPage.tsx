@@ -84,12 +84,10 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     const result = await confirmSignUp(confirmCode)
-    if (result.success) {
-      setSuccessMsg('Account verified! You can now sign in.')
-      setConfirmCode('')
-    } else {
+    if (!result.success) {
       setError(result.error || 'Verification failed')
     }
+    // On success, AuthProvider auto-logs in and transitions to MFA
   }
 
   function switchToSignUp() {
