@@ -96,6 +96,16 @@ export function getCurrentUser(): AuthUser | null {
 
   try {
     const claims = decodeJwtPayload(tokens.idToken);
+
+    // cognito:groups is an array in the JWT, not a comma-separated string
+    const groupsClaim = claims['cognito:groups'];
+    let groups: string[] = [];
+    if (Array.isArray(groupsClaim)) {
+      groups = groupsClaim as string[];
+    } else if (typeof groupsClaim === 'string') {
+      groups = groupsClaim.split(',').filter(Boolean);
+    }
+
     return {
       sub: claims.sub as string,
       email: claims.email as string,
@@ -103,7 +113,7 @@ export function getCurrentUser(): AuthUser | null {
       familyName: (claims.family_name as string) || '',
       providerId: (claims['custom:provider_id'] as string) || (claims.sub as string),
       role: (claims['custom:role'] as string) || 'provider',
-      groups: ((claims['cognito:groups'] as string) || '').split(',').filter(Boolean),
+      groups,
     };
   } catch {
     return null;
