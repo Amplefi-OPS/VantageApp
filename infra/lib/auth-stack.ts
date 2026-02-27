@@ -1,6 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambdaNode from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
+import * as path from 'path';
 
 interface AuthStackProps extends cdk.StackProps {
   stageName: string;
@@ -12,6 +16,20 @@ export class AuthStack extends cdk.Stack {
 
   constructor(scope: Construct, id: string, props: AuthStackProps) {
     super(scope, id, props);
+
+    const lambdaDir = path.join(__dirname, '..', 'lambda');
+
+    // ── Pre Sign-Up Trigger: Email Domain Restriction ──
+    const preSignUpFn = new lambdaNode.NodejsFunction(this, 'PreSignUpFn', {
+      functionName: `vantage-pre-sign-up-${props.stageName}`,
+      runtime: lambda.Runtime.NODEJS_20_X,
+      architecture: lambda.Architecture.ARM_64,
+      entry: path.join(lambdaDir, 'auth', 'pre-sign-up.ts'),
+      handler: 'handler',
+      memorySize: 128,
+      timeout: cdk.Duration.seconds(5),
+      logRetention: logs.RetentionDays.ONE_YEAR,
+    });
 
     // ── Cognito User Pool ──
     this.userPool = new cognito.UserPool(this, 'VantageUserPool', {
@@ -45,6 +63,9 @@ export class AuthStack extends cdk.Stack {
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       advancedSecurityMode: cognito.AdvancedSecurityMode.ENFORCED,
+      lambdaTriggers: {
+        preSignUp: preSignUpFn,
+      },
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
@@ -65,6 +86,7 @@ export class AuthStack extends cdk.Stack {
     this.userPoolClient = this.userPool.addClient('WebClient', {
       userPoolClientName: `vantage-web-${props.stageName}`,
       authFlows: {
+        userPassword: true,
         userSrp: true,
         custom: true,
       },

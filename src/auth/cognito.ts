@@ -33,6 +33,10 @@ export interface AuthUser {
 
 const STORAGE_KEY = 'vantage-auth-tokens';
 
+// Track email across challenge steps (never stored persistently)
+let pendingEmail = '';
+let pendingChallengeName = '';
+
 // Default config — override via environment variables
 let config: CognitoConfig = {
   userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID || '',
@@ -124,6 +128,7 @@ export function isAuthenticated(): boolean {
 export async function signIn(email: string, password: string): Promise<{
   success: boolean;
   mfaRequired?: boolean;
+  newPasswordRequired?: boolean;
   session?: string;
   error?: string;
 }> {
@@ -131,7 +136,8 @@ export async function signIn(email: string, password: string): Promise<{
     return { success: false, error: 'Cognito is not configured. Set VITE_COGNITO_USER_POOL_ID and VITE_COGNITO_CLIENT_ID.' };
   }
 
-  // Production: Use Cognito InitiateAuth API
+  pendingEmail = email;
+
   try {
     const endpoint = `https://cognito-idp.${config.region}.amazonaws.com/`;
     const response = await fetch(endpoint, {
@@ -152,7 +158,17 @@ export async function signIn(email: string, password: string): Promise<{
 
     const data = await response.json();
 
+    if (data.ChallengeName === 'NEW_PASSWORD_REQUIRED') {
+      pendingChallengeName = 'NEW_PASSWORD_REQUIRED';
+      return {
+        success: false,
+        newPasswordRequired: true,
+        session: data.Session,
+      };
+    }
+
     if (data.ChallengeName === 'SMS_MFA' || data.ChallengeName === 'SOFTWARE_TOKEN_MFA') {
+      pendingChallengeName = data.ChallengeName;
       return {
         success: false,
         mfaRequired: true,
@@ -177,12 +193,12 @@ export async function signIn(email: string, password: string): Promise<{
   }
 }
 
-/** Complete MFA challenge */
-export async function completeMfaChallenge(
-  code: string,
+/** Complete NEW_PASSWORD_REQUIRED challenge (first login with temp password) */
+export async function completeNewPasswordChallenge(
+  newPassword: string,
   session: string,
-): Promise<{ success: boolean; error?: string }> {
-  if (!config.userPoolId || !config.clientId) {
+): Promise<{ success: boolean; mfaRequired?: boolean; session?: string; error?: string }> {
+  if (!config.clientId) {
     return { success: false, error: 'Cognito is not configured.' };
   }
 
@@ -195,11 +211,71 @@ export async function completeMfaChallenge(
         'X-Amz-Target': 'AWSCognitoIdentityProviderService.RespondToAuthChallenge',
       },
       body: JSON.stringify({
-        ChallengeName: 'SMS_MFA',
+        ChallengeName: 'NEW_PASSWORD_REQUIRED',
         ClientId: config.clientId,
         ChallengeResponses: {
-          SMS_MFA_CODE: code,
-          USERNAME: getCurrentUser()?.email || '',
+          USERNAME: pendingEmail,
+          NEW_PASSWORD: newPassword,
+        },
+        Session: session,
+      }),
+    });
+
+    const data = await response.json();
+
+    // After setting new password, Cognito may require MFA setup
+    if (data.ChallengeName === 'MFA_SETUP' || data.ChallengeName === 'SMS_MFA' || data.ChallengeName === 'SOFTWARE_TOKEN_MFA') {
+      pendingChallengeName = data.ChallengeName;
+      return {
+        success: false,
+        mfaRequired: true,
+        session: data.Session,
+      };
+    }
+
+    if (data.AuthenticationResult) {
+      const tokens: AuthTokens = {
+        idToken: data.AuthenticationResult.IdToken,
+        accessToken: data.AuthenticationResult.AccessToken,
+        refreshToken: data.AuthenticationResult.RefreshToken,
+        expiresAt: Math.floor(Date.now() / 1000) + data.AuthenticationResult.ExpiresIn,
+      };
+      storeTokens(tokens);
+      return { success: true };
+    }
+
+    return { success: false, error: data.message || 'Failed to set new password' };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+}
+
+/** Complete MFA challenge */
+export async function completeMfaChallenge(
+  code: string,
+  session: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!config.clientId) {
+    return { success: false, error: 'Cognito is not configured.' };
+  }
+
+  const challengeName = pendingChallengeName === 'SOFTWARE_TOKEN_MFA' ? 'SOFTWARE_TOKEN_MFA' : 'SMS_MFA';
+  const codeKey = challengeName === 'SOFTWARE_TOKEN_MFA' ? 'SOFTWARE_TOKEN_MFA_CODE' : 'SMS_MFA_CODE';
+
+  try {
+    const endpoint = `https://cognito-idp.${config.region}.amazonaws.com/`;
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-amz-json-1.1',
+        'X-Amz-Target': 'AWSCognitoIdentityProviderService.RespondToAuthChallenge',
+      },
+      body: JSON.stringify({
+        ChallengeName: challengeName,
+        ClientId: config.clientId,
+        ChallengeResponses: {
+          [codeKey]: code,
+          USERNAME: pendingEmail,
         },
         Session: session,
       }),
@@ -215,6 +291,8 @@ export async function completeMfaChallenge(
         expiresAt: Math.floor(Date.now() / 1000) + data.AuthenticationResult.ExpiresIn,
       };
       storeTokens(tokens);
+      pendingEmail = '';
+      pendingChallengeName = '';
       return { success: true };
     }
 

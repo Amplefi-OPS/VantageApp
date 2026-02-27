@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
 import {
   signIn as cognitoSignIn,
   completeMfaChallenge,
+  completeNewPasswordChallenge,
   signOut as cognitoSignOut,
   getCurrentUser,
   isAuthenticated,
@@ -13,8 +14,10 @@ interface AuthContextValue {
   isLoggedIn: boolean
   isLoading: boolean
   mfaRequired: boolean
+  newPasswordRequired: boolean
   mfaSession: string | null
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  setNewPassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>
   verifyMfa: (code: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
 }
@@ -31,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [mfaRequired, setMfaRequired] = useState(false)
+  const [newPasswordRequired, setNewPasswordRequired] = useState(false)
   const [mfaSession, setMfaSession] = useState<string | null>(null)
 
   // Check existing session on mount
@@ -45,6 +49,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     try {
       const result = await cognitoSignIn(email, password)
+      if (result.newPasswordRequired) {
+        setNewPasswordRequired(true)
+        setMfaSession(result.session || null)
+        setIsLoading(false)
+        return { success: false, error: 'New password required' }
+      }
       if (result.mfaRequired) {
         setMfaRequired(true)
         setMfaSession(result.session || null)
@@ -54,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (result.success) {
         setUser(getCurrentUser())
         setMfaRequired(false)
+        setNewPasswordRequired(false)
         setMfaSession(null)
       }
       setIsLoading(false)
@@ -64,6 +75,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const setNewPassword = useCallback(async (newPassword: string) => {
+    if (!mfaSession) return { success: false, error: 'No session' }
+    setIsLoading(true)
+    try {
+      const result = await completeNewPasswordChallenge(newPassword, mfaSession)
+      if (result.mfaRequired) {
+        setNewPasswordRequired(false)
+        setMfaRequired(true)
+        setMfaSession(result.session || null)
+        setIsLoading(false)
+        return { success: false, error: 'MFA required' }
+      }
+      if (result.success) {
+        setUser(getCurrentUser())
+        setNewPasswordRequired(false)
+        setMfaRequired(false)
+        setMfaSession(null)
+      }
+      setIsLoading(false)
+      return { success: result.success, error: result.error }
+    } catch (err) {
+      setIsLoading(false)
+      return { success: false, error: String(err) }
+    }
+  }, [mfaSession])
+
   const verifyMfa = useCallback(async (code: string) => {
     if (!mfaSession) return { success: false, error: 'No MFA session' }
     setIsLoading(true)
@@ -72,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (result.success) {
         setUser(getCurrentUser())
         setMfaRequired(false)
+        setNewPasswordRequired(false)
         setMfaSession(null)
       }
       setIsLoading(false)
@@ -86,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     cognitoSignOut()
     setUser(null)
     setMfaRequired(false)
+    setNewPasswordRequired(false)
     setMfaSession(null)
   }, [])
 
@@ -96,8 +135,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoggedIn: !!user,
         isLoading,
         mfaRequired,
+        newPasswordRequired,
         mfaSession,
         login,
+        setNewPassword,
         verifyMfa,
         logout,
       }}
