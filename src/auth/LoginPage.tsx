@@ -3,20 +3,34 @@ import { useAuth } from './AuthProvider'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Card } from '../components/ui/Card'
-import { Shield, KeyRound } from 'lucide-react'
+import { Shield, KeyRound, UserPlus, Mail } from 'lucide-react'
 
 export default function LoginPage() {
-  const { login, setNewPassword, verifyMfa, mfaRequired, newPasswordRequired, isLoading } = useAuth()
+  const {
+    login, setNewPassword, verifyMfa, signUp, confirmSignUp, setSignUpMode,
+    mfaRequired, newPasswordRequired, signUpMode, confirmationPending, isLoading,
+  } = useAuth()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [newPwd, setNewPwd] = useState('')
   const [confirmPwd, setConfirmPwd] = useState('')
   const [mfaCode, setMfaCode] = useState('')
   const [error, setError] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
+
+  // Sign-up fields
+  const [suFirstName, setSuFirstName] = useState('')
+  const [suLastName, setSuLastName] = useState('')
+  const [suEmail, setSuEmail] = useState('')
+  const [suPassword, setSuPassword] = useState('')
+  const [suConfirmPwd, setSuConfirmPwd] = useState('')
+  const [confirmCode, setConfirmCode] = useState('')
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setSuccessMsg('')
     const result = await login(email, password)
     if (!result.success && result.error !== 'MFA required' && result.error !== 'New password required') {
       setError(result.error || 'Login failed')
@@ -49,9 +63,52 @@ export default function LoginPage() {
     }
   }
 
+  async function handleSignUp(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    if (suPassword !== suConfirmPwd) {
+      setError('Passwords do not match')
+      return
+    }
+    if (suPassword.length < 12) {
+      setError('Password must be at least 12 characters')
+      return
+    }
+    const result = await signUp(suEmail, suPassword, suFirstName, suLastName)
+    if (!result.success) {
+      setError(result.error || 'Sign up failed')
+    }
+  }
+
+  async function handleConfirmSignUp(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    const result = await confirmSignUp(confirmCode)
+    if (result.success) {
+      setSuccessMsg('Account verified! You can now sign in.')
+      setConfirmCode('')
+    } else {
+      setError(result.error || 'Verification failed')
+    }
+  }
+
+  function switchToSignUp() {
+    setError('')
+    setSuccessMsg('')
+    setSignUpMode(true)
+  }
+
+  function switchToLogin() {
+    setError('')
+    setSuccessMsg('')
+    setSignUpMode(false)
+  }
+
   // Determine which form to show
   const showNewPassword = newPasswordRequired
   const showMfa = mfaRequired && !newPasswordRequired
+  const showConfirmation = confirmationPending
+  const showSignUp = signUpMode && !showNewPassword && !showMfa && !showConfirmation
 
   return (
     <div className="min-h-screen bg-off-white flex items-center justify-center p-4">
@@ -112,6 +169,7 @@ export default function LoginPage() {
                 {isLoading ? 'Setting password...' : 'Set Password'}
               </Button>
             </form>
+
           ) : showMfa ? (
             <form onSubmit={handleMfa} className="space-y-4">
               <div className="text-center mb-2">
@@ -144,6 +202,138 @@ export default function LoginPage() {
                 {isLoading ? 'Verifying...' : 'Verify'}
               </Button>
             </form>
+
+          ) : showConfirmation ? (
+            <form onSubmit={handleConfirmSignUp} className="space-y-4">
+              <div className="text-center mb-2">
+                <Mail className="w-8 h-8 text-slate-blue mx-auto mb-2" />
+                <h2 className="text-lg font-semibold text-charcoal">
+                  Verify Your Email
+                </h2>
+                <p className="text-sm text-warm-gray">
+                  Enter the verification code sent to your email
+                </p>
+              </div>
+              <div>
+                <Input
+                  type="text"
+                  value={confirmCode}
+                  onChange={(e) => setConfirmCode(e.target.value)}
+                  placeholder="000000"
+                  maxLength={6}
+                  className="text-center text-2xl tracking-widest"
+                  required
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                />
+              </div>
+              {error && (
+                <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
+              )}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Verifying...' : 'Verify Account'}
+              </Button>
+            </form>
+
+          ) : showSignUp ? (
+            <form onSubmit={handleSignUp} className="space-y-4">
+              <div className="text-center mb-2">
+                <UserPlus className="w-8 h-8 text-slate-blue mx-auto mb-2" />
+                <h2 className="text-lg font-semibold text-charcoal">
+                  Create Account
+                </h2>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1">
+                    First Name
+                  </label>
+                  <Input
+                    type="text"
+                    value={suFirstName}
+                    onChange={(e) => setSuFirstName(e.target.value)}
+                    placeholder="Jane"
+                    required
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1">
+                    Last Name
+                  </label>
+                  <Input
+                    type="text"
+                    value={suLastName}
+                    onChange={(e) => setSuLastName(e.target.value)}
+                    placeholder="Smith"
+                    required
+                    autoComplete="family-name"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-1">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  value={suEmail}
+                  onChange={(e) => setSuEmail(e.target.value)}
+                  placeholder="name@vantagerefinery.com"
+                  required
+                  autoComplete="email"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-1">
+                  Password
+                </label>
+                <Input
+                  type="password"
+                  value={suPassword}
+                  onChange={(e) => setSuPassword(e.target.value)}
+                  placeholder="At least 12 characters"
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-1">
+                  Confirm Password
+                </label>
+                <Input
+                  type="password"
+                  value={suConfirmPwd}
+                  onChange={(e) => setSuConfirmPwd(e.target.value)}
+                  placeholder="Re-enter password"
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
+              <p className="text-xs text-warm-gray">
+                Only @vantagerefinery.com and @amplefi.com emails.
+                <br />
+                Password: 12+ characters, uppercase, lowercase, number, and symbol.
+              </p>
+              {error && (
+                <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
+              )}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Creating account...' : 'Create Account'}
+              </Button>
+              <p className="text-xs text-warm-gray text-center mt-3">
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={switchToLogin}
+                  className="text-slate-blue font-medium hover:underline"
+                >
+                  Sign In
+                </button>
+              </p>
+            </form>
+
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
@@ -172,6 +362,9 @@ export default function LoginPage() {
                   autoComplete="current-password"
                 />
               </div>
+              {successMsg && (
+                <p className="text-sm text-green-700 bg-green-50 p-2 rounded">{successMsg}</p>
+              )}
               {error && (
                 <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
               )}
@@ -179,9 +372,14 @@ export default function LoginPage() {
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
               <p className="text-xs text-warm-gray text-center mt-3">
-                A verification code will be sent to your email.
-                <br />
-                Contact your administrator for access.
+                Don't have an account?{' '}
+                <button
+                  type="button"
+                  onClick={switchToSignUp}
+                  className="text-slate-blue font-medium hover:underline"
+                >
+                  Create one
+                </button>
               </p>
             </form>
           )}

@@ -319,6 +319,85 @@ export async function completeMfaChallenge(
   }
 }
 
+/** Sign up a new user (domain validated by pre-sign-up Lambda trigger) */
+export async function signUp(
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!config.clientId) {
+    return { success: false, error: 'Cognito is not configured.' };
+  }
+
+  try {
+    const endpoint = `https://cognito-idp.${config.region}.amazonaws.com/`;
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-amz-json-1.1',
+        'X-Amz-Target': 'AWSCognitoIdentityProviderService.SignUp',
+      },
+      body: JSON.stringify({
+        ClientId: config.clientId,
+        Username: email,
+        Password: password,
+        UserAttributes: [
+          { Name: 'email', Value: email },
+          { Name: 'given_name', Value: firstName },
+          { Name: 'family_name', Value: lastName },
+        ],
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.UserSub) {
+      return { success: true };
+    }
+
+    return { success: false, error: data.message || 'Sign up failed' };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+}
+
+/** Confirm sign-up with verification code */
+export async function confirmSignUp(
+  email: string,
+  code: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!config.clientId) {
+    return { success: false, error: 'Cognito is not configured.' };
+  }
+
+  try {
+    const endpoint = `https://cognito-idp.${config.region}.amazonaws.com/`;
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-amz-json-1.1',
+        'X-Amz-Target': 'AWSCognitoIdentityProviderService.ConfirmSignUp',
+      },
+      body: JSON.stringify({
+        ClientId: config.clientId,
+        Username: email,
+        ConfirmationCode: code,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return { success: true };
+    }
+
+    return { success: false, error: data.message || 'Verification failed' };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+}
+
 /** Sign out */
 export function signOut() {
   clearTokens();

@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import {
   signIn as cognitoSignIn,
+  signUp as cognitoSignUp,
+  confirmSignUp as cognitoConfirmSignUp,
   completeMfaChallenge,
   completeNewPasswordChallenge,
   signOut as cognitoSignOut,
@@ -15,10 +17,15 @@ interface AuthContextValue {
   isLoading: boolean
   mfaRequired: boolean
   newPasswordRequired: boolean
+  signUpMode: boolean
+  confirmationPending: boolean
   mfaSession: string | null
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   setNewPassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>
   verifyMfa: (code: string) => Promise<{ success: boolean; error?: string }>
+  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ success: boolean; error?: string }>
+  confirmSignUp: (code: string) => Promise<{ success: boolean; error?: string }>
+  setSignUpMode: (mode: boolean) => void
   logout: () => void
 }
 
@@ -35,6 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [mfaRequired, setMfaRequired] = useState(false)
   const [newPasswordRequired, setNewPasswordRequired] = useState(false)
+  const [signUpMode, setSignUpMode] = useState(false)
+  const [confirmationPending, setConfirmationPending] = useState(false)
+  const [pendingSignUpEmail, setPendingSignUpEmail] = useState('')
   const [mfaSession, setMfaSession] = useState<string | null>(null)
 
   // Check existing session on mount
@@ -120,11 +130,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [mfaSession])
 
+  const signUp = useCallback(async (email: string, password: string, firstName: string, lastName: string) => {
+    setIsLoading(true)
+    try {
+      const result = await cognitoSignUp(email, password, firstName, lastName)
+      if (result.success) {
+        setPendingSignUpEmail(email)
+        setConfirmationPending(true)
+        setSignUpMode(false)
+      }
+      setIsLoading(false)
+      return result
+    } catch (err) {
+      setIsLoading(false)
+      return { success: false, error: String(err) }
+    }
+  }, [])
+
+  const confirmSignUp = useCallback(async (code: string) => {
+    if (!pendingSignUpEmail) return { success: false, error: 'No pending sign-up' }
+    setIsLoading(true)
+    try {
+      const result = await cognitoConfirmSignUp(pendingSignUpEmail, code)
+      if (result.success) {
+        setConfirmationPending(false)
+        setPendingSignUpEmail('')
+      }
+      setIsLoading(false)
+      return result
+    } catch (err) {
+      setIsLoading(false)
+      return { success: false, error: String(err) }
+    }
+  }, [pendingSignUpEmail])
+
   const logout = useCallback(() => {
     cognitoSignOut()
     setUser(null)
     setMfaRequired(false)
     setNewPasswordRequired(false)
+    setSignUpMode(false)
+    setConfirmationPending(false)
+    setPendingSignUpEmail('')
     setMfaSession(null)
   }, [])
 
@@ -136,10 +183,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         mfaRequired,
         newPasswordRequired,
+        signUpMode,
+        confirmationPending,
         mfaSession,
         login,
         setNewPassword,
         verifyMfa,
+        signUp,
+        confirmSignUp,
+        setSignUpMode,
         logout,
       }}
     >

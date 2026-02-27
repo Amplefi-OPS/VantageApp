@@ -34,7 +34,7 @@ export class AuthStack extends cdk.Stack {
     // ── Cognito User Pool ──
     this.userPool = new cognito.UserPool(this, 'VantageUserPool', {
       userPoolName: `vantage-providers-${props.stageName}`,
-      selfSignUpEnabled: false, // Admin-only creation for providers
+      selfSignUpEnabled: true, // Domain-restricted via pre-sign-up Lambda trigger
       signInAliases: {
         email: true,
         username: false,
