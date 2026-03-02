@@ -230,7 +230,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/acd6dff9640204023cecad84a27d1ade0015f94bc17805d4f723d642485fb335.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/2098073eb6bb003594a3a5b1e9ab6fd3bffa7a6aef516be8ec8318339a0ecd42.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -246,10 +246,46 @@
         "Vantage-Auth-dev.assets"
       ],
       "metadata": {
-        "/Vantage-Auth-dev/VantageUserPool/smsRole/Resource": [
+        "/Vantage-Auth-dev/PreSignUpFn/ServiceRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "VantageUserPoolsmsRoleCD2AC892"
+            "data": "PreSignUpFnServiceRoleC270C061"
+          }
+        ],
+        "/Vantage-Auth-dev/PreSignUpFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PreSignUpFn7227C88E"
+          }
+        ],
+        "/Vantage-Auth-dev/PreSignUpFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PreSignUpFnLogRetention33C9415D"
+          }
+        ],
+        "/Vantage-Auth-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+          }
+        ],
+        "/Vantage-Auth-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB"
+          }
+        ],
+        "/Vantage-Auth-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A"
+          }
+        ],
+        "/Vantage-Auth-dev/VantageUserPool/PreSignUpCognito": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageUserPoolPreSignUpCognito9A6B798B"
           }
         ],
         "/Vantage-Auth-dev/VantageUserPool/Resource": [
@@ -344,7 +380,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/26e4e95a80532096e450f4269935cec36c5674e72dbeb17f0e66111864d24ce8.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/acec701e7a1164373ba5f19d991402a5dae1ddc17c01b6069b22a5ddcfcd20eb.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -500,6 +536,30 @@
             "data": "GetAppointmentsFnLogRetention54A345B3"
           }
         ],
+        "/Vantage-Api-dev/CreateAppointmentFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateAppointmentFnServiceRoleA3D44389"
+          }
+        ],
+        "/Vantage-Api-dev/CreateAppointmentFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateAppointmentFnServiceRoleDefaultPolicy030C93D1"
+          }
+        ],
+        "/Vantage-Api-dev/CreateAppointmentFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateAppointmentFn361EA632"
+          }
+        ],
+        "/Vantage-Api-dev/CreateAppointmentFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateAppointmentFnLogRetention787A798F"
+          }
+        ],
         "/Vantage-Api-dev/GetDictationFn/ServiceRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -596,6 +656,78 @@
             "data": "GetPatientFnLogRetention9E1F56DF"
           }
         ],
+        "/Vantage-Api-dev/CreateNoteFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateNoteFnServiceRole86A3292D"
+          }
+        ],
+        "/Vantage-Api-dev/CreateNoteFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateNoteFnServiceRoleDefaultPolicyE9B63F03"
+          }
+        ],
+        "/Vantage-Api-dev/CreateNoteFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateNoteFn75A9EFD9"
+          }
+        ],
+        "/Vantage-Api-dev/CreateNoteFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateNoteFnLogRetention7D3442A7"
+          }
+        ],
+        "/Vantage-Api-dev/ListNotesFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ListNotesFnServiceRole8DAD73AB"
+          }
+        ],
+        "/Vantage-Api-dev/ListNotesFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ListNotesFnServiceRoleDefaultPolicy6709A138"
+          }
+        ],
+        "/Vantage-Api-dev/ListNotesFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ListNotesFn24F6EDFB"
+          }
+        ],
+        "/Vantage-Api-dev/ListNotesFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ListNotesFnLogRetention7721FC71"
+          }
+        ],
+        "/Vantage-Api-dev/DashboardCountsFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DashboardCountsFnServiceRole92D2B96E"
+          }
+        ],
+        "/Vantage-Api-dev/DashboardCountsFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DashboardCountsFnServiceRoleDefaultPolicyF2CB87A0"
+          }
+        ],
+        "/Vantage-Api-dev/DashboardCountsFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DashboardCountsFnB8088F74"
+          }
+        ],
+        "/Vantage-Api-dev/DashboardCountsFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DashboardCountsFnLogRetentionC13C4A38"
+          }
+        ],
         "/Vantage-Api-dev/BillingChargeFn/ServiceRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -641,7 +773,7 @@
         "/Vantage-Api-dev/VantageApi/Deployment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "VantageApiDeployment89164B33c1386d4a79bd01140125409a107e5333"
+            "data": "VantageApiDeployment89164B338f32b6e1b770d1635ba74cb30e54b8f9"
           }
         ],
         "/Vantage-Api-dev/VantageApi/DeploymentStage.dev/Resource": [
@@ -812,6 +944,24 @@
             "data": "VantageApiappointmentsGETDF789897"
           }
         ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..appointments": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsPOSTApiPermissionVantageApidevVantageApi61D49C06POSTappointments15CA8504"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..appointments": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTappointments29C18B71"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsPOST4737CD92"
+          }
+        ],
         "/Vantage-Api-dev/VantageApi/Default/dictations/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -930,6 +1080,96 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "VantageApipatientsidGET22AEFD92"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/notes/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsidnotes03D0F4E5"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/notes/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsidnotesOPTIONS41E054A6"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/notes/GET/ApiPermission.VantageApidevVantageApi61D49C06.GET..patients.{id}.notes": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsidnotesGETApiPermissionVantageApidevVantageApi61D49C06GETpatientsidnotesB2FF801C"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/notes/GET/ApiPermission.Test.VantageApidevVantageApi61D49C06.GET..patients.{id}.notes": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsidnotesGETApiPermissionTestVantageApidevVantageApi61D49C06GETpatientsidnotes7E7A9DBD"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/notes/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsidnotesGETC226F955"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/notes/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..patients.{id}.notes": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsidnotesPOSTApiPermissionVantageApidevVantageApi61D49C06POSTpatientsidnotesA04C5E65"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/notes/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..patients.{id}.notes": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsidnotesPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTpatientsidnotesDCE0D578"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/patients/{id}/notes/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApipatientsidnotesPOST5CEE5B71"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dashboard/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidashboard4AAD8EBE"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dashboard/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidashboardOPTIONS050C0A88"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dashboard/counts/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidashboardcounts3123FF64"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dashboard/counts/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidashboardcountsOPTIONS80135107"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dashboard/counts/GET/ApiPermission.VantageApidevVantageApi61D49C06.GET..dashboard.counts": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidashboardcountsGETApiPermissionVantageApidevVantageApi61D49C06GETdashboardcounts5F1993D4"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dashboard/counts/GET/ApiPermission.Test.VantageApidevVantageApi61D49C06.GET..dashboard.counts": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidashboardcountsGETApiPermissionTestVantageApidevVantageApi61D49C06GETdashboardcountsBF7AED20"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/dashboard/counts/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApidashboardcountsGET2F60E08E"
           }
         ],
         "/Vantage-Api-dev/VantageApi/Default/billing/Resource": [

@@ -1,43 +1,206 @@
 {
  "Resources": {
-  "VantageUserPoolsmsRoleCD2AC892": {
+  "PreSignUpFnServiceRoleC270C061": {
    "Type": "AWS::IAM::Role",
    "Properties": {
     "AssumeRolePolicyDocument": {
      "Statement": [
       {
        "Action": "sts:AssumeRole",
-       "Condition": {
-        "StringEquals": {
-         "sts:ExternalId": "VantageAuthdevVantageUserPool443CFED8"
-        }
-       },
        "Effect": "Allow",
        "Principal": {
-        "Service": "cognito-idp.amazonaws.com"
+        "Service": "lambda.amazonaws.com"
        }
       }
      ],
      "Version": "2012-10-17"
     },
-    "Policies": [
+    "ManagedPolicyArns": [
      {
-      "PolicyDocument": {
-       "Statement": [
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
         {
-         "Action": "sns:Publish",
-         "Effect": "Allow",
-         "Resource": "*"
-        }
-       ],
-       "Version": "2012-10-17"
-      },
-      "PolicyName": "sns-publish"
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
      }
     ]
    },
    "Metadata": {
-    "aws:cdk:path": "Vantage-Auth-dev/VantageUserPool/smsRole/Resource"
+    "aws:cdk:path": "Vantage-Auth-dev/PreSignUpFn/ServiceRole/Resource"
+   }
+  },
+  "PreSignUpFn7227C88E": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "6e2523c722dfdc683a3ae4a2e9f45efe15b3676ddbbef818ce69d86c80b6b29e.zip"
+    },
+    "FunctionName": "vantage-pre-sign-up-dev",
+    "Handler": "index.handler",
+    "MemorySize": 128,
+    "Role": {
+     "Fn::GetAtt": [
+      "PreSignUpFnServiceRoleC270C061",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 5
+   },
+   "DependsOn": [
+    "PreSignUpFnServiceRoleC270C061"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Auth-dev/PreSignUpFn/Resource",
+    "aws:asset:path": "asset.6e2523c722dfdc683a3ae4a2e9f45efe15b3676ddbbef818ce69d86c80b6b29e",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "PreSignUpFnLogRetention33C9415D": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "PreSignUpFn7227C88E"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Auth-dev/PreSignUpFn/LogRetention/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Auth-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:PutRetentionPolicy",
+        "logs:DeleteRetentionPolicy"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "Roles": [
+     {
+      "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Auth-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Handler": "index.handler",
+    "Runtime": "nodejs22.x",
+    "Timeout": 900,
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip"
+    },
+    "Role": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Auth-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource",
+    "aws:asset:path": "asset.2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "VantageUserPoolPreSignUpCognito9A6B798B": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "PreSignUpFn7227C88E",
+      "Arn"
+     ]
+    },
+    "Principal": "cognito-idp.amazonaws.com",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "VantageUserPoolB4156E75",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Auth-dev/VantageUserPool/PreSignUpCognito"
    }
   },
   "VantageUserPoolB4156E75": {
@@ -46,23 +209,35 @@
     "AccountRecoverySetting": {
      "RecoveryMechanisms": [
       {
-       "Name": "verified_email",
+       "Name": "admin_only",
        "Priority": 1
       }
      ]
     },
     "AdminCreateUserConfig": {
-     "AllowAdminCreateUserOnly": true
+     "AllowAdminCreateUserOnly": false
     },
     "AutoVerifiedAttributes": [
      "email"
     ],
+    "EmailConfiguration": {
+     "EmailSendingAccount": "DEVELOPER",
+     "SourceArn": "arn:aws:ses:us-east-1:841722554807:identity/vantagerefinery.com",
+     "From": "noreply@vantagerefinery.com"
+    },
     "EmailVerificationMessage": "The verification code to your new account is {####}",
     "EmailVerificationSubject": "Verify your new account",
     "EnabledMfas": [
-     "SMS_MFA",
-     "SOFTWARE_TOKEN_MFA"
+     "EMAIL_OTP"
     ],
+    "LambdaConfig": {
+     "PreSignUp": {
+      "Fn::GetAtt": [
+       "PreSignUpFn7227C88E",
+       "Arn"
+      ]
+     }
+    },
     "MfaConfiguration": "ON",
     "Policies": {
      "PasswordPolicy": {
@@ -101,15 +276,6 @@
       "Name": "role"
      }
     ],
-    "SmsConfiguration": {
-     "ExternalId": "VantageAuthdevVantageUserPool443CFED8",
-     "SnsCallerArn": {
-      "Fn::GetAtt": [
-       "VantageUserPoolsmsRoleCD2AC892",
-       "Arn"
-      ]
-     }
-    },
     "SmsVerificationMessage": "The verification code to your new account is {####}",
     "UserPoolAddOns": {
      "AdvancedSecurityMode": "ENFORCED"
@@ -153,6 +319,7 @@
     "ClientName": "vantage-web-dev",
     "EnableTokenRevocation": true,
     "ExplicitAuthFlows": [
+     "ALLOW_USER_PASSWORD_AUTH",
      "ALLOW_CUSTOM_AUTH",
      "ALLOW_USER_SRP_AUTH",
      "ALLOW_REFRESH_TOKEN_AUTH"
@@ -218,7 +385,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/2WKywrCMBREv6X79FqDfkEFl0rFtcQ0ym2T3JKHLkL+XYNWCq7mzJnhwDcNNJV4+lr2Y63xCukUhBzZW12SpLvFQJDOXrkjkWbtzf54hlajsmE5fc1cd2QE2uXh3+wdxSkzFAZSR1qVrWTOhQ4xTDFkZqlXMPjVg2+Bw7oaPGLtog1oFHSffAFXj5tA1QAAAA=="
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/2VQ207DMAz9lr2nZhT4ADY0XhBMRTxXWWoqt2k81QkIVfl30pRVk3g6l5xjOS6hvN/CdqO/pTBNX1g6wfTutelVsurJ6uHU6Npxg53Aa4ZDcMYTO0V6gKlii2r/6TIe2ZL5meXCopK7WougF3icIWnYBdOj32lBtYyHKRXWqXMZx4FEkorKcivwwm2FHl0OGG4deYbpQ3A8Mtu5svIL2VtK+eunP+cin3jQ5K4D/53nkcM5RpV3T2dpybX5sygcRoNqJcl8C/4cfFTzsaCTm6/yAUq43XRCVIwhLT8gVAv+AmW8lN14AQAA"
    },
    "Metadata": {
     "aws:cdk:path": "Vantage-Auth-dev/CDKMetadata/Default"
