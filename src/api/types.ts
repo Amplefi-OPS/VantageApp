@@ -128,6 +128,22 @@ export const FaxSchema = z.object({
 })
 export type Fax = z.infer<typeof FaxSchema>
 
+export const CallLogSchema = z.object({
+  id: z.string(),
+  callerNumber: z.string(),
+  callerName: z.string().optional(),
+  calleeNumber: z.string(),
+  calleeName: z.string().optional(),
+  direction: z.enum(['inbound', 'outbound']),
+  duration: z.number(),
+  result: z.enum(['answered', 'missed', 'voicemail']),
+  startTime: z.string(),
+  endTime: z.string(),
+  hasRecording: z.boolean(),
+  hasVoicemail: z.boolean(),
+})
+export type CallLog = z.infer<typeof CallLogSchema>
+
 // ── Settings ───────────────────────────────────────────
 
 export interface AppSettings {

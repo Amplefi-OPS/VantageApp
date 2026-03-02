@@ -175,6 +175,33 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadData(dashboardCountsFn);
 
+    // ── Zoom environment (only for Zoom Lambdas) ──
+    const zoomEnv: Record<string, string> = {
+      ZOOM_ACCOUNT_ID: process.env.ZOOM_ACCOUNT_ID || '',
+      ZOOM_CLIENT_ID: process.env.ZOOM_CLIENT_ID || '',
+      ZOOM_CLIENT_SECRET: process.env.ZOOM_CLIENT_SECRET || '',
+      ZOOM_USER_EMAIL: process.env.ZOOM_USER_EMAIL || '',
+    };
+
+    // ── Lambda: List Zoom Voicemails ──
+    const listZoomVoicemailsFn = new lambdaNode.NodejsFunction(this, 'ListZoomVoicemailsFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-list-zoom-voicemails-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'list-zoom-voicemails.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, ...zoomEnv },
+    });
+    props.table.grantReadData(listZoomVoicemailsFn);
+
+    // ── Lambda: List Zoom Call Logs ──
+    const listZoomCallLogsFn = new lambdaNode.NodejsFunction(this, 'ListZoomCallLogsFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-list-zoom-call-logs-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'list-zoom-call-logs.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, ...zoomEnv },
+    });
+
     // ── Lambda: Billing Charge ──
     const billingChargeFn = new lambdaNode.NodejsFunction(this, 'BillingChargeFn', {
       ...lambdaDefaults,
@@ -276,6 +303,13 @@ export class ApiStack extends cdk.Stack {
     const dashboard = this.api.root.addResource('dashboard');
     const dashboardCounts = dashboard.addResource('counts');
     dashboardCounts.addMethod('GET', new apigateway.LambdaIntegration(dashboardCountsFn), authMethodOptions);
+
+    // GET /zoom/voicemails  &  GET /zoom/call-logs
+    const zoom = this.api.root.addResource('zoom');
+    const zoomVoicemails = zoom.addResource('voicemails');
+    zoomVoicemails.addMethod('GET', new apigateway.LambdaIntegration(listZoomVoicemailsFn), authMethodOptions);
+    const zoomCallLogs = zoom.addResource('call-logs');
+    zoomCallLogs.addMethod('GET', new apigateway.LambdaIntegration(listZoomCallLogsFn), authMethodOptions);
 
     // POST /billing/charge
     const billing = this.api.root.addResource('billing');

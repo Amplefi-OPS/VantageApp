@@ -6,6 +6,7 @@
 import type {
   Patient,
   Voicemail,
+  CallLog,
   Todo,
   Note,
   Fax,
@@ -46,10 +47,16 @@ export async function createAppointment(req: CreateAppointmentRequest) {
   return apiPost('/appointments', req)
 }
 
-// ── Voicemails ─────────────────────────────────────────
+// ── Voicemails (Zoom Phone) ─────────────────────────────
 
 export async function listVoicemails(): Promise<Voicemail[]> {
-  return apiGet<Voicemail[]>('/voicemails')
+  return apiGet<Voicemail[]>('/zoom/voicemails')
+}
+
+// ── Call Logs (Zoom Phone) ──────────────────────────────
+
+export async function listCallLogs(): Promise<{ callLogs: CallLog[]; count: number }> {
+  return apiGet<{ callLogs: CallLog[]; count: number }>('/zoom/call-logs')
 }
 
 export async function attachVoicemail(req: AttachVoicemailRequest): Promise<Voicemail> {
