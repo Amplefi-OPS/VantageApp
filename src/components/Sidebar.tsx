@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Users,
   Send,
+  CreditCard,
   Settings,
   Calendar,
   LogOut,
@@ -19,6 +20,7 @@ const links = [
   { to: '/appointments', label: 'Appointments', icon: Calendar },
   { to: '/patients', label: 'Patients', icon: Users },
   { to: '/fax', label: 'Fax', icon: Send },
+  { to: '/billing', label: 'Billing', icon: CreditCard },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 

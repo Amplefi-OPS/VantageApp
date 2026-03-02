@@ -12,6 +12,10 @@ import Dictations from './pages/Dictations'
 import Patients from './pages/Patients'
 import PatientProfile from './pages/PatientProfile'
 import Fax from './pages/Fax'
+import StripeDashboard from './pages/stripe/StripeDashboard'
+import PatientLookup from './pages/stripe/PatientLookup'
+import ChargePatient from './pages/stripe/ChargePatient'
+import NoShowFee from './pages/stripe/NoShowFee'
 import Settings from './pages/Settings'
 
 const queryClient = new QueryClient({
@@ -49,6 +53,10 @@ function AppRoutes() {
         <Route path="/patients" element={<Patients />} />
         <Route path="/patients/:id" element={<PatientProfile />} />
         <Route path="/fax" element={<Fax />} />
+        <Route path="/billing" element={<StripeDashboard />} />
+        <Route path="/billing/lookup" element={<PatientLookup />} />
+        <Route path="/billing/charge" element={<ChargePatient />} />
+        <Route path="/billing/no-show" element={<NoShowFee />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

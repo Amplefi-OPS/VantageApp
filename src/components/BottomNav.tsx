@@ -7,6 +7,7 @@ import {
   Users,
   MoreHorizontal,
   Send,
+  CreditCard,
   Settings,
   X,
 } from 'lucide-react'
@@ -21,6 +22,7 @@ const mainLinks = [
 
 const moreLinks = [
   { to: '/fax', label: 'Fax', icon: Send },
+  { to: '/billing', label: 'Billing', icon: CreditCard },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 

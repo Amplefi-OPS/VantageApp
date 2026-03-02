@@ -78,29 +78,31 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       console.warn('User voicemails fetch failed:', (err as Error).message);
     }
 
-    // 2. Fetch voicemails from all auto receptionists (IVR boxes)
+    // 2. List all phone users on the account, check each for voicemails
     try {
-      const arList = await zoomGet<ZoomAutoReceptionistListResponse>(
-        '/phone/auto_receptionists',
+      const phoneUsers = await zoomGet<{ users: { id: string; email: string; name: string }[]; total_records: number }>(
+        '/phone/users',
         { page_size: '50' },
       );
-      const receptionists = arList.auto_receptionists || [];
+      console.log('Phone users found:', phoneUsers.total_records, (phoneUsers.users || []).map((u) => u.email));
 
-      for (const ar of receptionists) {
+      for (const user of phoneUsers.users || []) {
+        if (user.email === zoomUser) continue; // already fetched above
         try {
-          const arVoicemails = await zoomGet<ZoomVoicemailResponse>(
-            `/phone/auto_receptionists/${ar.id}/voice_mails`,
+          const userVm = await zoomGet<ZoomVoicemailResponse>(
+            `/phone/users/${encodeURIComponent(user.email)}/voice_mails`,
             zoomParams,
           );
-          if (arVoicemails.voice_mails) {
-            allVoicemails.push(...arVoicemails.voice_mails);
+          if (userVm.voice_mails?.length) {
+            console.log(`Found ${userVm.voice_mails.length} voicemails for ${user.email}`);
+            allVoicemails.push(...userVm.voice_mails);
           }
         } catch (err) {
-          console.warn(`Auto receptionist ${ar.name} (${ar.id}) voicemails failed:`, (err as Error).message);
+          console.warn(`Voicemails for ${user.email} failed:`, (err as Error).message);
         }
       }
     } catch (err) {
-      console.warn('Auto receptionists list failed:', (err as Error).message);
+      console.warn('Phone users list failed:', (err as Error).message);
     }
 
     // Deduplicate by voicemail ID

@@ -37,10 +37,13 @@ async function getAccessToken(): Promise<string> {
     throw new Error(`Zoom OAuth failed (${res.status}): ${body}`);
   }
 
-  const data = (await res.json()) as { access_token: string; expires_in: number };
+  const data = (await res.json()) as { access_token: string; expires_in: number; scope: string };
   cachedToken = data.access_token;
   // Expire 5 minutes early to avoid edge-case rejections
   tokenExpiresAt = now + (data.expires_in - 300) * 1000;
+
+  // Log granted scopes for debugging
+  console.log('Zoom token scopes:', data.scope);
 
   return cachedToken;
 }
