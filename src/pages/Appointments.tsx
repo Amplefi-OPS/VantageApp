@@ -33,10 +33,10 @@ function formatDateShort(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
-/** Get the date 30 days from a given date string (YYYY-MM-DD) */
-function thirtyDaysAhead(dateStr: string): string {
+/** Get the date N days from a given date string (YYYY-MM-DD) */
+function daysFrom(dateStr: string, n: number): string {
   const d = new Date(dateStr + 'T12:00:00')
-  d.setDate(d.getDate() + 30)
+  d.setDate(d.getDate() + n)
   return d.toISOString().slice(0, 10)
 }
 
@@ -56,6 +56,7 @@ export default function Appointments() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
+      queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
       toast('success', 'Appointment cancelled')
       setCancellingId(null)
@@ -84,6 +85,7 @@ export default function Appointments() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
+      queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
       queryClient.invalidateQueries({ queryKey: ['todos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
       toast('success', 'Marked as no-show. To-do created for $30 fee.')
@@ -103,7 +105,7 @@ export default function Appointments() {
   })
 
   // 30-day query — for "Upcoming" tab (today + 30 days)
-  const rangeEnd = useMemo(() => thirtyDaysAhead(today), [today])
+  const rangeEnd = useMemo(() => daysFrom(today, 30), [today])
   const { data: upcomingAppointments = [], isLoading: upcomingLoading } = useQuery({
     queryKey: ['appointments-upcoming', today, rangeEnd],
     queryFn: () => listAppointments(today, rangeEnd),
@@ -112,9 +114,26 @@ export default function Appointments() {
 
   const upcomingScheduled = upcomingAppointments.filter((a) => a.status === 'scheduled')
 
+  // 30-day back query — for "Past" tab (30 days ago through yesterday)
+  const pastStart = useMemo(() => daysFrom(today, -30), [today])
+  const pastEnd = useMemo(() => daysFrom(today, -1), [today])
+  const { data: pastAppointments = [], isLoading: pastLoading } = useQuery({
+    queryKey: ['appointments-past', pastStart, pastEnd],
+    queryFn: () => listAppointments(pastStart, pastEnd),
+    staleTime: 60_000,
+  })
+
   // Pick the right source based on active tab
-  const sourceList = filter === 'upcoming' ? upcomingScheduled : dayAppointments
-  const isLoading = filter === 'upcoming' ? upcomingLoading : dayLoading
+  const sourceList = filter === 'upcoming'
+    ? upcomingScheduled
+    : filter === 'past'
+      ? pastAppointments
+      : dayAppointments
+  const isLoading = filter === 'upcoming'
+    ? upcomingLoading
+    : filter === 'past'
+      ? pastLoading
+      : dayLoading
 
   const filtered = sourceList.filter((a) => {
     if (filter === 'cancelled' && a.status !== 'cancelled') return false
@@ -128,6 +147,7 @@ export default function Appointments() {
   const tabs = [
     { key: 'all', label: 'All', count: dayAppointments.length },
     { key: 'upcoming', label: 'Upcoming', count: upcomingScheduled.length },
+    { key: 'past', label: 'Past', count: pastAppointments.length },
     { key: 'cancelled', label: 'Cancelled', count: dayAppointments.filter((a) => a.status === 'cancelled').length },
   ]
 
@@ -141,14 +161,16 @@ export default function Appointments() {
           <p className="text-warm-gray text-sm mt-1">
             {filter === 'upcoming'
               ? 'Next 30 days'
-              : new Date(selectedDate + 'T12:00:00').toLocaleDateString(undefined, {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+              : filter === 'past'
+                ? 'Last 30 days'
+                : new Date(selectedDate + 'T12:00:00').toLocaleDateString(undefined, {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
           </p>
         </div>
-        {filter !== 'upcoming' && (
+        {filter !== 'upcoming' && filter !== 'past' && (
           <input
             type="date"
             value={selectedDate}
@@ -176,9 +198,11 @@ export default function Appointments() {
             description={
               filter === 'upcoming'
                 ? 'No upcoming appointments this month.'
-                : filter === 'all'
-                  ? 'No appointments scheduled for this date.'
-                  : 'No appointments match your current filters.'
+                : filter === 'past'
+                  ? 'No past appointments in the last 30 days.'
+                  : filter === 'all'
+                    ? 'No appointments scheduled for this date.'
+                    : 'No appointments match your current filters.'
             }
           />
         ) : (
@@ -211,7 +235,7 @@ export default function Appointments() {
                     </div>
                     <p className="text-sm text-charcoal">{appt.type}</p>
                     <div className="flex items-center gap-4 mt-2 text-xs text-warm-gray">
-                      {filter === 'upcoming' && (
+                      {(filter === 'upcoming' || filter === 'past') && (
                         <span className="font-medium text-charcoal">
                           {formatDateShort(appt.startTime)}
                         </span>
@@ -272,18 +296,28 @@ export default function Appointments() {
                             </Button>
                           </>
                         )}
-                        {/* Past (not today) + still scheduled: No-show fee */}
+                        {/* Past (not today) + still scheduled: No Show + charge fee */}
                         {appt.status === 'scheduled' && isPast && !isApptToday && (
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            icon={<DollarSign size={14} />}
-                            onClick={() =>
-                              navigate(`/billing/no-show?name=${encodeURIComponent(appt.patientName)}`)
-                            }
-                          >
-                            Charge $30 No-Show Fee
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              icon={<UserX size={14} />}
+                              onClick={() => setNoShowAppt(appt)}
+                            >
+                              No Show
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              icon={<DollarSign size={14} />}
+                              onClick={() =>
+                                navigate(`/billing/no-show?name=${encodeURIComponent(appt.patientName)}`)
+                              }
+                            >
+                              Charge $30 No-Show Fee
+                            </Button>
+                          </>
                         )}
                         {/* Already marked no-show: charge fee */}
                         {appt.status === 'no_show' && (

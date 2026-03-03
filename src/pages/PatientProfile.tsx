@@ -487,20 +487,30 @@ export default function PatientProfile() {
                                 </Button>
                               </>
                             )}
-                            {/* Past (not today) + still scheduled: No-show fee */}
+                            {/* Past (not today) + still scheduled: No Show + charge fee */}
                             {appt.status === 'scheduled' && isPast && !isApptToday && (
-                              <Button
-                                size="sm"
-                                variant="danger"
-                                icon={<DollarSign size={14} />}
-                                onClick={() =>
-                                  navigate(
-                                    `/billing/no-show?name=${encodeURIComponent(appt.patientName)}`
-                                  )
-                                }
-                              >
-                                Charge $30 No-Show Fee
-                              </Button>
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="danger"
+                                  icon={<UserX size={14} />}
+                                  onClick={() => setNoShowAppt(appt)}
+                                >
+                                  No Show
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="danger"
+                                  icon={<DollarSign size={14} />}
+                                  onClick={() =>
+                                    navigate(
+                                      `/billing/no-show?name=${encodeURIComponent(appt.patientName)}`
+                                    )
+                                  }
+                                >
+                                  Charge $30 No-Show Fee
+                                </Button>
+                              </>
                             )}
                             {/* Already marked no-show: charge fee */}
                             {appt.status === 'no_show' && (
