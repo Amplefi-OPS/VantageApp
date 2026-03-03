@@ -33,9 +33,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const caller = getCallerIdentity(event);
     const body = JSON.parse(event.body || '{}');
 
-    const { provider_id, type, title } = body;
-    if (!provider_id || !type || !title) {
-      return badRequest('Missing required fields: provider_id, type, title');
+    const provider_id = body.provider_id || caller.providerId;
+    const { type, title } = body;
+    if (!type || !title) {
+      return badRequest('Missing required fields: type, title');
     }
 
     if (!canAccessProvider(caller, provider_id)) {

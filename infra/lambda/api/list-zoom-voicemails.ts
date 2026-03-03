@@ -1,10 +1,9 @@
 /**
  * GET /zoom/voicemails?from=...&to=...
  *
- * Fetches voicemails from Zoom Phone API — both user-level and
- * auto receptionist voicemail boxes — and maps them to the
- * Voicemail shape the frontend expects. Checks DynamoDB for
- * existing patient attachments.
+ * Fetches voicemails from Zoom Phone API — user-level, call queues,
+ * common areas, and other phone users. Auto-matches voicemails to
+ * patients by phone number and creates todo tasks automatically.
  *
  * Query params:
  *   from  (optional) - ISO date, e.g. 2026-03-01
@@ -12,10 +11,13 @@
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
+import { randomUUID } from 'crypto';
 import { getCallerIdentity } from '../shared/auth';
-import { queryItems } from '../shared/dynamo';
+import { putItem, queryItems, writeAuditLog } from '../shared/dynamo';
 import { zoomGet } from '../shared/zoom';
 import { success, serverError } from '../shared/response';
+
+// ── Zoom API types ──
 
 interface ZoomVoicemail {
   id: string;
@@ -38,22 +40,90 @@ interface ZoomVoicemailResponse {
   next_page_token: string;
 }
 
-interface ZoomAutoReceptionist {
+interface ZoomCallQueue {
   id: string;
   name: string;
   extension_number: string;
+  status: string;
 }
 
-interface ZoomAutoReceptionistListResponse {
-  auto_receptionists: ZoomAutoReceptionist[];
+interface ZoomCallQueueListResponse {
+  call_queues: ZoomCallQueue[];
   total_records: number;
   page_size: number;
   next_page_token: string;
 }
 
+interface ZoomCommonArea {
+  id: string;
+  display_name: string;
+}
+
+interface ZoomCommonAreaListResponse {
+  common_areas: ZoomCommonArea[];
+  total_records: number;
+  page_size: number;
+  next_page_token: string;
+}
+
+// ── IVR category mapping ──
+
+// Map auto receptionist / callee name → voicemail category
+const CALLEE_NAME_TO_CATEGORY: Record<string, string> = {
+  'scheduling': 'Scheduling',
+  'refills': 'Refills',
+  'billing': 'Billing',
+  'new patient': 'New Patient',
+  'all other questions': 'Everything Else',
+  'vr phone system': 'Everything Else',
+};
+
+// Fallback: extension number → category
+const EXTENSION_TO_CATEGORY: Record<string, string> = {
+  '540': 'Scheduling',
+  '542': 'Refills',
+  '543': 'Billing',
+  '545': 'New Patient',
+  '544': 'Everything Else',
+};
+
+// Category → todo task type
+const CATEGORY_TO_TODO_TYPE: Record<string, string> = {
+  'Scheduling': 'Schedule',
+  'Refills': 'Refill',
+  'Billing': 'General',
+  'New Patient': 'CallBack',
+  'Everything Else': 'CallBack',
+};
+
+function resolveCategory(calleeName: string, calleeNumber: string): string {
+  if (calleeName) {
+    const key = calleeName.toLowerCase().trim();
+    // Check for partial matches (e.g., "Scheduling (Main Auto Receptionist)")
+    for (const [pattern, category] of Object.entries(CALLEE_NAME_TO_CATEGORY)) {
+      if (key.includes(pattern)) return category;
+    }
+  }
+  if (calleeNumber) {
+    const ext = calleeNumber.replace(/\D/g, '');
+    if (EXTENSION_TO_CATEGORY[ext]) return EXTENSION_TO_CATEGORY[ext];
+  }
+  return 'Everything Else';
+}
+
+// ── Phone number normalization ──
+
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+
+// ── Handler ──
+
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const caller = getCallerIdentity(event);
+    const providerId = caller.providerId;
     const params = event.queryStringParameters || {};
 
     const zoomParams: Record<string, string> = {
@@ -78,16 +148,68 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       console.warn('User voicemails fetch failed:', (err as Error).message);
     }
 
-    // 2. List all phone users on the account, check each for voicemails
+    // 2. Fetch voicemails from all call queues (IVR branches route here)
+    try {
+      const queues = await zoomGet<ZoomCallQueueListResponse>(
+        '/phone/call_queues',
+        { page_size: '100' },
+      );
+      console.log('Call queues found:', queues.total_records, (queues.call_queues || []).map((q) => q.name));
+
+      for (const queue of queues.call_queues || []) {
+        try {
+          const queueVm = await zoomGet<ZoomVoicemailResponse>(
+            `/phone/call_queues/${queue.id}/voice_mails`,
+            zoomParams,
+          );
+          if (queueVm.voice_mails?.length) {
+            console.log(`Found ${queueVm.voice_mails.length} voicemails in queue "${queue.name}"`);
+            allVoicemails.push(...queueVm.voice_mails);
+          }
+        } catch (err) {
+          console.warn(`Queue "${queue.name}" voicemails failed:`, (err as Error).message);
+        }
+      }
+    } catch (err) {
+      console.warn('Call queues list failed:', (err as Error).message);
+    }
+
+    // 3. Fetch voicemails from common areas
+    try {
+      const areas = await zoomGet<ZoomCommonAreaListResponse>(
+        '/phone/common_areas',
+        { page_size: '100' },
+      );
+      console.log('Common areas found:', areas.total_records);
+
+      for (const area of areas.common_areas || []) {
+        try {
+          const areaVm = await zoomGet<ZoomVoicemailResponse>(
+            `/phone/common_areas/${area.id}/voice_mails`,
+            zoomParams,
+          );
+          if (areaVm.voice_mails?.length) {
+            console.log(`Found ${areaVm.voice_mails.length} voicemails in common area "${area.display_name}"`);
+            allVoicemails.push(...areaVm.voice_mails);
+          }
+        } catch (err) {
+          console.warn(`Common area "${area.display_name}" voicemails failed:`, (err as Error).message);
+        }
+      }
+    } catch (err) {
+      console.warn('Common areas list failed:', (err as Error).message);
+    }
+
+    // 4. List all phone users on the account, check each for voicemails
     try {
       const phoneUsers = await zoomGet<{ users: { id: string; email: string; name: string }[]; total_records: number }>(
         '/phone/users',
         { page_size: '50' },
       );
-      console.log('Phone users found:', phoneUsers.total_records, (phoneUsers.users || []).map((u) => u.email));
+      console.log('Phone users found:', phoneUsers.total_records);
 
       for (const user of phoneUsers.users || []) {
-        if (user.email === zoomUser) continue; // already fetched above
+        if (user.email === zoomUser) continue;
         try {
           const userVm = await zoomGet<ZoomVoicemailResponse>(
             `/phone/users/${encodeURIComponent(user.email)}/voice_mails`,
@@ -113,40 +235,157 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       return true;
     });
 
-    // Look up existing voicemail-patient attachments in DynamoDB
+    // ── Look up existing voicemail attachments in DynamoDB ──
     const attachments = await queryItems({
       IndexName: 'GSI1',
       KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
       ExpressionAttributeValues: {
-        ':pk': `PROVIDER#${caller.providerId}`,
+        ':pk': `PROVIDER#${providerId}`,
         ':sk': 'VOICEMAIL#',
       },
     });
 
-    const attachMap = new Map<string, { type: string; patientId?: string }>();
+    const attachMap = new Map<string, { type: string; patientId?: string; category?: string }>();
     for (const item of attachments) {
       attachMap.set(item.voicemailId as string, {
         type: item.attachmentType as string,
         patientId: item.patientId as string | undefined,
+        category: item.category as string | undefined,
       });
     }
 
-    // Map to frontend shape
+    // ── Load patients for phone number matching ──
+    const patientItems = await queryItems({
+      IndexName: 'GSI1',
+      KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+      ExpressionAttributeValues: {
+        ':pk': `PROVIDER#${providerId}`,
+        ':sk': 'PATIENT#',
+      },
+    });
+
+    // Build phone → patient lookup (normalized)
+    const phoneToPatient = new Map<string, { id: string; firstName: string; lastName: string }>();
+    for (const p of patientItems) {
+      const phone = normalizePhone((p.phone as string) || '');
+      if (phone) {
+        phoneToPatient.set(phone, {
+          id: p.patientId as string,
+          firstName: p.firstName as string,
+          lastName: p.lastName as string,
+        });
+      }
+    }
+
+    // ── Auto-attach new voicemails and create todos ──
+    const now = new Date().toISOString();
+    for (const vm of uniqueVoicemails) {
+      if (attachMap.has(vm.id)) continue; // already processed
+
+      const callerPhone = normalizePhone(vm.caller_number || '');
+      const matchedPatient = callerPhone ? phoneToPatient.get(callerPhone) : undefined;
+      const category = resolveCategory(vm.callee_name || '', vm.callee_number || '');
+
+      // Write voicemail attachment record
+      const vmRecord: Record<string, unknown> = {
+        PK: `PROVIDER#${providerId}`,
+        SK: `VOICEMAIL#${vm.id}`,
+        voicemailId: vm.id,
+        providerId,
+        patientId: matchedPatient?.id || null,
+        attachmentType: matchedPatient ? 'patient' : 'none',
+        callerNumber: vm.caller_number || 'Unknown',
+        callerName: vm.caller_name || null,
+        category,
+        status: matchedPatient ? 'Attached' : 'Unattached',
+        receivedAt: vm.date_time,
+        durationSeconds: vm.duration,
+        audioUrl: vm.download_url,
+        createdAt: now,
+        GSI1PK: `PROVIDER#${providerId}`,
+        GSI1SK: `VOICEMAIL#${vm.date_time}`,
+        entityType: 'VoicemailAttachment',
+      };
+
+      try {
+        await putItem(vmRecord);
+      } catch (err) {
+        console.warn(`Failed to write voicemail record ${vm.id}:`, (err as Error).message);
+        continue;
+      }
+
+      // Update local cache
+      attachMap.set(vm.id, {
+        type: matchedPatient ? 'patient' : 'none',
+        patientId: matchedPatient?.id,
+        category,
+      });
+
+      // Auto-create todo task if matched to a patient
+      if (matchedPatient) {
+        const taskId = `task-${randomUUID().slice(0, 12)}`;
+        const todoType = CATEGORY_TO_TODO_TYPE[category] || 'CallBack';
+        const callerLabel = vm.caller_name || vm.caller_number || 'Unknown';
+        const patientLabel = `${matchedPatient.firstName} ${matchedPatient.lastName}`;
+        const title = `Voicemail from ${callerLabel} — ${category}`;
+
+        const taskRecord = {
+          PK: `PROVIDER#${providerId}`,
+          SK: `TASK#${taskId}`,
+          taskId,
+          providerId,
+          patientId: matchedPatient.id,
+          voicemailId: vm.id,
+          type: todoType,
+          title,
+          status: 'Open',
+          priority: 'Med',
+          dueDate: null,
+          assignedTo: null,
+          notes: `Auto-created from voicemail. Patient: ${patientLabel}. Duration: ${vm.duration}s.`,
+          dictationId: null,
+          createdAt: now,
+          updatedAt: now,
+          GSI1PK: `PROVIDER#${providerId}`,
+          GSI1SK: `TASKSTATUS#Open#${now}`,
+          GSI2PK: 'TASK',
+          GSI2SK: `${now}#${taskId}`,
+          entityType: 'Task',
+        };
+
+        try {
+          await putItem(taskRecord);
+          await writeAuditLog({
+            providerId,
+            action: 'AUTO_CREATE_TASK',
+            entityType: 'Task',
+            entityId: taskId,
+            details: { voicemailId: vm.id, category, todoType },
+          });
+          console.log(`Auto-created task ${taskId} for voicemail ${vm.id} → patient ${matchedPatient.id}`);
+        } catch (err) {
+          console.warn(`Failed to create task for voicemail ${vm.id}:`, (err as Error).message);
+        }
+      }
+    }
+
+    // ── Map to frontend shape ──
     const voicemails = uniqueVoicemails.map((vm) => {
       const attachment = attachMap.get(vm.id);
+      const category = attachment?.category || resolveCategory(vm.callee_name || '', vm.callee_number || '');
 
       return {
         id: vm.id,
         callerNumber: vm.caller_number || 'Unknown',
         callerName: vm.caller_name || undefined,
         receivedAt: vm.date_time,
-        category: 'Everything Else' as const,
+        category,
         durationSeconds: vm.duration,
         audioUrl: vm.download_url,
-        attachedTo: attachment
+        attachedTo: attachment && attachment.type !== 'none'
           ? { type: attachment.type, patientId: attachment.patientId }
           : { type: 'none' },
-        status: attachment ? 'Attached' : 'Unattached',
+        status: attachment && attachment.type !== 'none' ? 'Attached' : 'Unattached',
       };
     });
 

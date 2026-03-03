@@ -34,8 +34,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     if (!taskId) return badRequest('Missing path parameter: task_id');
 
     const body = JSON.parse(event.body || '{}');
-    const { provider_id } = body;
-    if (!provider_id) return badRequest('Missing required field: provider_id');
+    const provider_id = body.provider_id || caller.providerId;
 
     if (!canAccessProvider(caller, provider_id)) {
       return forbidden('Cannot update tasks for another provider');

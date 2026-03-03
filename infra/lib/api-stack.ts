@@ -191,7 +191,7 @@ export class ApiStack extends cdk.Stack {
       handler: 'handler',
       environment: { ...commonEnv, ...zoomEnv },
     });
-    props.table.grantReadData(listZoomVoicemailsFn);
+    props.table.grantReadWriteData(listZoomVoicemailsFn);
 
     // ── Lambda: List Zoom Call Logs ──
     const listZoomCallLogsFn = new lambdaNode.NodejsFunction(this, 'ListZoomCallLogsFn', {
@@ -201,6 +201,15 @@ export class ApiStack extends cdk.Stack {
       handler: 'handler',
       environment: { ...commonEnv, ...zoomEnv },
     });
+
+    // ── Lambda: Attach Voicemail ──
+    const attachVoicemailFn = new lambdaNode.NodejsFunction(this, 'AttachVoicemailFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-attach-voicemail-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'attach-voicemail.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadWriteData(attachVoicemailFn);
 
     // ── Lambda: Billing Charge ──
     const billingChargeFn = new lambdaNode.NodejsFunction(this, 'BillingChargeFn', {
@@ -303,6 +312,11 @@ export class ApiStack extends cdk.Stack {
     const dashboard = this.api.root.addResource('dashboard');
     const dashboardCounts = dashboard.addResource('counts');
     dashboardCounts.addMethod('GET', new apigateway.LambdaIntegration(dashboardCountsFn), authMethodOptions);
+
+    // POST /voicemails/attach
+    const voicemails = this.api.root.addResource('voicemails');
+    const attach = voicemails.addResource('attach');
+    attach.addMethod('POST', new apigateway.LambdaIntegration(attachVoicemailFn), authMethodOptions);
 
     // GET /zoom/voicemails  &  GET /zoom/call-logs
     const zoom = this.api.root.addResource('zoom');

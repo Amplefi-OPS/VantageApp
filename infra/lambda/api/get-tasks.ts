@@ -44,10 +44,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const caller = getCallerIdentity(event);
     const params = event.queryStringParameters || {};
 
-    const providerId = params.provider_id;
-    if (!providerId) {
-      return badRequest('Missing required query parameter: provider_id');
-    }
+    const providerId = params.provider_id || caller.providerId;
 
     if (!canAccessProvider(caller, providerId)) {
       return forbidden('Cannot access tasks for another provider');
