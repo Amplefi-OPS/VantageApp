@@ -21,9 +21,9 @@ import {
 } from 'lucide-react'
 import {
   getPatient,
-  getPatientVoicemails,
   getPatientTodos,
   listNotes,
+  listVoicemails,
   listPatientAppointments,
 } from '../api/endpoints'
 import type { Appointment } from '../api/types'
@@ -48,10 +48,19 @@ export default function PatientProfile() {
     enabled: !!id,
   })
 
-  const { data: voicemails } = useQuery({
-    queryKey: ['patient-voicemails', id],
-    queryFn: () => getPatientVoicemails(id!),
-    enabled: !!id && tab === 'voicemails',
+  const { data: allVoicemails } = useQuery({
+    queryKey: ['voicemails'],
+    queryFn: listVoicemails,
+    enabled: tab === 'voicemails',
+  })
+
+  // Filter voicemails by matching patient phone number (normalize to digits for comparison)
+  const normalizeDigits = (phone: string) => phone.replace(/\D/g, '').replace(/^1(\d{10})$/, '$1')
+  const voicemails = allVoicemails?.filter((vm) => {
+    if (!patient?.phone) return false
+    const patientDigits = normalizeDigits(patient.phone)
+    const callerDigits = normalizeDigits(vm.callerNumber)
+    return patientDigits === callerDigits
   })
 
   const { data: todos } = useQuery({
