@@ -34,8 +34,8 @@ export default function Dashboard() {
     {
       label: 'Voicemails',
       icon: Phone,
-      count: voicemails?.filter((v) => v.status === 'Unattached').length,
-      countLabel: 'unread',
+      count: voicemails?.filter((v) => v.status !== 'Reviewed').length,
+      countLabel: 'new',
       color: 'bg-blue-50 text-blue-700',
       path: '/voicemails',
     },
