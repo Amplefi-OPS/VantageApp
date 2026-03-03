@@ -6,38 +6,19 @@ import { Input } from '../components/ui/Input'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Tabs } from '../components/ui/Tabs'
-import { Calendar, CalendarPlus, Clock, MapPin, Video, Phone } from 'lucide-react'
-import { Button } from '../components/ui/Button'
-import { NewAppointmentModal } from '../components/NewAppointmentModal'
-import { useAuth } from '../auth/AuthProvider'
-import { getSettings } from '../lib/settings'
-import { getAuthHeader } from '../auth/cognito'
-
-interface Appointment {
-  appointment_id: string
-  provider_id: string
-  patient_id: string
-  patient_name: string
-  type: 'in_office' | 'telehealth' | 'phone'
-  start_time: string
-  end_time: string
-  status: 'scheduled' | 'checked_in' | 'completed' | 'cancelled' | 'no_show'
-  reason: string
-  notes: string
-}
+import { Calendar, Clock, UserPlus, UserCheck } from 'lucide-react'
+import { listAppointments } from '../api/endpoints'
+import type { Appointment } from '../api/types'
 
 const statusVariants: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'> = {
   scheduled: 'blue',
-  checked_in: 'yellow',
-  completed: 'green',
   cancelled: 'gray',
   no_show: 'red',
 }
 
-const typeIcons = {
-  in_office: MapPin,
-  telehealth: Video,
-  phone: Phone,
+const typeIcons: Record<string, typeof UserPlus> = {
+  'New Patient': UserPlus,
+  'Returning Patient': UserCheck,
 }
 
 function formatTime(iso: string) {
@@ -45,34 +26,30 @@ function formatTime(iso: string) {
 }
 
 export default function Appointments() {
-  const { user } = useAuth()
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10))
   const [filter, setFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
-  const [showNewAppt, setShowNewAppt] = useState(false)
 
   const { data: appointments = [], isLoading } = useQuery({
-    queryKey: ['appointments', selectedDate, user?.providerId],
-    queryFn: async () => {
-      const res = await fetch(
-        `${getSettings().apiBaseUrl}/appointments?provider_id=${user?.providerId}&date=${selectedDate}`,
-        { headers: { Authorization: getAuthHeader() || '' } },
-      )
-      return res.json().then((d: { appointments: Appointment[] }) => d.appointments)
-    },
+    queryKey: ['appointments', selectedDate],
+    queryFn: () => listAppointments(selectedDate),
+    staleTime: 30_000,
   })
 
   const filtered = appointments.filter((a) => {
-    if (filter !== 'all' && a.status !== filter) return false
-    if (search && !a.patient_name.toLowerCase().includes(search.toLowerCase()) && !a.reason.toLowerCase().includes(search.toLowerCase())) return false
+    if (filter === 'upcoming' && a.status !== 'scheduled') return false
+    if (filter === 'cancelled' && a.status !== 'cancelled') return false
+    if (search) {
+      const q = search.toLowerCase()
+      if (!a.patientName.toLowerCase().includes(q) && !a.type.toLowerCase().includes(q)) return false
+    }
     return true
   })
 
   const tabs = [
-    { key: 'all', label: `All (${appointments.length})` },
-    { key: 'scheduled', label: `Upcoming (${appointments.filter((a) => a.status === 'scheduled').length})` },
-    { key: 'checked_in', label: `Checked In (${appointments.filter((a) => a.status === 'checked_in').length})` },
-    { key: 'completed', label: `Done (${appointments.filter((a) => a.status === 'completed').length})` },
+    { key: 'all', label: 'All', count: appointments.length },
+    { key: 'upcoming', label: 'Upcoming', count: appointments.filter((a) => a.status === 'scheduled').length },
+    { key: 'cancelled', label: 'Cancelled', count: appointments.filter((a) => a.status === 'cancelled').length },
   ]
 
   if (isLoading) return <LoadingSpinner />
@@ -83,27 +60,26 @@ export default function Appointments() {
         <div>
           <h1 className="text-2xl font-bold text-charcoal">Appointments</h1>
           <p className="text-warm-gray text-sm mt-1">
-            {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+            {new Date(selectedDate + 'T12:00:00').toLocaleDateString(undefined, {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+            })}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 border border-light-gray rounded-lg text-sm bg-white"
-          />
-          <Button onClick={() => setShowNewAppt(true)} icon={<CalendarPlus size={18} />}>
-            New Appointment
-          </Button>
-        </div>
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          className="px-3 py-2 border border-light-gray rounded-lg text-sm bg-white"
+        />
       </div>
 
       <div className="mb-4">
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by patient or reason..."
+          placeholder="Search by patient or type..."
         />
       </div>
 
@@ -114,33 +90,39 @@ export default function Appointments() {
           <EmptyState
             icon={<Calendar className="w-12 h-12" />}
             title="No appointments"
-            description="No appointments match your current filters."
+            description={
+              filter === 'all'
+                ? 'No appointments scheduled for this date.'
+                : 'No appointments match your current filters.'
+            }
           />
         ) : (
           filtered.map((appt) => {
-            const TypeIcon = typeIcons[appt.type]
+            const TypeIcon = typeIcons[appt.type] || Calendar
             return (
-              <Card key={appt.appointment_id} className="hover:border-slate-blue/30 transition-colors">
+              <Card key={appt.id} className="hover:border-slate-blue/30 transition-colors">
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-slate-blue/10 flex items-center justify-center">
                     <TypeIcon className="w-5 h-5 text-slate-blue" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-charcoal">{appt.patient_name}</h3>
-                      <Badge variant={statusVariants[appt.status]}>{appt.status.replace('_', ' ')}</Badge>
+                      <h3 className="font-semibold text-charcoal">{appt.patientName}</h3>
+                      <Badge variant={statusVariants[appt.status] || 'gray'}>
+                        {appt.status === 'no_show' ? 'No Show' : appt.status}
+                      </Badge>
                     </div>
-                    <p className="text-sm text-charcoal">{appt.reason}</p>
+                    <p className="text-sm text-charcoal">{appt.type}</p>
                     <div className="flex items-center gap-4 mt-2 text-xs text-warm-gray">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {formatTime(appt.start_time)} - {formatTime(appt.end_time)}
+                        {formatTime(appt.startTime)} - {formatTime(appt.endTime)}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <TypeIcon className="w-3 h-3" />
-                        {appt.type === 'in_office' ? 'In-Office' : appt.type === 'telehealth' ? 'Telehealth' : 'Phone'}
-                      </span>
+                      <span>{appt.duration} min</span>
                     </div>
+                    {appt.patientPhone && (
+                      <p className="text-xs text-warm-gray mt-1">{appt.patientPhone}</p>
+                    )}
                     {appt.notes && (
                       <p className="text-xs text-warm-gray mt-1 italic">{appt.notes}</p>
                     )}
@@ -151,11 +133,6 @@ export default function Appointments() {
           })
         )}
       </div>
-
-      <NewAppointmentModal
-        open={showNewAppt}
-        onClose={() => setShowNewAppt(false)}
-      />
     </div>
   )
 }

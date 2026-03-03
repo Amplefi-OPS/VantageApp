@@ -10,9 +10,9 @@ import type {
   Todo,
   Note,
   Fax,
+  Appointment,
   RxDetails,
   CreatePatientRequest,
-  CreateAppointmentRequest,
   AttachVoicemailRequest,
   UpdateTodoRequest,
   CreateNoteRequest,
@@ -42,10 +42,13 @@ export async function createPatient(req: CreatePatientRequest): Promise<Patient>
   return apiPost<Patient>('/patients', req)
 }
 
-// ── Appointments ──────────────────────────────────────
+// ── Appointments (Acuity Scheduling) ─────────────────
 
-export async function createAppointment(req: CreateAppointmentRequest) {
-  return apiPost('/appointments', req)
+export async function listAppointments(date: string, rangeEnd?: string): Promise<Appointment[]> {
+  const params = new URLSearchParams({ date })
+  if (rangeEnd) params.set('range_end', rangeEnd)
+  const res = await apiGet<{ appointments: Appointment[]; count: number }>(`/appointments?${params}`)
+  return res.appointments
 }
 
 // ── Voicemails (Zoom Phone) ─────────────────────────────

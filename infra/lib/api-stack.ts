@@ -92,23 +92,20 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadWriteData(createTaskFn);
 
-    // ── Lambda: Get Appointments ──
-    const getAppointmentsFn = new lambdaNode.NodejsFunction(this, 'GetAppointmentsFn', {
-      ...lambdaDefaults,
-      functionName: `vantage-get-appointments-${props.stageName}`,
-      entry: path.join(lambdaDir, 'api', 'get-appointments.ts'),
-      handler: 'handler',
-    });
-    props.table.grantReadData(getAppointmentsFn);
+    // ── Acuity environment (only for Acuity Lambdas) ──
+    const acuityEnv: Record<string, string> = {
+      ACUITY_USER_ID: process.env.ACUITY_USER_ID || '',
+      ACUITY_API_KEY: process.env.ACUITY_API_KEY || '',
+    };
 
-    // ── Lambda: Create Appointment ──
-    const createAppointmentFn = new lambdaNode.NodejsFunction(this, 'CreateAppointmentFn', {
+    // ── Lambda: List Acuity Appointments ──
+    const listAcuityAppointmentsFn = new lambdaNode.NodejsFunction(this, 'ListAcuityAppointmentsFn', {
       ...lambdaDefaults,
-      functionName: `vantage-create-appointment-${props.stageName}`,
-      entry: path.join(lambdaDir, 'api', 'create-appointment.ts'),
+      functionName: `vantage-list-acuity-appointments-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'list-acuity-appointments.ts'),
       handler: 'handler',
+      environment: { ...commonEnv, ...acuityEnv },
     });
-    props.table.grantReadWriteData(createAppointmentFn);
 
     // ── Lambda: Get Dictation ──
     const getDictationFn = new lambdaNode.NodejsFunction(this, 'GetDictationFn', {
@@ -318,10 +315,9 @@ export class ApiStack extends cdk.Stack {
     const taskById = tasks.addResource('{task_id}');
     taskById.addMethod('PATCH', new apigateway.LambdaIntegration(updateTaskFn), authMethodOptions);
 
-    // GET /appointments  &  POST /appointments
+    // GET /appointments (Acuity Scheduling proxy)
     const appointments = this.api.root.addResource('appointments');
-    appointments.addMethod('GET', new apigateway.LambdaIntegration(getAppointmentsFn), authMethodOptions);
-    appointments.addMethod('POST', new apigateway.LambdaIntegration(createAppointmentFn), authMethodOptions);
+    appointments.addMethod('GET', new apigateway.LambdaIntegration(listAcuityAppointmentsFn), authMethodOptions);
 
     // GET /dictations/{dictation_id}
     const dictations = this.api.root.addResource('dictations');

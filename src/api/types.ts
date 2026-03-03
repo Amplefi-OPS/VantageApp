@@ -207,15 +207,21 @@ export interface CreateNoteRequest {
   body: string
 }
 
-export interface CreateAppointmentRequest {
-  patientId?: string
+export interface Appointment {
+  id: string
   patientName: string
-  type: 'in_office' | 'telehealth' | 'phone'
+  patientPhone: string
+  patientEmail: string
+  type: string // "New Patient" | "Returning Patient"
   startTime: string
   endTime: string
-  reason: string
-  notes?: string
-  status?: string
+  duration: number
+  status: 'scheduled' | 'cancelled' | 'no_show'
+  notes: string
+  calendar: string
+  location: string
+  acuityTypeId: number
+  createdAt: string
 }
 
 export interface SendFaxRequest {
