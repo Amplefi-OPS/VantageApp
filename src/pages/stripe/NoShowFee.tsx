@@ -39,9 +39,13 @@ export default function NoShowFee() {
           const match = res.customers[0]
           setCustomerId(match.id)
           setCustomerName(match.name || match.email)
+        } else {
+          // No match — pre-fill manual search with name
+          setCustomerSearch(preselectedName)
         }
       } catch {
-        // fall through to manual search
+        // Auto-search failed — pre-fill manual search with name
+        if (!cancelled) setCustomerSearch(preselectedName)
       } finally {
         if (!cancelled) setAutoSearching(false)
       }

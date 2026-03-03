@@ -57,9 +57,13 @@ export default function ChargePatient() {
           setCustomerId(match.id)
           setCustomerName(match.name || match.email)
           setCustomer(match)
+        } else {
+          // No match — pre-fill manual search with name
+          setCustomerSearch(preselectedName)
         }
       } catch {
-        // fall through to manual search
+        // Auto-search failed — pre-fill manual search with name
+        if (!cancelled) setCustomerSearch(preselectedName)
       } finally {
         if (!cancelled) setAutoSearching(false)
       }

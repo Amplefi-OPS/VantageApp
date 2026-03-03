@@ -12,11 +12,15 @@ const ACUITY_USER_ID = process.env.ACUITY_USER_ID!;
 const ACUITY_API_KEY = process.env.ACUITY_API_KEY!;
 const ACUITY_BASE = 'https://acuityscheduling.com/api/v1';
 
-async function acuityPut(path: string): Promise<unknown> {
+async function acuityPut(path: string, body?: Record<string, unknown>): Promise<unknown> {
   const auth = Buffer.from(`${ACUITY_USER_ID}:${ACUITY_API_KEY}`).toString('base64');
   const res = await fetch(`${ACUITY_BASE}${path}`, {
     method: 'PUT',
-    headers: { Authorization: `Basic ${auth}` },
+    headers: {
+      Authorization: `Basic ${auth}`,
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) {
     const text = await res.text();
@@ -31,7 +35,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const appointmentId = event.pathParameters?.id;
     if (!appointmentId) return badRequest('Missing appointment ID');
 
-    await acuityPut(`/appointments/${appointmentId}/no-show`);
+    await acuityPut(`/appointments/${appointmentId}`, { noShow: true });
     return success({ noShow: true, appointmentId });
   } catch (err) {
     console.error('No-show Acuity appointment error:', err);
