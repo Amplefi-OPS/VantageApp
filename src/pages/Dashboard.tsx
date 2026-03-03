@@ -8,7 +8,7 @@ import {
   Settings,
   AlertTriangle,
 } from 'lucide-react'
-import { getDashboardCounts } from '../api/endpoints'
+import { getDashboardCounts, listVoicemails } from '../api/endpoints'
 import { Card } from '../components/ui/Card'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 
@@ -21,14 +21,21 @@ export default function Dashboard() {
     retry: 1,
   })
 
+  const { data: voicemails } = useQuery({
+    queryKey: ['voicemails'],
+    queryFn: listVoicemails,
+    refetchInterval: 30000,
+    retry: 1,
+  })
+
   if (isLoading) return <LoadingSpinner />
 
   const tiles = [
     {
       label: 'Voicemails',
       icon: Phone,
-      count: counts?.totalVoicemails,
-      countLabel: 'unopened',
+      count: voicemails?.filter((v) => v.status === 'Unattached').length,
+      countLabel: 'unread',
       color: 'bg-blue-50 text-blue-700',
       path: '/voicemails',
     },
