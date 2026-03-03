@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -7,9 +7,11 @@ import { Input } from '../components/ui/Input'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Tabs } from '../components/ui/Tabs'
-import { Calendar, Clock, CreditCard, UserPlus, UserCheck } from 'lucide-react'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { useToast } from '../components/ui/Toast'
+import { Calendar, Clock, CreditCard, UserPlus, UserCheck, XCircle } from 'lucide-react'
 import { Button } from '../components/ui/Button'
-import { listAppointments } from '../api/endpoints'
+import { listAppointments, cancelAppointment } from '../api/endpoints'
 import type { Appointment } from '../api/types'
 
 const statusVariants: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'> = {
@@ -40,10 +42,28 @@ function thirtyDaysAhead(dateStr: string): string {
 
 export default function Appointments() {
   const navigate = useNavigate()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
   const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const [selectedDate, setSelectedDate] = useState(today)
   const [filter, setFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => cancelAppointment(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
+      toast('success', 'Appointment cancelled')
+      setCancellingId(null)
+    },
+    onError: (err) => {
+      toast('error', `Failed to cancel: ${(err as Error).message}`)
+      setCancellingId(null)
+    },
+  })
 
   // Daily query — for "All" and "Cancelled" tabs
   const { data: dayAppointments = [], isLoading: dayLoading } = useQuery({
@@ -176,7 +196,7 @@ export default function Appointments() {
                       <p className="text-xs text-warm-gray mt-1 italic">{appt.notes}</p>
                     )}
                     {appt.status !== 'cancelled' && (
-                      <div className="mt-3">
+                      <div className="mt-3 flex gap-2">
                         <Button
                           size="sm"
                           variant="secondary"
@@ -187,6 +207,16 @@ export default function Appointments() {
                         >
                           Collect Payment
                         </Button>
+                        {appt.status === 'scheduled' && (
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            icon={<XCircle size={14} />}
+                            onClick={() => setCancellingId(appt.id)}
+                          >
+                            Cancel
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -196,6 +226,17 @@ export default function Appointments() {
           })
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!cancellingId}
+        onClose={() => setCancellingId(null)}
+        onConfirm={() => cancellingId && cancelMutation.mutate(cancellingId)}
+        title="Cancel Appointment?"
+        message="This will cancel the appointment in Acuity Scheduling. This action cannot be undone."
+        confirmLabel="Cancel Appointment"
+        danger
+        loading={cancelMutation.isPending}
+      />
     </div>
   )
 }

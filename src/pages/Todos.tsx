@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ClipboardList,
@@ -8,6 +9,7 @@ import {
   UserCircle,
   ChevronDown,
   ChevronUp,
+  DollarSign,
 } from 'lucide-react'
 import { listTodos, updateTodo, listPatients } from '../api/endpoints'
 import type { Todo } from '../api/types'
@@ -47,6 +49,7 @@ const priorityBadge: Record<string, 'red' | 'yellow' | 'gray'> = {
 }
 
 export default function Todos() {
+  const navigate = useNavigate()
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState('all')
@@ -216,6 +219,22 @@ export default function Todos() {
                       Due: {new Date(todo.dueDate).toLocaleDateString()}
                       {isOverdue(todo.dueDate) && ' (Overdue)'}
                     </p>
+                  )}
+
+                  {todo.status === 'Open' && todo.dueDate && isOverdue(todo.dueDate) && todo.patientId && (
+                    <div className="mt-2">
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        icon={<DollarSign size={14} />}
+                        onClick={() => {
+                          const name = getPatientName(todo.patientId)
+                          navigate(`/billing/no-show${name ? `?name=${encodeURIComponent(name)}` : ''}`)
+                        }}
+                      >
+                        Charge $30 No-Show Fee
+                      </Button>
+                    </div>
                   )}
 
                   {todo.notes && (

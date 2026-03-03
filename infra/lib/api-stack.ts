@@ -108,6 +108,15 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadData(listAcuityAppointmentsFn);
 
+    // ── Lambda: Cancel Acuity Appointment ──
+    const cancelAcuityAppointmentFn = new lambdaNode.NodejsFunction(this, 'CancelAcuityAppointmentFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-cancel-acuity-appointment-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'cancel-acuity-appointment.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, ...acuityEnv },
+    });
+
     // ── Lambda: Get Dictation ──
     const getDictationFn = new lambdaNode.NodejsFunction(this, 'GetDictationFn', {
       ...lambdaDefaults,
@@ -319,6 +328,11 @@ export class ApiStack extends cdk.Stack {
     // GET /appointments (Acuity Scheduling proxy)
     const appointments = this.api.root.addResource('appointments');
     appointments.addMethod('GET', new apigateway.LambdaIntegration(listAcuityAppointmentsFn), authMethodOptions);
+
+    // PUT /appointments/{id}/cancel
+    const appointmentById = appointments.addResource('{id}');
+    const cancelAppointment = appointmentById.addResource('cancel');
+    cancelAppointment.addMethod('PUT', new apigateway.LambdaIntegration(cancelAcuityAppointmentFn), authMethodOptions);
 
     // GET /dictations/{dictation_id}
     const dictations = this.api.root.addResource('dictations');

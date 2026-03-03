@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { UserX, CheckCircle, ArrowLeft, Search } from 'lucide-react'
@@ -8,6 +8,7 @@ import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { TextArea } from '../../components/ui/Input'
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
 import { useToast } from '../../components/ui/Toast'
 
 export default function NoShowFee() {
@@ -24,6 +25,29 @@ export default function NoShowFee() {
   const [customerSearch, setCustomerSearch] = useState('')
   const [searchResults, setSearchResults] = useState<StripeCustomer[]>([])
   const [searching, setSearching] = useState(false)
+  const [autoSearching, setAutoSearching] = useState(!!preselectedName && !preselectedId)
+
+  // Auto-search Stripe by name when arriving from a todo
+  useEffect(() => {
+    if (!preselectedName || preselectedId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await searchCustomers(preselectedName)
+        if (cancelled) return
+        if (res.customers && res.customers.length > 0) {
+          const match = res.customers[0]
+          setCustomerId(match.id)
+          setCustomerName(match.name || match.email)
+        }
+      } catch {
+        // fall through to manual search
+      } finally {
+        if (!cancelled) setAutoSearching(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [preselectedName, preselectedId])
 
   const noShowMutation = useMutation({
     mutationFn: () =>
@@ -102,7 +126,12 @@ export default function NoShowFee() {
         {/* Customer selection */}
         <Card>
           <h3 className="font-semibold text-charcoal mb-3">Patient</h3>
-          {customerId ? (
+          {autoSearching ? (
+            <div className="flex items-center gap-3 py-2">
+              <LoadingSpinner />
+              <span className="text-sm text-warm-gray">Finding patient...</span>
+            </div>
+          ) : customerId ? (
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-charcoal">{customerName}</p>

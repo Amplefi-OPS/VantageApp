@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   Phone,
@@ -19,6 +19,8 @@ import {
   AlertTriangle,
   StickyNote,
   CreditCard,
+  XCircle,
+  DollarSign,
 } from 'lucide-react'
 import {
   getPatient,
@@ -26,6 +28,7 @@ import {
   listNotes,
   listVoicemails,
   listPatientAppointments,
+  cancelAppointment,
 } from '../api/endpoints'
 import type { Appointment } from '../api/types'
 import { Card } from '../components/ui/Card'
@@ -34,14 +37,34 @@ import { Button } from '../components/ui/Button'
 import { Tabs } from '../components/ui/Tabs'
 import { EmptyState } from '../components/ui/EmptyState'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
-import { formatDate, formatDateTime, formatDuration, timeAgo } from '../lib/utils'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { useToast } from '../components/ui/Toast'
+import { formatDate, formatDateTime, formatDuration, timeAgo, isOverdue } from '../lib/utils'
 import DictationMode from './DictationMode'
 
 export default function PatientProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
   const [tab, setTab] = useState('overview')
   const [dictating, setDictating] = useState(false)
+  const [cancellingApptId, setCancellingApptId] = useState<string | null>(null)
+
+  const cancelMutation = useMutation({
+    mutationFn: (apptId: string) => cancelAppointment(apptId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patient-appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
+      toast('success', 'Appointment cancelled')
+      setCancellingApptId(null)
+    },
+    onError: (err) => {
+      toast('error', `Failed to cancel: ${(err as Error).message}`)
+      setCancellingApptId(null)
+    },
+  })
 
   const { data: patient, isLoading } = useQuery({
     queryKey: ['patient', id],
@@ -381,7 +404,7 @@ export default function PatientProfile() {
                         <p className="text-sm text-warm-gray mt-1 italic">{appt.notes}</p>
                       )}
                       {appt.status !== 'cancelled' && (
-                        <div className="mt-3">
+                        <div className="mt-3 flex gap-2">
                           <Button
                             size="sm"
                             variant="secondary"
@@ -394,6 +417,16 @@ export default function PatientProfile() {
                           >
                             Collect Payment
                           </Button>
+                          {appt.status === 'scheduled' && !isPast && (
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              icon={<XCircle size={14} />}
+                              onClick={() => setCancellingApptId(appt.id)}
+                            >
+                              Cancel
+                            </Button>
+                          )}
                         </div>
                       )}
                     </Card>
@@ -475,6 +508,22 @@ export default function PatientProfile() {
                     <p className="font-medium">{t.title}</p>
                     {t.notes && <p className="text-sm text-warm-gray mt-1">{t.notes}</p>}
                     <p className="text-xs text-warm-gray mt-1">{formatDateTime(t.createdAt)}</p>
+                    {t.status === 'Open' && t.dueDate && isOverdue(t.dueDate) && (
+                      <div className="mt-2">
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          icon={<DollarSign size={14} />}
+                          onClick={() =>
+                            navigate(
+                              `/billing/no-show?name=${encodeURIComponent(`${patient.firstName} ${patient.lastName}`)}`
+                            )
+                          }
+                        >
+                          Charge $30 No-Show Fee
+                        </Button>
+                      </div>
+                    )}
                   </Card>
                 ))}
               </div>
@@ -531,6 +580,17 @@ export default function PatientProfile() {
           />
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!cancellingApptId}
+        onClose={() => setCancellingApptId(null)}
+        onConfirm={() => cancellingApptId && cancelMutation.mutate(cancellingApptId)}
+        title="Cancel Appointment?"
+        message="This will cancel the appointment in Acuity Scheduling. This action cannot be undone."
+        confirmLabel="Cancel Appointment"
+        danger
+        loading={cancelMutation.isPending}
+      />
     </div>
   )
 }
