@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import {
   getPatient,
-  getPatientTodos,
+  listTodos,
   listNotes,
   listVoicemails,
   listPatientAppointments,
@@ -63,11 +63,13 @@ export default function PatientProfile() {
     return patientDigits === callerDigits
   })
 
-  const { data: todos } = useQuery({
-    queryKey: ['patient-todos', id],
-    queryFn: () => getPatientTodos(id!),
-    enabled: !!id && tab === 'todos',
+  const { data: allTodos } = useQuery({
+    queryKey: ['todos'],
+    queryFn: listTodos,
+    enabled: tab === 'todos',
   })
+
+  const todos = allTodos?.filter((t) => t.patientId === id)
 
   const { data: notes, refetch: refetchNotes } = useQuery({
     queryKey: ['patient-notes', id],
