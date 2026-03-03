@@ -370,12 +370,13 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       },
     });
 
-    const attachMap = new Map<string, { type: string; patientId?: string; category?: string }>();
+    const attachMap = new Map<string, { type: string; patientId?: string; category?: string; status?: string }>();
     for (const item of attachments) {
       attachMap.set(item.voicemailId as string, {
         type: item.attachmentType as string,
         patientId: item.patientId as string | undefined,
         category: item.category as string | undefined,
+        status: item.status as string | undefined,
       });
     }
 
@@ -516,7 +517,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         attachedTo: attachment && attachment.type !== 'none'
           ? { type: attachment.type, patientId: attachment.patientId }
           : { type: 'none' },
-        status: attachment && attachment.type !== 'none' ? 'Attached' : 'Unattached',
+        status: attachment?.status === 'Archived' ? 'Archived'
+          : attachment && attachment.type !== 'none' ? 'Attached' : 'Unattached',
       };
     });
 

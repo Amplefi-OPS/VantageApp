@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Phone, Search, User, UserPlus, Play, Pause } from 'lucide-react'
-import { listVoicemails, listPatients, attachVoicemail, createPatient } from '../api/endpoints'
+import { Phone, Search, User, UserPlus, Play, Pause, Archive } from 'lucide-react'
+import { listVoicemails, listPatients, attachVoicemail, archiveVoicemail, createPatient } from '../api/endpoints'
 import type { Voicemail, Patient } from '../api/types'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -96,14 +96,27 @@ export default function Voicemails() {
     onError: () => toast('error', 'Failed to create patient. Please try again.'),
   })
 
-  const filtered = voicemails?.filter((vm) => {
-    if (tab === 'unattached') return vm.attachedTo.type === 'none'
-    if (tab === 'attached') return vm.attachedTo.type !== 'none'
-    return true
+  const archiveMutation = useMutation({
+    mutationFn: archiveVoicemail,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['voicemails'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
+      toast('success', 'Voicemail archived!')
+    },
+    onError: () => toast('error', 'Failed to archive voicemail. Please try again.'),
   })
 
-  const unattachedCount = voicemails?.filter((v) => v.attachedTo.type === 'none').length ?? 0
-  const attachedCount = voicemails?.filter((v) => v.attachedTo.type !== 'none').length ?? 0
+  const filtered = voicemails?.filter((vm) => {
+    if (tab === 'unattached') return vm.attachedTo.type === 'none' && vm.status !== 'Archived'
+    if (tab === 'attached') return vm.attachedTo.type !== 'none' && vm.status !== 'Archived'
+    if (tab === 'archived') return vm.status === 'Archived'
+    return vm.status !== 'Archived'
+  })
+
+  const unattachedCount = voicemails?.filter((v) => v.attachedTo.type === 'none' && v.status !== 'Archived').length ?? 0
+  const attachedCount = voicemails?.filter((v) => v.attachedTo.type !== 'none' && v.status !== 'Archived').length ?? 0
+  const archivedCount = voicemails?.filter((v) => v.status === 'Archived').length ?? 0
+  const activeCount = (voicemails?.length ?? 0) - archivedCount
 
   const filteredPatients = patients?.filter((p) => {
     const q = searchQuery.toLowerCase()
@@ -151,9 +164,10 @@ export default function Voicemails() {
 
       <Tabs
         tabs={[
-          { key: 'all', label: 'All', count: voicemails?.length },
+          { key: 'all', label: 'All', count: activeCount },
           { key: 'unattached', label: 'Unattached', count: unattachedCount },
           { key: 'attached', label: 'Attached', count: attachedCount },
+          { key: 'archived', label: 'Archived', count: archivedCount },
         ]}
         active={tab}
         onChange={setTab}
@@ -199,15 +213,27 @@ export default function Voicemails() {
                 )}
               </div>
 
-              {vm.attachedTo.type === 'none' && (
-                <Button
-                  size="sm"
-                  onClick={() => openAttachModal(vm)}
-                  icon={<UserPlus size={16} />}
-                >
-                  Attach
-                </Button>
-              )}
+              <div className="flex flex-col gap-2 shrink-0">
+                {vm.attachedTo.type === 'none' && vm.status !== 'Archived' && (
+                  <Button
+                    size="sm"
+                    onClick={() => openAttachModal(vm)}
+                    icon={<UserPlus size={16} />}
+                  >
+                    Attach
+                  </Button>
+                )}
+                {vm.status !== 'Archived' && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => archiveMutation.mutate(vm.id)}
+                    icon={<Archive size={16} />}
+                  >
+                    Archive
+                  </Button>
+                )}
+              </div>
             </div>
           </Card>
         ))}

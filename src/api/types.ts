@@ -77,7 +77,7 @@ export const VoicemailSchema = z.object({
     type: AttachmentType,
     patientId: z.string().optional(),
   }),
-  status: z.enum(['Unattached', 'Attached', 'Reviewed']),
+  status: z.enum(['Unattached', 'Attached', 'Reviewed', 'Archived']),
 })
 export type Voicemail = z.infer<typeof VoicemailSchema>
 

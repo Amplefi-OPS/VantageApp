@@ -64,6 +64,10 @@ export async function attachVoicemail(req: AttachVoicemailRequest): Promise<Voic
   return apiPost<Voicemail>('/voicemails/attach', req)
 }
 
+export async function archiveVoicemail(voicemailId: string): Promise<void> {
+  return apiPatch<void>(`/voicemails/${voicemailId}/archive`, {})
+}
+
 // ── Todos (backed by /tasks API) ───────────────────────
 
 interface TaskApiItem {

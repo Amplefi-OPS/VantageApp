@@ -216,6 +216,15 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadWriteData(attachVoicemailFn);
 
+    // ── Lambda: Archive Voicemail ──
+    const archiveVoicemailFn = new lambdaNode.NodejsFunction(this, 'ArchiveVoicemailFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-archive-voicemail-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'archive-voicemail.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadWriteData(archiveVoicemailFn);
+
     // ── Lambda: List Faxes ──
     const listFaxesFn = new lambdaNode.NodejsFunction(this, 'ListFaxesFn', {
       ...lambdaDefaults,
@@ -338,10 +347,13 @@ export class ApiStack extends cdk.Stack {
     const dashboardCounts = dashboard.addResource('counts');
     dashboardCounts.addMethod('GET', new apigateway.LambdaIntegration(dashboardCountsFn), authMethodOptions);
 
-    // POST /voicemails/attach
+    // POST /voicemails/attach  &  PATCH /voicemails/{id}/archive
     const voicemails = this.api.root.addResource('voicemails');
     const attach = voicemails.addResource('attach');
     attach.addMethod('POST', new apigateway.LambdaIntegration(attachVoicemailFn), authMethodOptions);
+    const voicemailById = voicemails.addResource('{id}');
+    const archiveResource = voicemailById.addResource('archive');
+    archiveResource.addMethod('PATCH', new apigateway.LambdaIntegration(archiveVoicemailFn), authMethodOptions);
 
     // GET /faxes  &  POST /faxes
     const faxes = this.api.root.addResource('faxes');
