@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -21,6 +21,8 @@ import {
   CreditCard,
   XCircle,
   DollarSign,
+  UserX,
+  CheckCircle,
 } from 'lucide-react'
 import {
   getPatient,
@@ -29,6 +31,8 @@ import {
   listVoicemails,
   listPatientAppointments,
   cancelAppointment,
+  markNoShow,
+  createTodo,
 } from '../api/endpoints'
 import type { Appointment } from '../api/types'
 import { Card } from '../components/ui/Card'
@@ -50,6 +54,8 @@ export default function PatientProfile() {
   const [tab, setTab] = useState('overview')
   const [dictating, setDictating] = useState(false)
   const [cancellingApptId, setCancellingApptId] = useState<string | null>(null)
+  const [noShowAppt, setNoShowAppt] = useState<Appointment | null>(null)
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), [])
 
   const cancelMutation = useMutation({
     mutationFn: (apptId: string) => cancelAppointment(apptId),
@@ -63,6 +69,35 @@ export default function PatientProfile() {
     onError: (err) => {
       toast('error', `Failed to cancel: ${(err as Error).message}`)
       setCancellingApptId(null)
+    },
+  })
+
+  const noShowMutation = useMutation({
+    mutationFn: async (appt: Appointment) => {
+      await markNoShow(appt.id)
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      await createTodo({
+        type: 'General',
+        title: `No-show fee — ${appt.patientName}`,
+        status: 'Open',
+        priority: 'High',
+        patientId: appt.patientId || undefined,
+        dueDate: tomorrow.toISOString(),
+        notes: `Patient did not show for ${appt.type} appointment. Charge $30 no-show fee.`,
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patient-appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['todos'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
+      toast('success', 'Marked as no-show. To-do created for $30 fee.')
+      setNoShowAppt(null)
+    },
+    onError: (err) => {
+      toast('error', `Failed: ${(err as Error).message}`)
+      setNoShowAppt(null)
     },
   })
 
@@ -403,46 +438,88 @@ export default function PatientProfile() {
                       {appt.notes && (
                         <p className="text-sm text-warm-gray mt-1 italic">{appt.notes}</p>
                       )}
-                      {appt.status !== 'cancelled' && (
-                        <div className="mt-3 flex gap-2 flex-wrap">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            icon={<CreditCard size={14} />}
-                            onClick={() =>
-                              navigate(
-                                `/billing/charge?name=${encodeURIComponent(appt.patientName)}`
-                              )
-                            }
-                          >
-                            Collect Payment
-                          </Button>
-                          {appt.status === 'scheduled' && !isPast && (
+                      {(() => {
+                        const apptDate = appt.startTime.slice(0, 10)
+                        const isApptToday = apptDate === todayStr
+                        return appt.status !== 'cancelled' && (
+                          <div className="mt-3 flex gap-2 flex-wrap">
                             <Button
                               size="sm"
-                              variant="danger"
-                              icon={<XCircle size={14} />}
-                              onClick={() => setCancellingApptId(appt.id)}
-                            >
-                              Cancel
-                            </Button>
-                          )}
-                          {appt.status === 'scheduled' && isPast && (
-                            <Button
-                              size="sm"
-                              variant="danger"
-                              icon={<DollarSign size={14} />}
+                              variant="secondary"
+                              icon={<CreditCard size={14} />}
                               onClick={() =>
                                 navigate(
-                                  `/billing/no-show?name=${encodeURIComponent(appt.patientName)}`
+                                  `/billing/charge?name=${encodeURIComponent(appt.patientName)}`
                                 )
                               }
                             >
-                              Charge $30 No-Show Fee
+                              Collect Payment
                             </Button>
-                          )}
-                        </div>
-                      )}
+                            {/* Future (not today): Cancel */}
+                            {appt.status === 'scheduled' && !isPast && !isApptToday && (
+                              <Button
+                                size="sm"
+                                variant="danger"
+                                icon={<XCircle size={14} />}
+                                onClick={() => setCancellingApptId(appt.id)}
+                              >
+                                Cancel
+                              </Button>
+                            )}
+                            {/* Day-of: No Show + Complete */}
+                            {appt.status === 'scheduled' && isApptToday && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="danger"
+                                  icon={<UserX size={14} />}
+                                  onClick={() => setNoShowAppt(appt)}
+                                >
+                                  No Show
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  icon={<CheckCircle size={14} />}
+                                  onClick={() => toast('success', `${appt.patientName}'s appointment marked complete`)}
+                                >
+                                  Complete
+                                </Button>
+                              </>
+                            )}
+                            {/* Past (not today) + still scheduled: No-show fee */}
+                            {appt.status === 'scheduled' && isPast && !isApptToday && (
+                              <Button
+                                size="sm"
+                                variant="danger"
+                                icon={<DollarSign size={14} />}
+                                onClick={() =>
+                                  navigate(
+                                    `/billing/no-show?name=${encodeURIComponent(appt.patientName)}`
+                                  )
+                                }
+                              >
+                                Charge $30 No-Show Fee
+                              </Button>
+                            )}
+                            {/* Already marked no-show: charge fee */}
+                            {appt.status === 'no_show' && (
+                              <Button
+                                size="sm"
+                                variant="danger"
+                                icon={<DollarSign size={14} />}
+                                onClick={() =>
+                                  navigate(
+                                    `/billing/no-show?name=${encodeURIComponent(appt.patientName)}`
+                                  )
+                                }
+                              >
+                                Charge $30 No-Show Fee
+                              </Button>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </Card>
                   )
                 })}
@@ -604,6 +681,17 @@ export default function PatientProfile() {
         confirmLabel="Cancel Appointment"
         danger
         loading={cancelMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={!!noShowAppt}
+        onClose={() => setNoShowAppt(null)}
+        onConfirm={() => noShowAppt && noShowMutation.mutate(noShowAppt)}
+        title="Mark as No-Show?"
+        message="This will mark the appointment as a no-show in Acuity and create a to-do to charge the $30 no-show fee."
+        confirmLabel="Mark No-Show"
+        danger
+        loading={noShowMutation.isPending}
       />
     </div>
   )

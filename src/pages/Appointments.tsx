@@ -9,9 +9,9 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { Tabs } from '../components/ui/Tabs'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useToast } from '../components/ui/Toast'
-import { Calendar, Clock, CreditCard, DollarSign, UserPlus, UserCheck, XCircle } from 'lucide-react'
+import { Calendar, Clock, CreditCard, CheckCircle, DollarSign, UserPlus, UserCheck, UserX, XCircle } from 'lucide-react'
 import { Button } from '../components/ui/Button'
-import { listAppointments, cancelAppointment } from '../api/endpoints'
+import { listAppointments, cancelAppointment, markNoShow, createTodo } from '../api/endpoints'
 import type { Appointment } from '../api/types'
 
 const statusVariants: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'> = {
@@ -49,6 +49,7 @@ export default function Appointments() {
   const [filter, setFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
   const [cancellingId, setCancellingId] = useState<string | null>(null)
+  const [noShowAppt, setNoShowAppt] = useState<Appointment | null>(null)
 
   const cancelMutation = useMutation({
     mutationFn: (id: string) => cancelAppointment(id),
@@ -62,6 +63,35 @@ export default function Appointments() {
     onError: (err) => {
       toast('error', `Failed to cancel: ${(err as Error).message}`)
       setCancellingId(null)
+    },
+  })
+
+  const noShowMutation = useMutation({
+    mutationFn: async (appt: Appointment) => {
+      await markNoShow(appt.id)
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      await createTodo({
+        type: 'General',
+        title: `No-show fee — ${appt.patientName}`,
+        status: 'Open',
+        priority: 'High',
+        patientId: appt.patientId || undefined,
+        dueDate: tomorrow.toISOString(),
+        notes: `Patient did not show for ${appt.type} appointment. Charge $30 no-show fee.`,
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
+      queryClient.invalidateQueries({ queryKey: ['todos'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
+      toast('success', 'Marked as no-show. To-do created for $30 fee.')
+      setNoShowAppt(null)
+    },
+    onError: (err) => {
+      toast('error', `Failed: ${(err as Error).message}`)
+      setNoShowAppt(null)
     },
   })
 
@@ -155,6 +185,8 @@ export default function Appointments() {
           filtered.map((appt) => {
             const TypeIcon = typeIcons[appt.type] || Calendar
             const isPast = new Date(appt.endTime) < new Date()
+            const apptDate = appt.startTime.slice(0, 10)
+            const isApptToday = apptDate === today
             return (
               <Card key={appt.id} className="hover:border-slate-blue/30 transition-colors">
                 <div className="flex items-start gap-4">
@@ -208,7 +240,8 @@ export default function Appointments() {
                         >
                           Collect Payment
                         </Button>
-                        {appt.status === 'scheduled' && !isPast && (
+                        {/* Future (not today): Cancel */}
+                        {appt.status === 'scheduled' && !isPast && !isApptToday && (
                           <Button
                             size="sm"
                             variant="danger"
@@ -218,7 +251,42 @@ export default function Appointments() {
                             Cancel
                           </Button>
                         )}
-                        {appt.status === 'scheduled' && isPast && (
+                        {/* Day-of: No Show + Complete */}
+                        {appt.status === 'scheduled' && isApptToday && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              icon={<UserX size={14} />}
+                              onClick={() => setNoShowAppt(appt)}
+                            >
+                              No Show
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="primary"
+                              icon={<CheckCircle size={14} />}
+                              onClick={() => toast('success', `${appt.patientName}'s appointment marked complete`)}
+                            >
+                              Complete
+                            </Button>
+                          </>
+                        )}
+                        {/* Past (not today) + still scheduled: No-show fee */}
+                        {appt.status === 'scheduled' && isPast && !isApptToday && (
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            icon={<DollarSign size={14} />}
+                            onClick={() =>
+                              navigate(`/billing/no-show?name=${encodeURIComponent(appt.patientName)}`)
+                            }
+                          >
+                            Charge $30 No-Show Fee
+                          </Button>
+                        )}
+                        {/* Already marked no-show: charge fee */}
+                        {appt.status === 'no_show' && (
                           <Button
                             size="sm"
                             variant="danger"
@@ -249,6 +317,17 @@ export default function Appointments() {
         confirmLabel="Cancel Appointment"
         danger
         loading={cancelMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={!!noShowAppt}
+        onClose={() => setNoShowAppt(null)}
+        onConfirm={() => noShowAppt && noShowMutation.mutate(noShowAppt)}
+        title="Mark as No-Show?"
+        message="This will mark the appointment as a no-show in Acuity and create a to-do to charge the $30 no-show fee."
+        confirmLabel="Mark No-Show"
+        danger
+        loading={noShowMutation.isPending}
       />
     </div>
   )

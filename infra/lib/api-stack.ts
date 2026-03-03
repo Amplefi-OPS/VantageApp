@@ -117,6 +117,15 @@ export class ApiStack extends cdk.Stack {
       environment: { ...commonEnv, ...acuityEnv },
     });
 
+    // ── Lambda: No-Show Acuity Appointment ──
+    const noshowAcuityAppointmentFn = new lambdaNode.NodejsFunction(this, 'NoshowAcuityAppointmentFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-noshow-acuity-appointment-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'noshow-acuity-appointment.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, ...acuityEnv },
+    });
+
     // ── Lambda: Get Dictation ──
     const getDictationFn = new lambdaNode.NodejsFunction(this, 'GetDictationFn', {
       ...lambdaDefaults,
@@ -333,6 +342,10 @@ export class ApiStack extends cdk.Stack {
     const appointmentById = appointments.addResource('{id}');
     const cancelAppointment = appointmentById.addResource('cancel');
     cancelAppointment.addMethod('PUT', new apigateway.LambdaIntegration(cancelAcuityAppointmentFn), authMethodOptions);
+
+    // PUT /appointments/{id}/no-show
+    const noshowAppointment = appointmentById.addResource('no-show');
+    noshowAppointment.addMethod('PUT', new apigateway.LambdaIntegration(noshowAcuityAppointmentFn), authMethodOptions);
 
     // GET /dictations/{dictation_id}
     const dictations = this.api.root.addResource('dictations');

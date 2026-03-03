@@ -61,6 +61,10 @@ export async function cancelAppointment(id: string): Promise<{ cancelled: boolea
   return apiPut<{ cancelled: boolean; appointmentId: string }>(`/appointments/${id}/cancel`, {})
 }
 
+export async function markNoShow(id: string): Promise<{ noShow: boolean; appointmentId: string }> {
+  return apiPut<{ noShow: boolean; appointmentId: string }>(`/appointments/${id}/no-show`, {})
+}
+
 // ── Voicemails (Zoom Phone) ─────────────────────────────
 
 export async function listVoicemails(): Promise<Voicemail[]> {
