@@ -69,6 +69,23 @@ export async function zoomGet<T = unknown>(path: string, params?: Record<string,
   return res.json() as Promise<T>;
 }
 
+/** Download a binary file from a Zoom URL (e.g. voicemail audio). */
+export async function zoomDownload(url: string): Promise<{ buffer: Buffer; contentType: string }> {
+  const token = await getAccessToken();
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Zoom download error (${res.status}): ${url}`);
+  }
+
+  const contentType = res.headers.get('content-type') || 'audio/mpeg';
+  const arrayBuffer = await res.arrayBuffer();
+  return { buffer: Buffer.from(arrayBuffer), contentType };
+}
+
 /** Make an authenticated POST request to the Zoom API. */
 export async function zoomPost<T = unknown>(path: string, body: unknown): Promise<T> {
   const token = await getAccessToken();

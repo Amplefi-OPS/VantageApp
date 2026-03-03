@@ -191,9 +191,12 @@ export class ApiStack extends cdk.Stack {
       functionName: `vantage-list-zoom-voicemails-${props.stageName}`,
       entry: path.join(lambdaDir, 'api', 'list-zoom-voicemails.ts'),
       handler: 'handler',
+      timeout: cdk.Duration.seconds(60), // longer timeout for downloading audio to S3
       environment: { ...commonEnv, ...zoomEnv },
     });
     props.table.grantReadWriteData(listZoomVoicemailsFn);
+    props.audioBucket.grantReadWrite(listZoomVoicemailsFn);
+    props.kmsKey.grantEncryptDecrypt(listZoomVoicemailsFn);
 
     // ── Lambda: List Zoom Call Logs ──
     const listZoomCallLogsFn = new lambdaNode.NodejsFunction(this, 'ListZoomCallLogsFn', {

@@ -12,10 +12,17 @@
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { randomUUID } from 'crypto';
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getCallerIdentity } from '../shared/auth';
 import { putItem, queryItems, writeAuditLog } from '../shared/dynamo';
-import { zoomGet } from '../shared/zoom';
+import { zoomGet, zoomDownload } from '../shared/zoom';
 import { success, serverError } from '../shared/response';
+
+const s3 = new S3Client({});
+const AUDIO_BUCKET = process.env.AUDIO_BUCKET!;
+const KMS_KEY_ARN = process.env.KMS_KEY_ARN!;
+const PRESIGN_EXPIRY = parseInt(process.env.PRESIGN_EXPIRY_SECONDS || '900', 10);
 
 // ── Zoom API types ──
 
@@ -116,6 +123,53 @@ function resolveCategory(calleeName: string, calleeNumber: string): string {
 function normalizePhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
   return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+
+// ── S3 audio caching ──
+
+/** Check if audio already exists in S3 */
+async function audioExistsInS3(key: string): Promise<boolean> {
+  try {
+    await s3.send(new HeadObjectCommand({ Bucket: AUDIO_BUCKET, Key: key }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Download voicemail audio from Zoom and store in S3, return presigned URL */
+async function getAudioUrl(vmId: string, zoomDownloadUrl: string, providerId: string): Promise<string> {
+  const s3Key = `voicemails/${providerId}/${vmId}.mp3`;
+
+  // Check if already cached in S3
+  const exists = await audioExistsInS3(s3Key);
+
+  if (!exists) {
+    try {
+      const { buffer, contentType } = await zoomDownload(zoomDownloadUrl);
+      await s3.send(new PutObjectCommand({
+        Bucket: AUDIO_BUCKET,
+        Key: s3Key,
+        Body: buffer,
+        ContentType: contentType,
+        ServerSideEncryption: 'aws:kms',
+        SSEKMSKeyId: KMS_KEY_ARN,
+      }));
+      console.log(`Cached voicemail audio in S3: ${s3Key} (${buffer.length} bytes)`);
+    } catch (err) {
+      console.warn(`Failed to cache voicemail ${vmId} audio:`, (err as Error).message);
+      // Return Zoom URL as fallback (won't play but doesn't break)
+      return zoomDownloadUrl;
+    }
+  }
+
+  // Generate presigned GET URL
+  const url = await getSignedUrl(s3, new GetObjectCommand({
+    Bucket: AUDIO_BUCKET,
+    Key: s3Key,
+  }), { expiresIn: PRESIGN_EXPIRY });
+
+  return url;
 }
 
 // ── Handler ──
@@ -440,8 +494,14 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       }
     }
 
+    // ── Cache audio in S3 and generate presigned URLs ──
+    const audioUrlPromises = uniqueVoicemails.map((vm) =>
+      getAudioUrl(vm.id, vm.download_url, providerId),
+    );
+    const audioUrls = await Promise.all(audioUrlPromises);
+
     // ── Map to frontend shape ──
-    const voicemails = uniqueVoicemails.map((vm) => {
+    const voicemails = uniqueVoicemails.map((vm, i) => {
       const attachment = attachMap.get(vm.id);
       const category = attachment?.category || resolveCategory(vm.callee_name || '', vm.callee_number || '');
 
@@ -452,7 +512,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         receivedAt: vm.date_time,
         category,
         durationSeconds: vm.duration,
-        audioUrl: vm.download_url,
+        audioUrl: audioUrls[i],
         attachedTo: attachment && attachment.type !== 'none'
           ? { type: attachment.type, patientId: attachment.patientId }
           : { type: 'none' },

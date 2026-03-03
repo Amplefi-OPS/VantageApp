@@ -46,7 +46,7 @@ export class StorageStack extends cdk.Stack {
       ],
       cors: [
         {
-          allowedMethods: [s3.HttpMethods.PUT],
+          allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET],
           allowedOrigins: ['*'], // Tighten to portal domain in production
           allowedHeaders: ['*'],
           maxAge: 3600,
