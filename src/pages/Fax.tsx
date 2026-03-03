@@ -8,6 +8,8 @@ import {
   CheckCircle,
   AlertCircle,
   FileText,
+  ArrowDownLeft,
+  ArrowUpRight,
 } from 'lucide-react'
 import { listFaxes, listPatients, sendFax, uploadToS3 } from '../api/endpoints'
 import type { SendFaxRequest } from '../api/types'
@@ -92,10 +94,12 @@ export default function Fax() {
     Queued: faxes?.filter((f) => f.status === 'Queued').length ?? 0,
     Sent: faxes?.filter((f) => f.status === 'Sent').length ?? 0,
     Failed: faxes?.filter((f) => f.status === 'Failed').length ?? 0,
+    Inbound: faxes?.filter((f) => f.direction === 'inbound').length ?? 0,
   }
 
   const filtered = faxes?.filter((f) => {
     if (tab === 'history') return true
+    if (tab === 'Inbound') return f.direction === 'inbound'
     return f.status === tab
   })
 
@@ -119,6 +123,7 @@ export default function Fax() {
       <Tabs
         tabs={[
           { key: 'history', label: 'All', count: faxes?.length },
+          { key: 'Inbound', label: 'Inbound', count: statusCounts.Inbound },
           { key: 'Queued', label: 'Queued', count: statusCounts.Queued },
           { key: 'Sent', label: 'Sent', count: statusCounts.Sent },
           { key: 'Failed', label: 'Failed', count: statusCounts.Failed },
@@ -142,12 +147,15 @@ export default function Fax() {
         )}
 
         {filtered?.map((fax) => {
-          const config = statusConfig[fax.status]
+          const config = statusConfig[fax.status] || statusConfig.Sent
+          const DirIcon = fax.direction === 'inbound' ? ArrowDownLeft : ArrowUpRight
+          const dirColor = fax.direction === 'inbound' ? 'text-blue-500' : 'text-green-600'
           return (
             <Card key={fax.id}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <DirIcon size={16} className={dirColor} />
                     <span className="font-semibold text-charcoal">{fax.pharmacyName}</span>
                     <Badge variant={config.variant}>
                       <config.icon size={12} className="mr-1" />
@@ -160,9 +168,18 @@ export default function Fax() {
                       Patient: {getPatientName(fax.patientId)}
                     </p>
                   )}
-                  <p className="text-sm text-charcoal mt-2">
-                    <strong>Rx:</strong> {fax.rxDetails.medication} {fax.rxDetails.dosage}
-                  </p>
+                  {fax.rxDetails ? (
+                    <p className="text-sm text-charcoal mt-2">
+                      <strong>Rx:</strong> {fax.rxDetails.medication} {fax.rxDetails.dosage}
+                    </p>
+                  ) : fax.pages ? (
+                    <p className="text-sm text-charcoal mt-2">
+                      <FileText size={14} className="inline mr-1" />
+                      {fax.pages} page{fax.pages > 1 ? 's' : ''}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-warm-gray mt-2">Fax document</p>
+                  )}
                   <p className="text-xs text-warm-gray mt-1">
                     {formatDateTime(fax.createdAt)}
                   </p>

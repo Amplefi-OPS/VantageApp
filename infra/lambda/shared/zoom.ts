@@ -68,3 +68,24 @@ export async function zoomGet<T = unknown>(path: string, params?: Record<string,
 
   return res.json() as Promise<T>;
 }
+
+/** Make an authenticated POST request to the Zoom API. */
+export async function zoomPost<T = unknown>(path: string, body: unknown): Promise<T> {
+  const token = await getAccessToken();
+
+  const res = await fetch(`${ZOOM_API_BASE}${path}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Zoom API error (${res.status}): ${text}`);
+  }
+
+  return res.json() as Promise<T>;
+}

@@ -182,6 +182,7 @@ export class ApiStack extends cdk.Stack {
       ZOOM_CLIENT_SECRET: process.env.ZOOM_CLIENT_SECRET || '',
       ZOOM_USER_EMAIL: process.env.ZOOM_USER_EMAIL || '',
       ZOOM_AUTO_RECEPTIONIST_IDS: process.env.ZOOM_AUTO_RECEPTIONIST_IDS || '',
+      ZOOM_FAX_EXTENSION_ID: process.env.ZOOM_FAX_EXTENSION_ID || '',
     };
 
     // ── Lambda: List Zoom Voicemails ──
@@ -211,6 +212,26 @@ export class ApiStack extends cdk.Stack {
       handler: 'handler',
     });
     props.table.grantReadWriteData(attachVoicemailFn);
+
+    // ── Lambda: List Faxes ──
+    const listFaxesFn = new lambdaNode.NodejsFunction(this, 'ListFaxesFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-list-faxes-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'list-faxes.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, ...zoomEnv },
+    });
+    props.table.grantReadData(listFaxesFn);
+
+    // ── Lambda: Send Fax ──
+    const sendFaxFn = new lambdaNode.NodejsFunction(this, 'SendFaxFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-send-fax-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'send-fax.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, ...zoomEnv },
+    });
+    props.table.grantReadWriteData(sendFaxFn);
 
     // ── Lambda: Billing Charge ──
     const billingChargeFn = new lambdaNode.NodejsFunction(this, 'BillingChargeFn', {
@@ -318,6 +339,11 @@ export class ApiStack extends cdk.Stack {
     const voicemails = this.api.root.addResource('voicemails');
     const attach = voicemails.addResource('attach');
     attach.addMethod('POST', new apigateway.LambdaIntegration(attachVoicemailFn), authMethodOptions);
+
+    // GET /faxes  &  POST /faxes
+    const faxes = this.api.root.addResource('faxes');
+    faxes.addMethod('GET', new apigateway.LambdaIntegration(listFaxesFn), authMethodOptions);
+    faxes.addMethod('POST', new apigateway.LambdaIntegration(sendFaxFn), authMethodOptions);
 
     // GET /zoom/voicemails  &  GET /zoom/call-logs
     const zoom = this.api.root.addResource('zoom');

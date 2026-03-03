@@ -123,8 +123,10 @@ export const FaxSchema = z.object({
   pharmacyFax: z.string(),
   pharmacyPhone: z.string().optional(),
   status: FaxStatus,
-  rxDetails: RxDetailsSchema,
+  rxDetails: RxDetailsSchema.optional(),
   attachmentUrl: z.string().optional(),
+  direction: z.enum(['inbound', 'outbound']).optional(),
+  pages: z.number().optional(),
 })
 export type Fax = z.infer<typeof FaxSchema>
 

@@ -10,6 +10,7 @@ import type {
   Todo,
   Note,
   Fax,
+  RxDetails,
   CreatePatientRequest,
   CreateAppointmentRequest,
   AttachVoicemailRequest,
@@ -144,12 +145,61 @@ export async function createNote(req: CreateNoteRequest): Promise<Note> {
 
 // ── Fax ────────────────────────────────────────────────
 
+// The list-faxes Lambda returns a mix of Zoom-sourced and DB-sourced fax records.
+// Fields use camelCase from the Lambda mapping layer.
+interface FaxApiItem {
+  id: string
+  patientId?: string
+  patient_id?: string
+  pharmacyName: string
+  pharmacy_name?: string
+  pharmacyFax: string
+  pharmacy_fax?: string
+  pharmacyPhone?: string
+  pharmacy_phone?: string
+  status: string
+  rxDetails?: RxDetails
+  rx_details?: RxDetails
+  attachmentUrl?: string
+  attachment_url?: string
+  direction?: 'inbound' | 'outbound'
+  pages?: number
+  createdAt?: string
+  created_at?: string
+}
+
+function mapFaxItem(f: FaxApiItem): Fax {
+  return {
+    id: f.id,
+    patientId: f.patientId || f.patient_id || undefined,
+    pharmacyName: f.pharmacyName || f.pharmacy_name || '',
+    pharmacyFax: f.pharmacyFax || f.pharmacy_fax || '',
+    pharmacyPhone: f.pharmacyPhone || f.pharmacy_phone || undefined,
+    status: (f.status as Fax['status']) || 'Queued',
+    rxDetails: f.rxDetails || f.rx_details || undefined,
+    attachmentUrl: f.attachmentUrl || f.attachment_url || undefined,
+    direction: f.direction,
+    pages: f.pages,
+    createdAt: f.createdAt || f.created_at || new Date().toISOString(),
+  }
+}
+
 export async function listFaxes(): Promise<Fax[]> {
-  return apiGet<Fax[]>('/faxes')
+  const res = await apiGet<FaxApiItem[]>('/faxes')
+  return res.map(mapFaxItem)
 }
 
 export async function sendFax(req: SendFaxRequest): Promise<Fax> {
-  return apiPost<Fax>('/faxes', req)
+  const body = {
+    pharmacy_name: req.pharmacyName,
+    pharmacy_fax: req.pharmacyFax,
+    pharmacy_phone: req.pharmacyPhone || null,
+    patient_id: req.patientId || null,
+    rx_details: req.rxDetails,
+    attachment_url: req.attachmentUrl || null,
+  }
+  const res = await apiPost<FaxApiItem>('/faxes', body)
+  return mapFaxItem(res)
 }
 
 // ── S3 Upload ──────────────────────────────────────────
