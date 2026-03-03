@@ -27,8 +27,8 @@ export default function Dashboard() {
     {
       label: 'Voicemails',
       icon: Phone,
-      count: counts?.unattachedVoicemails,
-      countLabel: 'unattached',
+      count: counts?.totalVoicemails,
+      countLabel: 'unopened',
       color: 'bg-blue-50 text-blue-700',
       path: '/voicemails',
     },

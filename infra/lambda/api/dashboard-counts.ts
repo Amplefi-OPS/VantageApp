@@ -29,23 +29,23 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       ProjectionExpression: 'PK',
     });
 
-    // Query todos for this provider
-    const todos = await queryItems({
+    // Query tasks for this provider (GSI1SK uses TASKSTATUS# prefix)
+    const tasks = await queryItems({
       IndexName: 'GSI1',
       KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
       ExpressionAttributeValues: {
         ':pk': `PROVIDER#${providerId}`,
-        ':sk': 'TODO#',
+        ':sk': 'TASKSTATUS#',
       },
     });
 
     const now = new Date().toISOString();
     let openTodos = 0;
     let overdueTodos = 0;
-    for (const todo of todos) {
-      if (todo.status === 'Open') {
+    for (const task of tasks) {
+      if (task.status === 'Open') {
         openTodos++;
-        if (todo.dueDate && todo.dueDate < now) {
+        if (task.dueDate && task.dueDate < now) {
           overdueTodos++;
         }
       }
@@ -70,6 +70,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     return success({
       unattachedVoicemails,
+      totalVoicemails: voicemails.length,
       openTodos,
       overdueTodos,
       totalPatients: patients.length,

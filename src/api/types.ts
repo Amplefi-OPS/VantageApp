@@ -237,6 +237,7 @@ export interface UploadToS3Response {
 
 export interface DashboardCounts {
   unattachedVoicemails: number
+  totalVoicemails: number
   openTodos: number
   overdueTodos: number
   totalPatients: number
