@@ -148,7 +148,34 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       console.warn('User voicemails fetch failed:', (err as Error).message);
     }
 
-    // 2. Fetch voicemails from all call queues (IVR branches route here)
+    // 2. Fetch voicemails from auto receptionists (IVR voicemail boxes)
+    try {
+      const arResp = await zoomGet<{ auto_receptionists: { id: string; name: string; extension_number: string }[]; total_records: number }>(
+        '/phone/auto_receptionists',
+        { page_size: '100' },
+      );
+      const autoRecs = arResp.auto_receptionists || [];
+      console.log('Auto receptionists found:', arResp.total_records, autoRecs.map((ar) => `${ar.name} (ext ${ar.extension_number})`));
+
+      for (const ar of autoRecs) {
+        try {
+          const arVm = await zoomGet<ZoomVoicemailResponse>(
+            `/phone/auto_receptionists/${ar.id}/voice_mails`,
+            zoomParams,
+          );
+          if (arVm.voice_mails?.length) {
+            console.log(`Found ${arVm.voice_mails.length} voicemails in auto receptionist "${ar.name}"`);
+            allVoicemails.push(...arVm.voice_mails);
+          }
+        } catch (err) {
+          console.warn(`Auto receptionist "${ar.name}" voicemails failed:`, (err as Error).message);
+        }
+      }
+    } catch (err) {
+      console.warn('Auto receptionists list failed:', (err as Error).message);
+    }
+
+    // 3. Fetch voicemails from call queues
     try {
       const queues = await zoomGet<ZoomCallQueueListResponse>(
         '/phone/call_queues',
@@ -174,7 +201,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       console.warn('Call queues list failed:', (err as Error).message);
     }
 
-    // 3. Fetch voicemails from common areas
+    // 4. Fetch voicemails from common areas
     try {
       const areas = await zoomGet<ZoomCommonAreaListResponse>(
         '/phone/common_areas',
@@ -200,7 +227,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       console.warn('Common areas list failed:', (err as Error).message);
     }
 
-    // 4. List all phone users on the account, check each for voicemails
+    // 5. List all phone users on the account, check each for voicemails
     try {
       const phoneUsers = await zoomGet<{ users: { id: string; email: string; name: string }[]; total_records: number }>(
         '/phone/users',
