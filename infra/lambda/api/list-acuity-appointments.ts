@@ -83,7 +83,20 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const caller = getCallerIdentity(event);
     const providerId = caller.providerId;
     const params = event.queryStringParameters || {};
-    const phoneFilter = params.phone;
+    const rawPhone = params.phone;
+
+    // Normalize phone to E.164 (+1XXXXXXXXXX) for Acuity API matching
+    let phoneFilter: string | undefined;
+    if (rawPhone) {
+      const digits = rawPhone.replace(/\D/g, '');
+      if (digits.length === 10) {
+        phoneFilter = `+1${digits}`;
+      } else if (digits.length === 11 && digits.startsWith('1')) {
+        phoneFilter = `+${digits}`;
+      } else {
+        phoneFilter = rawPhone; // pass through as-is
+      }
+    }
 
     let allAcuity: AcuityAppointment[];
 

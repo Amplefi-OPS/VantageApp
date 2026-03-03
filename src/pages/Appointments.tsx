@@ -30,11 +30,11 @@ function formatDateShort(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
-/** Get the last day of the month for a given date string (YYYY-MM-DD) */
-function endOfMonth(dateStr: string): string {
+/** Get the date 30 days from a given date string (YYYY-MM-DD) */
+function thirtyDaysAhead(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00')
-  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0)
-  return last.toISOString().slice(0, 10)
+  d.setDate(d.getDate() + 30)
+  return d.toISOString().slice(0, 10)
 }
 
 export default function Appointments() {
@@ -51,11 +51,11 @@ export default function Appointments() {
     staleTime: 30_000,
   })
 
-  // Monthly query — for "Upcoming" tab (today through end of month)
-  const monthEnd = useMemo(() => endOfMonth(today), [today])
+  // 30-day query — for "Upcoming" tab (today + 30 days)
+  const rangeEnd = useMemo(() => thirtyDaysAhead(today), [today])
   const { data: upcomingAppointments = [], isLoading: upcomingLoading } = useQuery({
-    queryKey: ['appointments-upcoming', today, monthEnd],
-    queryFn: () => listAppointments(today, monthEnd),
+    queryKey: ['appointments-upcoming', today, rangeEnd],
+    queryFn: () => listAppointments(today, rangeEnd),
     staleTime: 60_000,
   })
 
@@ -89,7 +89,7 @@ export default function Appointments() {
           <h1 className="text-2xl font-bold text-charcoal">Appointments</h1>
           <p className="text-warm-gray text-sm mt-1">
             {filter === 'upcoming'
-              ? `${new Date(today + 'T12:00:00').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })} — upcoming`
+              ? 'Next 30 days'
               : new Date(selectedDate + 'T12:00:00').toLocaleDateString(undefined, {
                   weekday: 'long',
                   month: 'long',
