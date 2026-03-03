@@ -181,6 +181,7 @@ export class ApiStack extends cdk.Stack {
       ZOOM_CLIENT_ID: process.env.ZOOM_CLIENT_ID || '',
       ZOOM_CLIENT_SECRET: process.env.ZOOM_CLIENT_SECRET || '',
       ZOOM_USER_EMAIL: process.env.ZOOM_USER_EMAIL || '',
+      ZOOM_AUTO_RECEPTIONIST_IDS: process.env.ZOOM_AUTO_RECEPTIONIST_IDS || '',
     };
 
     // ── Lambda: List Zoom Voicemails ──

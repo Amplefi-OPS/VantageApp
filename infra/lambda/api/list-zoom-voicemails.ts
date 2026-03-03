@@ -134,48 +134,90 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     const allVoicemails: ZoomVoicemail[] = [];
 
-    // 1. Fetch user-level voicemails
+    // 1. Try account-level voicemail endpoint (works with phone:read:list_voicemails:admin)
+    let accountLevelWorked = false;
+    try {
+      const accountVm = await zoomGet<ZoomVoicemailResponse>(
+        '/phone/voice_mails',
+        zoomParams,
+      );
+      if (accountVm.voice_mails?.length) {
+        console.log(`Account-level voicemails found: ${accountVm.voice_mails.length}`);
+        allVoicemails.push(...accountVm.voice_mails);
+        accountLevelWorked = true;
+      } else {
+        console.log('Account-level voicemails endpoint returned 0 results');
+      }
+    } catch (err) {
+      console.warn('Account-level voicemails failed:', (err as Error).message);
+    }
+
+    // 2. Fetch user-level voicemails
     const zoomUser = process.env.ZOOM_USER_EMAIL || 'me';
     try {
       const userData = await zoomGet<ZoomVoicemailResponse>(
         `/phone/users/${encodeURIComponent(zoomUser)}/voice_mails`,
         zoomParams,
       );
-      if (userData.voice_mails) {
+      if (userData.voice_mails?.length) {
+        console.log(`User voicemails found: ${userData.voice_mails.length}`);
         allVoicemails.push(...userData.voice_mails);
       }
     } catch (err) {
       console.warn('User voicemails fetch failed:', (err as Error).message);
     }
 
-    // 2. Fetch voicemails from auto receptionists (IVR voicemail boxes)
-    try {
-      const arResp = await zoomGet<{ auto_receptionists: { id: string; name: string; extension_number: string }[]; total_records: number }>(
-        '/phone/auto_receptionists',
-        { page_size: '100' },
-      );
-      const autoRecs = arResp.auto_receptionists || [];
-      console.log('Auto receptionists found:', arResp.total_records, autoRecs.map((ar) => `${ar.name} (ext ${ar.extension_number})`));
-
-      for (const ar of autoRecs) {
+    // 3. Fetch voicemails from hardcoded auto receptionist IDs (env var fallback)
+    //    Set ZOOM_AUTO_RECEPTIONIST_IDS=id1,id2,id3 to bypass listing
+    const hardcodedArIds = (process.env.ZOOM_AUTO_RECEPTIONIST_IDS || '').split(',').filter(Boolean);
+    if (hardcodedArIds.length > 0) {
+      console.log(`Trying ${hardcodedArIds.length} hardcoded auto receptionist IDs`);
+      for (const arId of hardcodedArIds) {
         try {
           const arVm = await zoomGet<ZoomVoicemailResponse>(
-            `/phone/auto_receptionists/${ar.id}/voice_mails`,
+            `/phone/auto_receptionists/${arId.trim()}/voice_mails`,
             zoomParams,
           );
           if (arVm.voice_mails?.length) {
-            console.log(`Found ${arVm.voice_mails.length} voicemails in auto receptionist "${ar.name}"`);
+            console.log(`Found ${arVm.voice_mails.length} voicemails in auto receptionist ${arId}`);
             allVoicemails.push(...arVm.voice_mails);
           }
         } catch (err) {
-          console.warn(`Auto receptionist "${ar.name}" voicemails failed:`, (err as Error).message);
+          console.warn(`Auto receptionist ${arId} voicemails failed:`, (err as Error).message);
         }
       }
-    } catch (err) {
-      console.warn('Auto receptionists list failed:', (err as Error).message);
     }
 
-    // 3. Fetch voicemails from call queues
+    // 4. Try listing auto receptionists dynamically (needs phone:read:list_auto_receptionists:admin)
+    if (hardcodedArIds.length === 0) {
+      try {
+        const arResp = await zoomGet<{ auto_receptionists: { id: string; name: string; extension_number: string }[]; total_records: number }>(
+          '/phone/auto_receptionists',
+          { page_size: '100' },
+        );
+        const autoRecs = arResp.auto_receptionists || [];
+        console.log('Auto receptionists found:', arResp.total_records, autoRecs.map((ar) => `${ar.name} (ext ${ar.extension_number})`));
+
+        for (const ar of autoRecs) {
+          try {
+            const arVm = await zoomGet<ZoomVoicemailResponse>(
+              `/phone/auto_receptionists/${ar.id}/voice_mails`,
+              zoomParams,
+            );
+            if (arVm.voice_mails?.length) {
+              console.log(`Found ${arVm.voice_mails.length} voicemails in auto receptionist "${ar.name}"`);
+              allVoicemails.push(...arVm.voice_mails);
+            }
+          } catch (err) {
+            console.warn(`Auto receptionist "${ar.name}" voicemails failed:`, (err as Error).message);
+          }
+        }
+      } catch (err) {
+        console.warn('Auto receptionists list failed:', (err as Error).message);
+      }
+    }
+
+    // 5. Try listing call queues (needs phone:read:list_call_queues:admin)
     try {
       const queues = await zoomGet<ZoomCallQueueListResponse>(
         '/phone/call_queues',
@@ -201,7 +243,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       console.warn('Call queues list failed:', (err as Error).message);
     }
 
-    // 4. Fetch voicemails from common areas
+    // 6. Try listing common areas (needs phone:read:common_area:admin)
     try {
       const areas = await zoomGet<ZoomCommonAreaListResponse>(
         '/phone/common_areas',
@@ -227,7 +269,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       console.warn('Common areas list failed:', (err as Error).message);
     }
 
-    // 5. List all phone users on the account, check each for voicemails
+    // 7. List other phone users (needs phone:read:list_users:admin)
     try {
       const phoneUsers = await zoomGet<{ users: { id: string; email: string; name: string }[]; total_records: number }>(
         '/phone/users',
@@ -253,6 +295,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     } catch (err) {
       console.warn('Phone users list failed:', (err as Error).message);
     }
+
+    console.log(`Total voicemails collected (before dedup): ${allVoicemails.length}, accountLevelWorked: ${accountLevelWorked}`);
 
     // Deduplicate by voicemail ID
     const seen = new Set<string>();
