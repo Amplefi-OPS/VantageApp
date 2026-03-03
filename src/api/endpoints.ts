@@ -51,6 +51,12 @@ export async function listAppointments(date: string, rangeEnd?: string): Promise
   return res.appointments
 }
 
+export async function listPatientAppointments(phone: string): Promise<Appointment[]> {
+  const params = new URLSearchParams({ phone })
+  const res = await apiGet<{ appointments: Appointment[]; count: number }>(`/appointments?${params}`)
+  return res.appointments
+}
+
 // ── Voicemails (Zoom Phone) ─────────────────────────────
 
 export async function listVoicemails(): Promise<Voicemail[]> {

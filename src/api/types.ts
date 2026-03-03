@@ -212,6 +212,7 @@ export interface Appointment {
   patientName: string
   patientPhone: string
   patientEmail: string
+  patientId: string | null
   type: string // "New Patient" | "Returning Patient"
   startTime: string
   endTime: string

@@ -106,6 +106,7 @@ export class ApiStack extends cdk.Stack {
       handler: 'handler',
       environment: { ...commonEnv, ...acuityEnv },
     });
+    props.table.grantReadData(listAcuityAppointmentsFn);
 
     // ── Lambda: Get Dictation ──
     const getDictationFn = new lambdaNode.NodejsFunction(this, 'GetDictationFn', {

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Input } from '../components/ui/Input'
@@ -25,19 +26,46 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
 
+function formatDateShort(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+/** Get the last day of the month for a given date string (YYYY-MM-DD) */
+function endOfMonth(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00')
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0)
+  return last.toISOString().slice(0, 10)
+}
+
 export default function Appointments() {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10))
+  const navigate = useNavigate()
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const [selectedDate, setSelectedDate] = useState(today)
   const [filter, setFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
 
-  const { data: appointments = [], isLoading } = useQuery({
+  // Daily query — for "All" and "Cancelled" tabs
+  const { data: dayAppointments = [], isLoading: dayLoading } = useQuery({
     queryKey: ['appointments', selectedDate],
     queryFn: () => listAppointments(selectedDate),
     staleTime: 30_000,
   })
 
-  const filtered = appointments.filter((a) => {
-    if (filter === 'upcoming' && a.status !== 'scheduled') return false
+  // Monthly query — for "Upcoming" tab (today through end of month)
+  const monthEnd = useMemo(() => endOfMonth(today), [today])
+  const { data: upcomingAppointments = [], isLoading: upcomingLoading } = useQuery({
+    queryKey: ['appointments-upcoming', today, monthEnd],
+    queryFn: () => listAppointments(today, monthEnd),
+    staleTime: 60_000,
+  })
+
+  const upcomingScheduled = upcomingAppointments.filter((a) => a.status === 'scheduled')
+
+  // Pick the right source based on active tab
+  const sourceList = filter === 'upcoming' ? upcomingScheduled : dayAppointments
+  const isLoading = filter === 'upcoming' ? upcomingLoading : dayLoading
+
+  const filtered = sourceList.filter((a) => {
     if (filter === 'cancelled' && a.status !== 'cancelled') return false
     if (search) {
       const q = search.toLowerCase()
@@ -47,9 +75,9 @@ export default function Appointments() {
   })
 
   const tabs = [
-    { key: 'all', label: 'All', count: appointments.length },
-    { key: 'upcoming', label: 'Upcoming', count: appointments.filter((a) => a.status === 'scheduled').length },
-    { key: 'cancelled', label: 'Cancelled', count: appointments.filter((a) => a.status === 'cancelled').length },
+    { key: 'all', label: 'All', count: dayAppointments.length },
+    { key: 'upcoming', label: 'Upcoming', count: upcomingScheduled.length },
+    { key: 'cancelled', label: 'Cancelled', count: dayAppointments.filter((a) => a.status === 'cancelled').length },
   ]
 
   if (isLoading) return <LoadingSpinner />
@@ -60,19 +88,23 @@ export default function Appointments() {
         <div>
           <h1 className="text-2xl font-bold text-charcoal">Appointments</h1>
           <p className="text-warm-gray text-sm mt-1">
-            {new Date(selectedDate + 'T12:00:00').toLocaleDateString(undefined, {
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric',
-            })}
+            {filter === 'upcoming'
+              ? `${new Date(today + 'T12:00:00').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })} — upcoming`
+              : new Date(selectedDate + 'T12:00:00').toLocaleDateString(undefined, {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                })}
           </p>
         </div>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className="px-3 py-2 border border-light-gray rounded-lg text-sm bg-white"
-        />
+        {filter !== 'upcoming' && (
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="px-3 py-2 border border-light-gray rounded-lg text-sm bg-white"
+          />
+        )}
       </div>
 
       <div className="mb-4">
@@ -91,9 +123,11 @@ export default function Appointments() {
             icon={<Calendar className="w-12 h-12" />}
             title="No appointments"
             description={
-              filter === 'all'
-                ? 'No appointments scheduled for this date.'
-                : 'No appointments match your current filters.'
+              filter === 'upcoming'
+                ? 'No upcoming appointments this month.'
+                : filter === 'all'
+                  ? 'No appointments scheduled for this date.'
+                  : 'No appointments match your current filters.'
             }
           />
         ) : (
@@ -107,13 +141,27 @@ export default function Appointments() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-charcoal">{appt.patientName}</h3>
+                      {appt.patientId ? (
+                        <button
+                          onClick={() => navigate(`/patients/${appt.patientId}`)}
+                          className="font-semibold text-slate-blue hover:underline text-left"
+                        >
+                          {appt.patientName}
+                        </button>
+                      ) : (
+                        <h3 className="font-semibold text-charcoal">{appt.patientName}</h3>
+                      )}
                       <Badge variant={statusVariants[appt.status] || 'gray'}>
                         {appt.status === 'no_show' ? 'No Show' : appt.status}
                       </Badge>
                     </div>
                     <p className="text-sm text-charcoal">{appt.type}</p>
                     <div className="flex items-center gap-4 mt-2 text-xs text-warm-gray">
+                      {filter === 'upcoming' && (
+                        <span className="font-medium text-charcoal">
+                          {formatDateShort(appt.startTime)}
+                        </span>
+                      )}
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {formatTime(appt.startTime)} - {formatTime(appt.endTime)}

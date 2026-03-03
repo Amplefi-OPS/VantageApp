@@ -1,12 +1,17 @@
 /**
- * GET /appointments?date=YYYY-MM-DD&range_end=YYYY-MM-DD
+ * GET /appointments?date=YYYY-MM-DD&range_end=YYYY-MM-DD&phone=+1234567890
  *
  * Fetches appointments from Acuity Scheduling API,
  * filtered to the medical calendar (New Patient + Returning Patient types only).
+ * Matches patient phone numbers against DynamoDB to attach patientId.
+ *
+ * If `phone` is provided, filters Acuity results to that phone number
+ * and skips the date range (returns all upcoming for that patient).
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { getCallerIdentity } from '../shared/auth';
+import { queryItems } from '../shared/dynamo';
 import { success, serverError } from '../shared/response';
 
 const ACUITY_USER_ID = process.env.ACUITY_USER_ID!;
@@ -68,55 +73,113 @@ function computeEndTime(datetime: string, durationMin: number): string {
   return d.toISOString();
 }
 
+// Normalize phone to digits only for matching
+function normalizePhone(phone: string): string {
+  return phone.replace(/\D/g, '').replace(/^1(\d{10})$/, '$1');
+}
+
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    // Validate caller is authenticated
-    getCallerIdentity(event);
-
+    const caller = getCallerIdentity(event);
+    const providerId = caller.providerId;
     const params = event.queryStringParameters || {};
-    const date = params.date || new Date().toISOString().slice(0, 10);
-    const rangeEnd = params.range_end || date;
+    const phoneFilter = params.phone;
 
-    // Fetch from Acuity — filter to medical calendar, include canceled
-    const query = new URLSearchParams({
-      minDate: date,
-      maxDate: rangeEnd,
-      calendarID: CALENDAR_ID,
-      max: '100',
-      direction: 'ASC',
+    let allAcuity: AcuityAppointment[];
+
+    if (phoneFilter) {
+      // Patient-specific: fetch all appointments for this phone (past 6 months + upcoming)
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      const sixMonthsAhead = new Date();
+      sixMonthsAhead.setMonth(sixMonthsAhead.getMonth() + 6);
+
+      const query = new URLSearchParams({
+        minDate: sixMonthsAgo.toISOString().slice(0, 10),
+        maxDate: sixMonthsAhead.toISOString().slice(0, 10),
+        calendarID: CALENDAR_ID,
+        phone: phoneFilter,
+        max: '100',
+        direction: 'DESC',
+      });
+      const appts = await acuityGet<AcuityAppointment[]>(`/appointments?${query}`);
+
+      // Also fetch canceled for this phone
+      query.set('canceled', 'true');
+      const canceled = await acuityGet<AcuityAppointment[]>(`/appointments?${query}`);
+
+      const dedup = new Map<number, AcuityAppointment>();
+      for (const a of appts) dedup.set(a.id, a);
+      for (const a of canceled) dedup.set(a.id, a);
+      allAcuity = Array.from(dedup.values()).sort(
+        (a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime()
+      );
+    } else {
+      // Date-based: fetch appointments for the date range
+      const date = params.date || new Date().toISOString().slice(0, 10);
+      const rangeEnd = params.range_end || date;
+
+      const query = new URLSearchParams({
+        minDate: date,
+        maxDate: rangeEnd,
+        calendarID: CALENDAR_ID,
+        max: '100',
+        direction: 'ASC',
+      });
+      const appts = await acuityGet<AcuityAppointment[]>(`/appointments?${query}`);
+
+      const canceledQuery = new URLSearchParams({
+        minDate: date,
+        maxDate: rangeEnd,
+        calendarID: CALENDAR_ID,
+        max: '100',
+        direction: 'ASC',
+        canceled: 'true',
+      });
+      const canceled = await acuityGet<AcuityAppointment[]>(`/appointments?${canceledQuery}`);
+
+      const dedup = new Map<number, AcuityAppointment>();
+      for (const a of appts) dedup.set(a.id, a);
+      for (const a of canceled) dedup.set(a.id, a);
+      allAcuity = Array.from(dedup.values()).sort(
+        (a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
+      );
+    }
+
+    // Load patients from DynamoDB to match phone numbers → patientId
+    const patientItems = await queryItems({
+      IndexName: 'GSI1',
+      KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+      ExpressionAttributeValues: {
+        ':pk': `PROVIDER#${providerId}`,
+        ':sk': 'PATIENT#',
+      },
     });
 
-    const appointments = await acuityGet<AcuityAppointment[]>(`/appointments?${query}`);
+    // Build phone → patientId lookup (normalized)
+    const phoneToPatient = new Map<string, { id: string; name: string }>();
+    for (const p of patientItems) {
+      if (p.phone) {
+        const norm = normalizePhone(p.phone as string);
+        phoneToPatient.set(norm, {
+          id: p.patientId as string,
+          name: `${p.firstName} ${p.lastName}`,
+        });
+      }
+    }
 
-    // Also fetch canceled appointments
-    const canceledQuery = new URLSearchParams({
-      minDate: date,
-      maxDate: rangeEnd,
-      calendarID: CALENDAR_ID,
-      max: '100',
-      direction: 'ASC',
-      canceled: 'true',
-    });
-    const canceledAppts = await acuityGet<AcuityAppointment[]>(`/appointments?${canceledQuery}`);
-
-    // Merge: canceled query returns ONLY canceled, so combine both lists
-    // Deduplicate by id
-    const allMap = new Map<number, AcuityAppointment>();
-    for (const a of appointments) allMap.set(a.id, a);
-    for (const a of canceledAppts) allMap.set(a.id, a);
-    const all = Array.from(allMap.values()).sort(
-      (a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
-    );
-
-    const mapped = all.map((a) => {
+    const mapped = allAcuity.map((a) => {
       const durationMin = parseInt(a.duration, 10) || 30;
       const status = a.canceled ? 'cancelled' : a.noShow ? 'no_show' : 'scheduled';
+      const normPhone = a.phone ? normalizePhone(a.phone) : '';
+      const matchedPatient = normPhone ? phoneToPatient.get(normPhone) : undefined;
 
       return {
         id: String(a.id),
         patientName: `${a.firstName} ${a.lastName}`,
         patientPhone: a.phone || '',
         patientEmail: a.email || '',
+        patientId: matchedPatient?.id || null,
         type: shortTypeName(a.type),
         startTime: a.datetime,
         endTime: computeEndTime(a.datetime, durationMin),

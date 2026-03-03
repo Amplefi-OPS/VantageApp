@@ -24,7 +24,9 @@ import {
   getPatientVoicemails,
   getPatientTodos,
   listNotes,
+  listPatientAppointments,
 } from '../api/endpoints'
+import type { Appointment } from '../api/types'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -62,6 +64,12 @@ export default function PatientProfile() {
     queryKey: ['patient-notes', id],
     queryFn: () => listNotes(id!),
     enabled: !!id && (tab === 'notes' || dictating),
+  })
+
+  const { data: appointments } = useQuery({
+    queryKey: ['patient-appointments', patient?.phone],
+    queryFn: () => listPatientAppointments(patient!.phone),
+    enabled: !!patient?.phone && tab === 'appointments',
   })
 
   if (isLoading) return <LoadingSpinner />
@@ -117,6 +125,7 @@ export default function PatientProfile() {
       <Tabs
         tabs={[
           { key: 'overview', label: 'Overview' },
+          { key: 'appointments', label: 'Appointments' },
           { key: 'voicemails', label: 'Voicemails' },
           { key: 'todos', label: 'To-Dos' },
           { key: 'notes', label: 'Notes' },
@@ -297,6 +306,74 @@ export default function PatientProfile() {
               )}
             </div>
           </Card>
+        )}
+
+        {/* Appointments Tab */}
+        {tab === 'appointments' && (
+          <>
+            {!appointments || appointments.length === 0 ? (
+              <EmptyState
+                icon={<Calendar size={48} />}
+                title="No appointments"
+                description="No appointments found for this patient in Acuity Scheduling."
+              />
+            ) : (
+              <div className="space-y-3">
+                {appointments.map((appt: Appointment) => {
+                  const isPast = new Date(appt.startTime) < new Date()
+                  return (
+                    <Card key={appt.id}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge
+                          variant={
+                            appt.status === 'cancelled'
+                              ? 'gray'
+                              : appt.status === 'no_show'
+                                ? 'red'
+                                : isPast
+                                  ? 'green'
+                                  : 'blue'
+                          }
+                        >
+                          {appt.status === 'cancelled'
+                            ? 'Cancelled'
+                            : appt.status === 'no_show'
+                              ? 'No Show'
+                              : isPast
+                                ? 'Completed'
+                                : 'Scheduled'}
+                        </Badge>
+                        <Badge variant="gray">{appt.type}</Badge>
+                      </div>
+                      <p className="font-medium">
+                        {new Date(appt.startTime).toLocaleDateString(undefined, {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </p>
+                      <p className="text-sm text-warm-gray">
+                        {new Date(appt.startTime).toLocaleTimeString([], {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })}{' '}
+                        -{' '}
+                        {new Date(appt.endTime).toLocaleTimeString([], {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })}{' '}
+                        ({appt.duration} min)
+                      </p>
+                      {appt.notes && (
+                        <p className="text-sm text-warm-gray mt-1 italic">{appt.notes}</p>
+                      )}
+                    </Card>
+                  )
+                })}
+              </div>
+            )}
+          </>
         )}
 
         {/* Voicemails Tab */}
