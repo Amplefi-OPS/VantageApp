@@ -18,6 +18,7 @@ import {
   Stethoscope,
   AlertTriangle,
   StickyNote,
+  CreditCard,
 } from 'lucide-react'
 import {
   getPatient,
@@ -378,6 +379,22 @@ export default function PatientProfile() {
                       </p>
                       {appt.notes && (
                         <p className="text-sm text-warm-gray mt-1 italic">{appt.notes}</p>
+                      )}
+                      {appt.status !== 'cancelled' && (
+                        <div className="mt-3">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            icon={<CreditCard size={14} />}
+                            onClick={() =>
+                              navigate(
+                                `/billing/charge?name=${encodeURIComponent(appt.patientName)}`
+                              )
+                            }
+                          >
+                            Collect Payment
+                          </Button>
+                        </div>
                       )}
                     </Card>
                   )

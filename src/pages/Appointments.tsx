@@ -7,7 +7,8 @@ import { Input } from '../components/ui/Input'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Tabs } from '../components/ui/Tabs'
-import { Calendar, Clock, UserPlus, UserCheck } from 'lucide-react'
+import { Calendar, Clock, CreditCard, UserPlus, UserCheck } from 'lucide-react'
+import { Button } from '../components/ui/Button'
 import { listAppointments } from '../api/endpoints'
 import type { Appointment } from '../api/types'
 
@@ -173,6 +174,20 @@ export default function Appointments() {
                     )}
                     {appt.notes && (
                       <p className="text-xs text-warm-gray mt-1 italic">{appt.notes}</p>
+                    )}
+                    {appt.status !== 'cancelled' && (
+                      <div className="mt-3">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          icon={<CreditCard size={14} />}
+                          onClick={() =>
+                            navigate(`/billing/charge?name=${encodeURIComponent(appt.patientName)}`)
+                          }
+                        >
+                          Collect Payment
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
