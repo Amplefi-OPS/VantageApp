@@ -169,6 +169,17 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       },
     });
 
+    // Load completed appointments from DynamoDB
+    const completedItems = await queryItems({
+      IndexName: 'GSI1',
+      KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+      ExpressionAttributeValues: {
+        ':pk': `PROVIDER#${providerId}`,
+        ':sk': 'APPT_COMPLETE#',
+      },
+    });
+    const completedIds = new Set(completedItems.map((c) => c.appointmentId as string));
+
     // Build phone → patientId lookup (normalized)
     const phoneToPatient = new Map<string, { id: string; name: string }>();
     for (const p of patientItems) {
@@ -183,7 +194,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     const mapped = allAcuity.map((a) => {
       const durationMin = parseInt(a.duration, 10) || 30;
-      const status = a.canceled ? 'cancelled' : a.noShow ? 'no_show' : 'scheduled';
+      const isCompleted = completedIds.has(String(a.id));
+      const status = a.canceled ? 'cancelled' : a.noShow ? 'no_show' : isCompleted ? 'completed' : 'scheduled';
       const normPhone = a.phone ? normalizePhone(a.phone) : '';
       const matchedPatient = normPhone ? phoneToPatient.get(normPhone) : undefined;
 

@@ -11,13 +11,21 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useToast } from '../components/ui/Toast'
 import { Calendar, Clock, CreditCard, CheckCircle, DollarSign, UserPlus, UserCheck, UserX, XCircle } from 'lucide-react'
 import { Button } from '../components/ui/Button'
-import { listAppointments, cancelAppointment, markNoShow, createTodo } from '../api/endpoints'
+import { listAppointments, cancelAppointment, markNoShow, completeAppointment, createTodo } from '../api/endpoints'
 import type { Appointment } from '../api/types'
 
 const statusVariants: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'> = {
   scheduled: 'blue',
+  completed: 'green',
   cancelled: 'gray',
   no_show: 'red',
+}
+
+const statusLabels: Record<string, string> = {
+  scheduled: 'Scheduled',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+  no_show: 'No Show',
 }
 
 const typeIcons: Record<string, typeof UserPlus> = {
@@ -50,6 +58,7 @@ export default function Appointments() {
   const [search, setSearch] = useState('')
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [noShowAppt, setNoShowAppt] = useState<Appointment | null>(null)
+  const [completingAppt, setCompletingAppt] = useState<Appointment | null>(null)
 
   const cancelMutation = useMutation({
     mutationFn: (id: string) => cancelAppointment(id),
@@ -94,6 +103,34 @@ export default function Appointments() {
     onError: (err) => {
       toast('error', `Failed: ${(err as Error).message}`)
       setNoShowAppt(null)
+    },
+  })
+
+  const completeMutation = useMutation({
+    mutationFn: async (appt: Appointment) => {
+      await completeAppointment(appt.id)
+      await createTodo({
+        type: 'General',
+        title: `Doctor's notes — ${appt.patientName}`,
+        status: 'Open',
+        priority: 'Med',
+        patientId: appt.patientId || undefined,
+        dueDate: new Date().toISOString(),
+        notes: `Complete doctor's notes for ${appt.type} appointment.`,
+      })
+    },
+    onSuccess: (_data, appt) => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
+      queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
+      queryClient.invalidateQueries({ queryKey: ['todos'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
+      toast('success', `${appt.patientName}'s appointment marked complete. To-do created for doctor's notes.`)
+      setCompletingAppt(null)
+    },
+    onError: (err) => {
+      toast('error', `Failed: ${(err as Error).message}`)
+      setCompletingAppt(null)
     },
   })
 
@@ -230,7 +267,7 @@ export default function Appointments() {
                         <h3 className="font-semibold text-charcoal">{appt.patientName}</h3>
                       )}
                       <Badge variant={statusVariants[appt.status] || 'gray'}>
-                        {appt.status === 'no_show' ? 'No Show' : appt.status}
+                        {statusLabels[appt.status] || appt.status}
                       </Badge>
                     </div>
                     <p className="text-sm text-charcoal">{appt.type}</p>
@@ -254,16 +291,18 @@ export default function Appointments() {
                     )}
                     {appt.status !== 'cancelled' && (
                       <div className="mt-3 flex gap-2 flex-wrap">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          icon={<CreditCard size={14} />}
-                          onClick={() =>
-                            navigate(`/billing/charge?name=${encodeURIComponent(appt.patientName)}`)
-                          }
-                        >
-                          Collect Payment
-                        </Button>
+                        {appt.status !== 'completed' && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            icon={<CreditCard size={14} />}
+                            onClick={() =>
+                              navigate(`/billing/charge?name=${encodeURIComponent(appt.patientName)}`)
+                            }
+                          >
+                            Collect Payment
+                          </Button>
+                        )}
                         {/* Future (not today): Cancel */}
                         {appt.status === 'scheduled' && !isPast && !isApptToday && (
                           <Button
@@ -275,7 +314,7 @@ export default function Appointments() {
                             Cancel
                           </Button>
                         )}
-                        {/* Day-of: No Show + Complete */}
+                        {/* Day-of scheduled: No Show + Complete */}
                         {appt.status === 'scheduled' && isApptToday && (
                           <>
                             <Button
@@ -290,13 +329,13 @@ export default function Appointments() {
                               size="sm"
                               variant="primary"
                               icon={<CheckCircle size={14} />}
-                              onClick={() => toast('success', `${appt.patientName}'s appointment marked complete`)}
+                              onClick={() => setCompletingAppt(appt)}
                             >
                               Complete
                             </Button>
                           </>
                         )}
-                        {/* Past (not today) + still scheduled: No Show + charge fee */}
+                        {/* Past (not today) + still scheduled: No Show + Complete + charge fee */}
                         {appt.status === 'scheduled' && isPast && !isApptToday && (
                           <>
                             <Button
@@ -306,6 +345,14 @@ export default function Appointments() {
                               onClick={() => setNoShowAppt(appt)}
                             >
                               No Show
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="primary"
+                              icon={<CheckCircle size={14} />}
+                              onClick={() => setCompletingAppt(appt)}
+                            >
+                              Complete
                             </Button>
                             <Button
                               size="sm"
@@ -362,6 +409,16 @@ export default function Appointments() {
         confirmLabel="Mark No-Show"
         danger
         loading={noShowMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={!!completingAppt}
+        onClose={() => setCompletingAppt(null)}
+        onConfirm={() => completingAppt && completeMutation.mutate(completingAppt)}
+        title="Complete Appointment?"
+        message="This will mark the appointment as completed and create a to-do for doctor's notes."
+        confirmLabel="Complete"
+        loading={completeMutation.isPending}
       />
     </div>
   )

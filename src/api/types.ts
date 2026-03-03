@@ -217,7 +217,7 @@ export interface Appointment {
   startTime: string
   endTime: string
   duration: number
-  status: 'scheduled' | 'cancelled' | 'no_show'
+  status: 'scheduled' | 'cancelled' | 'no_show' | 'completed'
   notes: string
   calendar: string
   location: string

@@ -1,16 +1,16 @@
 {
   "version": "50.0.0",
   "files": {
-    "63fb39954ecc5cf323d9f78151c39b3eb7751ad3967ed11ca2079df9229a67ff": {
+    "5ef7f4996f1a0b8f47a6e6c6cf6a55aedc3907bd99509da537a048959c6b8ffd": {
       "displayName": "Vantage-Storage-dev Template",
       "source": {
         "path": "Vantage-Storage-dev.template.json",
         "packaging": "file"
       },
       "destinations": {
-        "841722554807-us-east-1-19c42736": {
+        "841722554807-us-east-1-3bebd08e": {
           "bucketName": "cdk-hnb659fds-assets-841722554807-us-east-1",
-          "objectKey": "63fb39954ecc5cf323d9f78151c39b3eb7751ad3967ed11ca2079df9229a67ff.json",
+          "objectKey": "5ef7f4996f1a0b8f47a6e6c6cf6a55aedc3907bd99509da537a048959c6b8ffd.json",
           "region": "us-east-1",
           "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-file-publishing-role-841722554807-us-east-1"
         }

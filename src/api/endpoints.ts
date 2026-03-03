@@ -65,6 +65,10 @@ export async function markNoShow(id: string): Promise<{ noShow: boolean; appoint
   return apiPut<{ noShow: boolean; appointmentId: string }>(`/appointments/${id}/no-show`, {})
 }
 
+export async function completeAppointment(id: string): Promise<{ completed: boolean; appointmentId: string }> {
+  return apiPut<{ completed: boolean; appointmentId: string }>(`/appointments/${id}/complete`, {})
+}
+
 // ── Voicemails (Zoom Phone) ─────────────────────────────
 
 export async function listVoicemails(): Promise<Voicemail[]> {

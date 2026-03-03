@@ -126,6 +126,15 @@ export class ApiStack extends cdk.Stack {
       environment: { ...commonEnv, ...acuityEnv },
     });
 
+    // ── Lambda: Complete Appointment ──
+    const completeAppointmentFn = new lambdaNode.NodejsFunction(this, 'CompleteAppointmentFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-complete-appointment-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'complete-appointment.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadWriteData(completeAppointmentFn);
+
     // ── Lambda: Get Dictation ──
     const getDictationFn = new lambdaNode.NodejsFunction(this, 'GetDictationFn', {
       ...lambdaDefaults,
@@ -346,6 +355,10 @@ export class ApiStack extends cdk.Stack {
     // PUT /appointments/{id}/no-show
     const noshowAppointment = appointmentById.addResource('no-show');
     noshowAppointment.addMethod('PUT', new apigateway.LambdaIntegration(noshowAcuityAppointmentFn), authMethodOptions);
+
+    // PUT /appointments/{id}/complete
+    const completeAppointment = appointmentById.addResource('complete');
+    completeAppointment.addMethod('PUT', new apigateway.LambdaIntegration(completeAppointmentFn), authMethodOptions);
 
     // GET /dictations/{dictation_id}
     const dictations = this.api.root.addResource('dictations');
