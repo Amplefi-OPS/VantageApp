@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { CreditCard, CheckCircle, ArrowLeft, Search } from 'lucide-react'
@@ -9,10 +9,21 @@ import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
 import { useToast } from '../../components/ui/Toast'
 
 function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`
+}
+
+function formatCardBrand(brand: string): string {
+  const brands: Record<string, string> = {
+    visa: 'Visa',
+    mastercard: 'Mastercard',
+    amex: 'Amex',
+    discover: 'Discover',
+  }
+  return brands[brand.toLowerCase()] || brand
 }
 
 export default function ChargePatient() {
@@ -25,11 +36,36 @@ export default function ChargePatient() {
 
   const [customerId, setCustomerId] = useState(preselectedId)
   const [customerName, setCustomerName] = useState(preselectedName)
+  const [customer, setCustomer] = useState<StripeCustomer | null>(null)
   const [selectedPackage, setSelectedPackage] = useState('')
   const [customAmount, setCustomAmount] = useState('')
   const [customerSearch, setCustomerSearch] = useState('')
   const [searchResults, setSearchResults] = useState<StripeCustomer[]>([])
   const [searching, setSearching] = useState(false)
+  const [autoSearching, setAutoSearching] = useState(!!preselectedName && !preselectedId)
+
+  // Auto-search Stripe by name when arriving from an appointment
+  useEffect(() => {
+    if (!preselectedName || preselectedId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await searchCustomers(preselectedName)
+        if (cancelled) return
+        if (res.customers && res.customers.length > 0) {
+          const match = res.customers[0]
+          setCustomerId(match.id)
+          setCustomerName(match.name || match.email)
+          setCustomer(match)
+        }
+      } catch {
+        // fall through to manual search
+      } finally {
+        if (!cancelled) setAutoSearching(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [preselectedName, preselectedId])
 
   const packageOptions = [
     { value: '', label: 'Select a service...' },
@@ -81,6 +117,7 @@ export default function ChargePatient() {
   const selectCustomer = (c: StripeCustomer) => {
     setCustomerId(c.id)
     setCustomerName(c.name || c.email)
+    setCustomer(c)
     setSearchResults([])
     setCustomerSearch('')
   }
@@ -131,11 +168,24 @@ export default function ChargePatient() {
         {/* Customer selection */}
         <Card>
           <h3 className="font-semibold text-charcoal mb-3">Patient</h3>
-          {customerId ? (
+          {autoSearching ? (
+            <div className="flex items-center gap-3 py-2">
+              <LoadingSpinner />
+              <span className="text-sm text-warm-gray">Finding patient...</span>
+            </div>
+          ) : customerId ? (
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-charcoal">{customerName}</p>
-                <p className="text-sm text-warm-gray">{customerId}</p>
+                {customer?.defaultPaymentMethod ? (
+                  <p className="text-sm text-warm-gray">
+                    {formatCardBrand(customer.defaultPaymentMethod.brand)} ending in {customer.defaultPaymentMethod.last4}
+                    {' '}&middot;{' '}
+                    {String(customer.defaultPaymentMethod.expMonth).padStart(2, '0')}/{customer.defaultPaymentMethod.expYear}
+                  </p>
+                ) : (
+                  <p className="text-sm text-warm-gray">No card on file</p>
+                )}
               </div>
               <Button
                 size="sm"
@@ -143,6 +193,7 @@ export default function ChargePatient() {
                 onClick={() => {
                   setCustomerId('')
                   setCustomerName('')
+                  setCustomer(null)
                 }}
               >
                 Change
@@ -216,6 +267,11 @@ export default function ChargePatient() {
               <span className="text-warm-gray">Amount</span>
               <span className="text-2xl font-bold text-charcoal">{formatCents(amount)}</span>
             </div>
+            {customer?.defaultPaymentMethod && (
+              <p className="text-sm text-warm-gray mb-3">
+                Charging {formatCardBrand(customer.defaultPaymentMethod.brand)} ending in {customer.defaultPaymentMethod.last4}
+              </p>
+            )}
             <Button
               className="w-full"
               size="lg"
