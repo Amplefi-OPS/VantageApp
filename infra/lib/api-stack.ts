@@ -270,6 +270,20 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadWriteData(sendFaxFn);
 
+    // ── Stripe environment ──
+    const stripeEnv: Record<string, string> = {
+      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
+    };
+
+    // ── Lambda: Stripe Customer Search ──
+    const stripeCustomerSearchFn = new lambdaNode.NodejsFunction(this, 'StripeCustomerSearchFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-stripe-customer-search-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'stripe-customer-search.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, ...stripeEnv },
+    });
+
     // ── Lambda: Billing Charge ──
     const billingChargeFn = new lambdaNode.NodejsFunction(this, 'BillingChargeFn', {
       ...lambdaDefaults,
@@ -403,6 +417,11 @@ export class ApiStack extends cdk.Stack {
     zoomVoicemails.addMethod('GET', new apigateway.LambdaIntegration(listZoomVoicemailsFn), authMethodOptions);
     const zoomCallLogs = zoom.addResource('call-logs');
     zoomCallLogs.addMethod('GET', new apigateway.LambdaIntegration(listZoomCallLogsFn), authMethodOptions);
+
+    // GET /stripe/customers
+    const stripe = this.api.root.addResource('stripe');
+    const stripeCustomers = stripe.addResource('customers');
+    stripeCustomers.addMethod('GET', new apigateway.LambdaIntegration(stripeCustomerSearchFn), authMethodOptions);
 
     // POST /billing/charge
     const billing = this.api.root.addResource('billing');
