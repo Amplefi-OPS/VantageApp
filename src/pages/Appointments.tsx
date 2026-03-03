@@ -9,7 +9,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { Tabs } from '../components/ui/Tabs'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useToast } from '../components/ui/Toast'
-import { Calendar, Clock, CreditCard, UserPlus, UserCheck, XCircle } from 'lucide-react'
+import { Calendar, Clock, CreditCard, DollarSign, UserPlus, UserCheck, XCircle } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { listAppointments, cancelAppointment } from '../api/endpoints'
 import type { Appointment } from '../api/types'
@@ -154,6 +154,7 @@ export default function Appointments() {
         ) : (
           filtered.map((appt) => {
             const TypeIcon = typeIcons[appt.type] || Calendar
+            const isPast = new Date(appt.endTime) < new Date()
             return (
               <Card key={appt.id} className="hover:border-slate-blue/30 transition-colors">
                 <div className="flex items-start gap-4">
@@ -196,7 +197,7 @@ export default function Appointments() {
                       <p className="text-xs text-warm-gray mt-1 italic">{appt.notes}</p>
                     )}
                     {appt.status !== 'cancelled' && (
-                      <div className="mt-3 flex gap-2">
+                      <div className="mt-3 flex gap-2 flex-wrap">
                         <Button
                           size="sm"
                           variant="secondary"
@@ -207,7 +208,7 @@ export default function Appointments() {
                         >
                           Collect Payment
                         </Button>
-                        {appt.status === 'scheduled' && (
+                        {appt.status === 'scheduled' && !isPast && (
                           <Button
                             size="sm"
                             variant="danger"
@@ -215,6 +216,18 @@ export default function Appointments() {
                             onClick={() => setCancellingId(appt.id)}
                           >
                             Cancel
+                          </Button>
+                        )}
+                        {appt.status === 'scheduled' && isPast && (
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            icon={<DollarSign size={14} />}
+                            onClick={() =>
+                              navigate(`/billing/no-show?name=${encodeURIComponent(appt.patientName)}`)
+                            }
+                          >
+                            Charge $30 No-Show Fee
                           </Button>
                         )}
                       </div>

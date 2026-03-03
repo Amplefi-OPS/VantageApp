@@ -404,7 +404,7 @@ export default function PatientProfile() {
                         <p className="text-sm text-warm-gray mt-1 italic">{appt.notes}</p>
                       )}
                       {appt.status !== 'cancelled' && (
-                        <div className="mt-3 flex gap-2">
+                        <div className="mt-3 flex gap-2 flex-wrap">
                           <Button
                             size="sm"
                             variant="secondary"
@@ -425,6 +425,20 @@ export default function PatientProfile() {
                               onClick={() => setCancellingApptId(appt.id)}
                             >
                               Cancel
+                            </Button>
+                          )}
+                          {appt.status === 'scheduled' && isPast && (
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              icon={<DollarSign size={14} />}
+                              onClick={() =>
+                                navigate(
+                                  `/billing/no-show?name=${encodeURIComponent(appt.patientName)}`
+                                )
+                              }
+                            >
+                              Charge $30 No-Show Fee
                             </Button>
                           )}
                         </div>
