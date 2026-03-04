@@ -46,7 +46,7 @@ export class StorageStack extends cdk.Stack {
       ],
       cors: [
         {
-          allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET],
+          allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET, s3.HttpMethods.HEAD],
           allowedOrigins: [
             'https://main.dvufomlgdfium.amplifyapp.com',
             'https://providerdev.vantagerefinery.com',

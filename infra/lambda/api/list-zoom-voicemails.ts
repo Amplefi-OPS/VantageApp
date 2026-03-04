@@ -15,7 +15,7 @@ import { randomUUID } from 'crypto';
 import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getCallerIdentity } from '../shared/auth';
-import { putItem, queryItems, writeAuditLog } from '../shared/dynamo';
+import { putItem, updateItem, buildUpdateExpression, queryItems, writeAuditLog } from '../shared/dynamo';
 import { zoomGet, zoomDownload } from '../shared/zoom';
 import { success, serverError } from '../shared/response';
 import { getSecrets } from '../shared/secrets';
@@ -79,10 +79,10 @@ interface ZoomCommonAreaListResponse {
 // Map auto receptionist / callee name → voicemail category
 const CALLEE_NAME_TO_CATEGORY: Record<string, string> = {
   'scheduling': 'Scheduling',
-  'refills': 'Refills',
+  'refill': 'Refills',
   'billing': 'Billing',
   'new patient': 'New Patient',
-  'all other questions': 'Everything Else',
+  'all other': 'Everything Else',
   'vr phone system': 'Everything Else',
 };
 
@@ -105,15 +105,21 @@ const CATEGORY_TO_TODO_TYPE: Record<string, string> = {
 };
 
 function resolveCategory(calleeName: string, calleeNumber: string): string {
+  console.log(`resolveCategory input: calleeName="${calleeName}", calleeNumber="${calleeNumber}"`);
   if (calleeName) {
     const key = calleeName.toLowerCase().trim();
     // Check for partial matches (e.g., "Scheduling - Ext. 540")
     for (const [pattern, category] of Object.entries(CALLEE_NAME_TO_CATEGORY)) {
-      if (key.includes(pattern)) return category;
+      if (key.includes(pattern)) {
+        console.log(`  Matched callee name pattern "${pattern}" → "${category}"`);
+        return category;
+      }
     }
+    console.log(`  No callee name match for "${key}"`);
   }
   if (calleeNumber) {
     const digits = calleeNumber.replace(/\D/g, '');
+    console.log(`  Trying extension digits: full="${digits}", last3="${digits.slice(-3)}", last4="${digits.slice(-4)}"`);
     // Try exact match first (e.g., "540")
     if (EXTENSION_TO_CATEGORY[digits]) return EXTENSION_TO_CATEGORY[digits];
     // Try last 3 digits (Zoom may return full DID like "+18005550540")
@@ -123,7 +129,7 @@ function resolveCategory(calleeName: string, calleeNumber: string): string {
     const last4 = digits.slice(-4);
     if (EXTENSION_TO_CATEGORY[last4]) return EXTENSION_TO_CATEGORY[last4];
   }
-  console.log(`Could not categorize voicemail: calleeName="${calleeName}", calleeNumber="${calleeNumber}" → defaulting to Everything Else`);
+  console.log(`  → defaulting to Everything Else`);
   return 'Everything Else';
 }
 
@@ -421,6 +427,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       const callerPhone = normalizePhone(vm.caller_number || '');
       const matchedPatient = callerPhone ? phoneToPatient.get(callerPhone) : undefined;
       const category = resolveCategory(vm.callee_name || '', vm.callee_number || '');
+      console.log(`New VM ${vm.id}: callee_name="${vm.callee_name}", callee_number="${vm.callee_number}" → category="${category}"`);
 
       // Write voicemail attachment record
       const vmRecord: Record<string, unknown> = {
@@ -432,6 +439,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         attachmentType: matchedPatient ? 'patient' : 'none',
         callerNumber: vm.caller_number || 'Unknown',
         callerName: vm.caller_name || null,
+        calleeName: vm.callee_name || null,
+        calleeNumber: vm.callee_number || null,
         category,
         status: matchedPatient ? 'Attached' : 'Unattached',
         receivedAt: vm.date_time,
@@ -511,10 +520,39 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     );
     const audioUrls = await Promise.all(audioUrlPromises);
 
+    // ── Re-resolve categories for existing voicemails using fresh Zoom data ──
+    const updatePromises: Promise<void>[] = [];
+    for (const vm of uniqueVoicemails) {
+      const attachment = attachMap.get(vm.id);
+      if (!attachment) continue;
+      const freshCategory = resolveCategory(vm.callee_name || '', vm.callee_number || '');
+      if (freshCategory !== attachment.category) {
+        console.log(`Re-categorizing VM ${vm.id}: "${attachment.category}" → "${freshCategory}" (callee_name="${vm.callee_name}", callee_number="${vm.callee_number}")`);
+        attachment.category = freshCategory;
+        const expr = buildUpdateExpression({
+          category: freshCategory,
+          calleeName: vm.callee_name || null,
+          calleeNumber: vm.callee_number || null,
+        });
+        if (expr) {
+          updatePromises.push(
+            updateItem({
+              Key: { PK: `PROVIDER#${providerId}`, SK: `VOICEMAIL#${vm.id}` },
+              ...expr,
+            }).then(() => undefined).catch((err) => console.warn(`Failed to update category for ${vm.id}:`, (err as Error).message))
+          );
+        }
+      }
+    }
+    if (updatePromises.length > 0) {
+      await Promise.all(updatePromises);
+    }
+
     // ── Map to frontend shape ──
     const voicemails = uniqueVoicemails.map((vm, i) => {
       const attachment = attachMap.get(vm.id);
-      const category = attachment?.category || resolveCategory(vm.callee_name || '', vm.callee_number || '');
+      // Always resolve from fresh Zoom data
+      const category = resolveCategory(vm.callee_name || '', vm.callee_number || '');
 
       return {
         id: vm.id,

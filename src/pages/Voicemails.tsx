@@ -24,19 +24,34 @@ const categoryBadge: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'
 
 function AudioPlayer({ url }: { url: string }) {
   const [playing, setPlaying] = useState(false)
+  const [error, setError] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   // Create/update audio element when URL changes
   useEffect(() => {
+    setPlaying(false)
+    setError(false)
     if (typeof Audio === 'undefined') return
-    const audio = new Audio(url)
-    audio.addEventListener('ended', () => setPlaying(false))
-    audio.addEventListener('error', () => setPlaying(false))
+
+    const audio = new Audio()
+    audio.preload = 'none'
+
+    const onEnded = () => setPlaying(false)
+    const onError = () => {
+      console.error('Audio playback error:', audio.error?.message, 'url:', url.slice(0, 100))
+      setPlaying(false)
+      setError(true)
+    }
+
+    audio.addEventListener('ended', onEnded)
+    audio.addEventListener('error', onError)
+    audio.src = url
     audioRef.current = audio
+
     return () => {
       audio.pause()
-      audio.removeEventListener('ended', () => setPlaying(false))
-      audio.removeEventListener('error', () => setPlaying(false))
+      audio.removeEventListener('ended', onEnded)
+      audio.removeEventListener('error', onError)
       audio.src = ''
       audioRef.current = null
     }
@@ -49,17 +64,27 @@ function AudioPlayer({ url }: { url: string }) {
       audio.pause()
       setPlaying(false)
     } else {
+      setError(false)
       audio.play()
         .then(() => setPlaying(true))
-        .catch(() => setPlaying(false))
+        .catch((err) => {
+          console.error('Audio play() failed:', err)
+          setPlaying(false)
+          setError(true)
+        })
     }
   }
 
   return (
     <button
       onClick={toggle}
-      className="p-2 rounded-full bg-slate-blue/10 text-slate-blue hover:bg-slate-blue/20 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
-      aria-label={playing ? 'Pause' : 'Play'}
+      className={`p-2 rounded-full transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center ${
+        error
+          ? 'bg-red-100 text-red-500'
+          : 'bg-slate-blue/10 text-slate-blue hover:bg-slate-blue/20'
+      }`}
+      aria-label={playing ? 'Pause' : error ? 'Playback error' : 'Play'}
+      title={error ? 'Audio playback failed — try refreshing' : undefined}
     >
       {playing ? <Pause size={18} /> : <Play size={18} />}
     </button>
