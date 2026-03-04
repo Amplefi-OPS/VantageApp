@@ -97,8 +97,11 @@ export default function LoginPage() {
     if (!result.success) {
       setError(result.error || 'Verification failed')
     } else {
-      // Account verified — redirect to login form with success message
-      setSuccessMsg('Account verified! Please sign in with your credentials.')
+      // Account verified — auto-login with the credentials still in local state
+      const loginResult = await login(suEmail, suPassword)
+      if (!loginResult.success && loginResult.error !== 'MFA required' && loginResult.error !== 'New password required') {
+        setError(loginResult.error || 'Account verified but auto-login failed. Please sign in.')
+      }
     }
   }
 
