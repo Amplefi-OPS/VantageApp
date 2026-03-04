@@ -50,16 +50,16 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
         ref={contentRef}
         tabIndex={-1}
         className={cn(
-          'bg-white rounded-xl shadow-lg w-full outline-none',
+          'bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full outline-none',
           'max-h-[90vh] overflow-y-auto',
           sizeMap[size],
         )}
       >
-        <div className="flex items-center justify-between p-5 border-b border-light-gray">
-          <h2 className="text-xl font-semibold text-charcoal">{title}</h2>
+        <div className="flex items-center justify-between p-5 border-b border-light-gray dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-charcoal dark:text-gray-100">{title}</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-light-gray transition-colors"
+            className="p-2 rounded-lg hover:bg-light-gray dark:hover:bg-gray-700 transition-colors text-charcoal dark:text-gray-300"
             aria-label="Close"
           >
             <X size={20} />

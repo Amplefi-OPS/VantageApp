@@ -160,7 +160,7 @@ export default function Voicemails() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-charcoal mb-6">Voicemails</h1>
+      <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-6">Voicemails</h1>
 
       <Tabs
         tabs={[
@@ -192,15 +192,15 @@ export default function Voicemails() {
               <AudioPlayer url={vm.audioUrl} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-charcoal truncate">
+                  <span className="font-semibold text-charcoal dark:text-gray-100 truncate">
                     {vm.callerName || vm.callerNumber}
                   </span>
                   <Badge variant={categoryBadge[vm.category]}>{vm.category}</Badge>
                 </div>
                 {vm.callerName && (
-                  <p className="text-sm text-warm-gray">{vm.callerNumber}</p>
+                  <p className="text-sm text-warm-gray dark:text-gray-400">{vm.callerNumber}</p>
                 )}
-                <div className="flex items-center gap-3 mt-1 text-sm text-warm-gray">
+                <div className="flex items-center gap-3 mt-1 text-sm text-warm-gray dark:text-gray-400">
                   <span>{timeAgo(vm.receivedAt)}</span>
                   <span>{formatDuration(vm.durationSeconds)}</span>
                 </div>
@@ -248,7 +248,7 @@ export default function Voicemails() {
       >
         {attachModal && (
           <div>
-            <p className="text-sm text-warm-gray mb-4">
+            <p className="text-sm text-warm-gray dark:text-gray-400 mb-4">
               Voicemail from{' '}
               <strong>{attachModal.callerName || attachModal.callerNumber}</strong>{' '}
               ({formatDateTime(attachModal.receivedAt)})
@@ -286,7 +286,7 @@ export default function Voicemails() {
                     placeholder="Search patients..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-light-gray text-base focus:outline-none focus:ring-2 focus:ring-slate-blue min-h-[48px]"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-light-gray dark:border-gray-600 text-base bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-slate-blue min-h-[48px]"
                   />
                 </div>
 
@@ -298,13 +298,13 @@ export default function Voicemails() {
                       className={`w-full text-left px-4 py-3 transition-colors min-h-[48px] ${
                         selectedPatientId === p.id
                           ? 'bg-slate-blue/10 text-slate-blue'
-                          : 'hover:bg-light-gray'
+                          : 'hover:bg-light-gray dark:hover:bg-gray-700'
                       }`}
                     >
                       <span className="font-medium">
                         {p.firstName} {p.lastName}
                       </span>
-                      <span className="text-sm text-warm-gray ml-2">{p.phone}</span>
+                      <span className="text-sm text-warm-gray dark:text-gray-400 ml-2">{p.phone}</span>
                     </button>
                   ))}
                   {filteredPatients?.length === 0 && (

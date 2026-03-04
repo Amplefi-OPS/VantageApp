@@ -8,7 +8,7 @@ interface TabsProps {
 
 export function Tabs({ tabs, active, onChange }: TabsProps) {
   return (
-    <div className="flex gap-1 border-b border-light-gray overflow-x-auto" role="tablist">
+    <div className="flex gap-1 border-b border-light-gray dark:border-gray-700 overflow-x-auto" role="tablist">
       {tabs.map((tab) => (
         <button
           key={tab.key}
@@ -19,7 +19,7 @@ export function Tabs({ tabs, active, onChange }: TabsProps) {
             'px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px min-h-[44px]',
             tab.key === active
               ? 'border-slate-blue text-slate-blue'
-              : 'border-transparent text-warm-gray hover:text-charcoal hover:border-light-gray',
+              : 'border-transparent text-warm-gray hover:text-charcoal dark:hover:text-gray-100 hover:border-light-gray dark:hover:border-gray-600',
           )}
         >
           {tab.label}
@@ -27,7 +27,7 @@ export function Tabs({ tabs, active, onChange }: TabsProps) {
             <span
               className={cn(
                 'ml-1.5 px-1.5 py-0.5 rounded-full text-xs',
-                tab.key === active ? 'bg-slate-blue/10 text-slate-blue' : 'bg-light-gray text-warm-gray',
+                tab.key === active ? 'bg-slate-blue/10 text-slate-blue' : 'bg-light-gray dark:bg-gray-700 text-warm-gray',
               )}
             >
               {tab.count}

@@ -28,13 +28,13 @@ export function Sidebar() {
   const { user, logout } = useAuth()
 
   return (
-    <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 bg-white border-r border-light-gray z-30">
+    <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 bg-white dark:bg-gray-800 border-r border-light-gray dark:border-gray-700 z-30">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 h-16 border-b border-light-gray">
+      <div className="flex items-center gap-3 px-6 h-16 border-b border-light-gray dark:border-gray-700">
         <div className="w-9 h-9 rounded-lg bg-slate-blue flex items-center justify-center">
           <span className="text-white font-bold text-lg">V</span>
         </div>
-        <span className="text-lg font-semibold text-charcoal">Vantage</span>
+        <span className="text-lg font-semibold text-charcoal dark:text-gray-100">Vantage</span>
       </div>
 
       {/* Nav links */}
@@ -49,7 +49,7 @@ export function Sidebar() {
                 'min-h-[48px]',
                 isActive
                   ? 'bg-slate-blue/10 text-slate-blue'
-                  : 'text-warm-gray hover:bg-light-gray hover:text-charcoal',
+                  : 'text-warm-gray hover:bg-light-gray dark:hover:bg-gray-700 hover:text-charcoal dark:hover:text-gray-100',
               )
             }
           >
@@ -60,14 +60,14 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-light-gray">
+      <div className="px-6 py-4 border-t border-light-gray dark:border-gray-700">
         {user && (
           <div className="flex items-center justify-between">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-charcoal truncate">
+              <p className="text-sm font-medium text-charcoal dark:text-gray-100 truncate">
                 {user.givenName} {user.familyName}
               </p>
-              <p className="text-xs text-warm-gray truncate">{user.email}</p>
+              <p className="text-xs text-warm-gray dark:text-gray-400 truncate">{user.email}</p>
             </div>
             <button
               onClick={logout}

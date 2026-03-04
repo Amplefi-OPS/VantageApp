@@ -10,7 +10,7 @@ export function Card({ children, padding = true, className, ...props }: CardProp
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border border-light-gray',
+        'bg-white dark:bg-gray-800 rounded-xl border border-light-gray dark:border-gray-700',
         padding && 'p-5',
         className,
       )}
@@ -30,5 +30,5 @@ export function CardHeader({ children, className, ...props }: HTMLAttributes<HTM
 }
 
 export function CardTitle({ children, className }: { children: ReactNode; className?: string }) {
-  return <h3 className={cn('text-lg font-semibold text-charcoal', className)}>{children}</h3>
+  return <h3 className={cn('text-lg font-semibold text-charcoal dark:text-gray-100', className)}>{children}</h3>
 }

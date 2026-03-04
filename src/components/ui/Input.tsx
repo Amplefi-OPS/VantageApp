@@ -12,7 +12,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-charcoal">
+          <label htmlFor={inputId} className="text-sm font-medium text-charcoal dark:text-gray-100">
             {label}
           </label>
         )}
@@ -21,9 +21,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           className={cn(
             'w-full px-4 py-3 rounded-lg border text-base transition-colors',
-            'bg-white text-charcoal placeholder:text-warm-gray',
+            'bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 placeholder:text-warm-gray dark:placeholder:text-gray-500',
             'focus:outline-none focus:ring-2 focus:ring-slate-blue focus:border-transparent',
-            error ? 'border-red-400' : 'border-light-gray',
+            error ? 'border-red-400' : 'border-light-gray dark:border-gray-600',
             'min-h-[48px]',
             className,
           )}
@@ -48,7 +48,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-charcoal">
+          <label htmlFor={inputId} className="text-sm font-medium text-charcoal dark:text-gray-100">
             {label}
           </label>
         )}
@@ -57,9 +57,9 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           id={inputId}
           className={cn(
             'w-full px-4 py-3 rounded-lg border text-base transition-colors resize-y',
-            'bg-white text-charcoal placeholder:text-warm-gray',
+            'bg-white dark:bg-gray-700 text-charcoal dark:text-gray-100 placeholder:text-warm-gray dark:placeholder:text-gray-500',
             'focus:outline-none focus:ring-2 focus:ring-slate-blue focus:border-transparent',
-            error ? 'border-red-400' : 'border-light-gray',
+            error ? 'border-red-400' : 'border-light-gray dark:border-gray-600',
             className,
           )}
           rows={4}

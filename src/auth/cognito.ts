@@ -398,6 +398,42 @@ export async function confirmSignUp(
   }
 }
 
+/** Change password for authenticated user */
+export async function changePassword(
+  previousPassword: string,
+  proposedPassword: string,
+): Promise<{ success: boolean; error?: string }> {
+  const tokens = loadTokens();
+  if (!tokens) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  try {
+    const endpoint = `https://cognito-idp.${config.region}.amazonaws.com/`;
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-amz-json-1.1',
+        'X-Amz-Target': 'AWSCognitoIdentityProviderService.ChangePassword',
+      },
+      body: JSON.stringify({
+        AccessToken: tokens.accessToken,
+        PreviousPassword: previousPassword,
+        ProposedPassword: proposedPassword,
+      }),
+    });
+
+    if (response.ok) {
+      return { success: true };
+    }
+
+    const data = await response.json();
+    return { success: false, error: data.message || 'Failed to change password' };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+}
+
 /** Sign out */
 export function signOut() {
   clearTokens();

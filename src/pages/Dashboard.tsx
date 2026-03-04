@@ -75,7 +75,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-charcoal mb-6">Good morning</h1>
+      <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100 dark:text-gray-100 mb-6">Good morning</h1>
 
       {/* Alert: overdue todos */}
       {counts && counts.overdueTodos > 0 && (
@@ -107,11 +107,11 @@ export default function Dashboard() {
               <div className={`inline-flex p-3 rounded-xl ${tile.color} mb-3`}>
                 <tile.icon size={28} />
               </div>
-              <h2 className="text-base font-semibold text-charcoal mb-1">{tile.label}</h2>
+              <h2 className="text-base font-semibold text-charcoal dark:text-gray-100 mb-1">{tile.label}</h2>
               {tile.count !== undefined && (
-                <p className="text-2xl font-bold text-charcoal">
+                <p className="text-2xl font-bold text-charcoal dark:text-gray-100 dark:text-gray-100">
                   {tile.count}
-                  <span className="text-sm font-normal text-warm-gray ml-1.5">
+                  <span className="text-sm font-normal text-warm-gray dark:text-gray-400 ml-1.5">
                     {tile.countLabel}
                   </span>
                 </p>

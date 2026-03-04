@@ -133,7 +133,7 @@ export default function Todos() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-charcoal mb-6">To-Do List</h1>
+      <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-6">To-Do List</h1>
 
       <Tabs
         tabs={[
@@ -177,7 +177,7 @@ export default function Todos() {
                 {todo.status === 'Open' ? (
                   <button
                     onClick={() => setConfirmDoneId(todo.id)}
-                    className="mt-0.5 w-6 h-6 rounded-md border-2 border-light-gray hover:border-slate-blue transition-colors shrink-0 flex items-center justify-center"
+                    className="mt-0.5 w-6 h-6 rounded-md border-2 border-light-gray dark:border-gray-600 hover:border-slate-blue transition-colors shrink-0 flex items-center justify-center"
                     aria-label={`Mark "${todo.title}" as done`}
                   />
                 ) : (
@@ -200,7 +200,7 @@ export default function Todos() {
                     <Badge variant={typeBadge[todo.type]}>{typeLabel[todo.type]}</Badge>
                     <Badge variant={priorityBadge[todo.priority]}>{todo.priority}</Badge>
                     {todo.patientId && (
-                      <span className="text-xs text-warm-gray">
+                      <span className="text-xs text-warm-gray dark:text-gray-400">
                         {getPatientName(todo.patientId)}
                       </span>
                     )}
@@ -238,14 +238,14 @@ export default function Todos() {
                   )}
 
                   {todo.notes && (
-                    <p className="text-sm text-warm-gray mt-1">
+                    <p className="text-sm text-warm-gray dark:text-gray-400 mt-1">
                       <MessageSquare size={12} className="inline mr-1" />
                       {todo.notes}
                     </p>
                   )}
 
                   {todo.assignedTo && (
-                    <p className="text-xs text-warm-gray mt-1 flex items-center gap-1">
+                    <p className="text-xs text-warm-gray dark:text-gray-400 mt-1 flex items-center gap-1">
                       <UserCircle size={12} />
                       {todo.assignedTo}
                     </p>
@@ -253,7 +253,7 @@ export default function Todos() {
 
                   {/* Expanded actions */}
                   {expanded && todo.status === 'Open' && (
-                    <div className="mt-4 pt-4 border-t border-light-gray space-y-3">
+                    <div className="mt-4 pt-4 border-t border-light-gray dark:border-gray-700 space-y-3">
                       <Input
                         label="Add a note"
                         placeholder="Type a note..."
@@ -309,7 +309,7 @@ export default function Todos() {
                 {todo.status === 'Open' && (
                   <button
                     onClick={() => setExpandedId(expanded ? null : todo.id)}
-                    className="p-2 rounded-lg hover:bg-light-gray transition-colors shrink-0"
+                    className="p-2 rounded-lg hover:bg-light-gray dark:hover:bg-gray-700 transition-colors shrink-0"
                     aria-label={expanded ? 'Collapse' : 'Expand'}
                   >
                     {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}

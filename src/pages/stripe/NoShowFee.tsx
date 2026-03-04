@@ -94,9 +94,9 @@ export default function NoShowFee() {
           <div className="inline-flex p-4 rounded-full bg-green-50 text-green-600 mb-4">
             <CheckCircle size={48} />
           </div>
-          <h2 className="text-2xl font-bold text-charcoal mb-2">No-Show Fee Charged</h2>
+          <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-2">No-Show Fee Charged</h2>
           <p className="text-warm-gray mb-1">$30.00 charged to {customerName}</p>
-          <p className="text-sm text-warm-gray mb-6">
+          <p className="text-sm text-warm-gray dark:text-gray-400 mb-6">
             Payment ID: {noShowMutation.data.id}
           </p>
           <div className="flex gap-3">
@@ -120,26 +120,26 @@ export default function NoShowFee() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate('/billing')} className="p-2 rounded-lg hover:bg-light-gray transition-colors">
+        <button onClick={() => navigate('/billing')} className="p-2 rounded-lg hover:bg-light-gray dark:hover:bg-gray-700 transition-colors">
           <ArrowLeft size={20} className="text-warm-gray" />
         </button>
-        <h1 className="text-2xl font-bold text-charcoal">No-Show Fee</h1>
+        <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100">No-Show Fee</h1>
       </div>
 
       <div className="max-w-lg space-y-6">
         {/* Customer selection */}
         <Card>
-          <h3 className="font-semibold text-charcoal mb-3">Patient</h3>
+          <h3 className="font-semibold text-charcoal dark:text-gray-100 mb-3">Patient</h3>
           {autoSearching ? (
             <div className="flex items-center gap-3 py-2">
               <LoadingSpinner />
-              <span className="text-sm text-warm-gray">Finding patient...</span>
+              <span className="text-sm text-warm-gray dark:text-gray-400">Finding patient...</span>
             </div>
           ) : customerId ? (
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-charcoal">{customerName}</p>
-                <p className="text-sm text-warm-gray">{customerId}</p>
+                <p className="font-medium text-charcoal dark:text-gray-100">{customerName}</p>
+                <p className="text-sm text-warm-gray dark:text-gray-400">{customerId}</p>
               </div>
               <Button
                 size="sm"
@@ -178,10 +178,10 @@ export default function NoShowFee() {
                     <button
                       key={c.id}
                       onClick={() => selectCustomer(c)}
-                      className="w-full text-left p-3 rounded-lg border border-light-gray hover:bg-light-gray transition-colors"
+                      className="w-full text-left p-3 rounded-lg border border-light-gray dark:border-gray-600 hover:bg-light-gray dark:hover:bg-gray-700 dark:hover:bg-gray-700 transition-colors"
                     >
-                      <p className="font-medium text-charcoal">{c.name || 'No Name'}</p>
-                      <p className="text-sm text-warm-gray">{c.email}</p>
+                      <p className="font-medium text-charcoal dark:text-gray-100">{c.name || 'No Name'}</p>
+                      <p className="text-sm text-warm-gray dark:text-gray-400">{c.email}</p>
                     </button>
                   ))}
                 </div>
@@ -208,11 +208,11 @@ export default function NoShowFee() {
                 <UserX size={24} />
               </div>
               <div>
-                <p className="font-semibold text-charcoal">No-Show Fee</p>
-                <p className="text-sm text-warm-gray">Flat rate charge</p>
+                <p className="font-semibold text-charcoal dark:text-gray-100">No-Show Fee</p>
+                <p className="text-sm text-warm-gray dark:text-gray-400">Flat rate charge</p>
               </div>
             </div>
-            <span className="text-2xl font-bold text-charcoal">$30.00</span>
+            <span className="text-2xl font-bold text-charcoal dark:text-gray-100">$30.00</span>
           </div>
           <Button
             className="w-full"

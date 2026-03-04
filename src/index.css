@@ -64,3 +64,20 @@ body {
 audio::-webkit-media-controls-panel {
   background-color: #F8F7F6;
 }
+
+/* Dark mode overrides */
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #4B5563;
+}
+
+.dark audio::-webkit-media-controls-panel {
+  background-color: #1F2937;
+}
+
+.dark *:focus-visible {
+  outline-color: #7B8FA0;
+}

@@ -5,6 +5,7 @@ import {
   confirmSignUp as cognitoConfirmSignUp,
   completeMfaChallenge,
   completeNewPasswordChallenge,
+  changePassword as cognitoChangePassword,
   signOut as cognitoSignOut,
   getCurrentUser,
   isAuthenticated,
@@ -25,6 +26,7 @@ interface AuthContextValue {
   verifyMfa: (code: string) => Promise<{ success: boolean; error?: string }>
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ success: boolean; error?: string }>
   confirmSignUp: (code: string) => Promise<{ success: boolean; error?: string }>
+  changePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>
   setSignUpMode: (mode: boolean) => void
   logout: () => void
 }
@@ -190,6 +192,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [pendingSignUpEmail, pendingSignUpPassword])
 
+  const changePassword = useCallback(async (oldPassword: string, newPassword: string) => {
+    return cognitoChangePassword(oldPassword, newPassword)
+  }, [])
+
   const logout = useCallback(() => {
     cognitoSignOut()
     setUser(null)
@@ -220,6 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         verifyMfa,
         signUp,
         confirmSignUp,
+        changePassword,
         setSignUpMode,
         logout,
       }}

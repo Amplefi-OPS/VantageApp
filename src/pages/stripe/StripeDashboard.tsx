@@ -83,7 +83,7 @@ export default function StripeDashboard() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-charcoal">Billing</h1>
+        <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100">Billing</h1>
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -110,14 +110,14 @@ export default function StripeDashboard() {
             <div className={`inline-flex p-2.5 rounded-xl ${tile.color} mb-3`}>
               <tile.icon size={22} />
             </div>
-            <p className="text-sm text-warm-gray mb-1">{tile.label}</p>
-            <p className="text-xl font-bold text-charcoal">{tile.value}</p>
+            <p className="text-sm text-warm-gray dark:text-gray-400 mb-1">{tile.label}</p>
+            <p className="text-xl font-bold text-charcoal dark:text-gray-100">{tile.value}</p>
           </Card>
         ))}
       </div>
 
       {/* Recent Transactions */}
-      <h2 className="text-lg font-semibold text-charcoal mb-4">Recent Transactions</h2>
+      <h2 className="text-lg font-semibold text-charcoal dark:text-gray-100 mb-4">Recent Transactions</h2>
 
       {transactions.length === 0 ? (
         <EmptyState
@@ -132,16 +132,16 @@ export default function StripeDashboard() {
             return (
               <Card key={tx.id} className="flex items-center justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-charcoal truncate">
+                  <p className="font-medium text-charcoal dark:text-gray-100 truncate">
                     {tx.customerName || tx.customerEmail || 'Unknown'}
                   </p>
-                  <p className="text-sm text-warm-gray truncate">
+                  <p className="text-sm text-warm-gray dark:text-gray-400 truncate">
                     {tx.description || 'Payment'} &middot; {formatDate(tx.created)}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <Badge variant={badge.variant}>{badge.label}</Badge>
-                  <span className="text-base font-semibold text-charcoal">
+                  <span className="text-base font-semibold text-charcoal dark:text-gray-100">
                     {formatCents(tx.amount)}
                   </span>
                 </div>

@@ -135,11 +135,11 @@ export default function ChargePatient() {
           <div className="inline-flex p-4 rounded-full bg-green-50 text-green-600 mb-4">
             <CheckCircle size={48} />
           </div>
-          <h2 className="text-2xl font-bold text-charcoal mb-2">Payment Successful</h2>
+          <h2 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-2">Payment Successful</h2>
           <p className="text-warm-gray mb-1">
             {formatCents(chargeMutation.data.amount)} charged to {customerName}
           </p>
-          <p className="text-sm text-warm-gray mb-6">
+          <p className="text-sm text-warm-gray dark:text-gray-400 mb-6">
             Payment ID: {chargeMutation.data.id}
           </p>
           <div className="flex gap-3">
@@ -162,33 +162,33 @@ export default function ChargePatient() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate('/billing')} className="p-2 rounded-lg hover:bg-light-gray transition-colors">
+        <button onClick={() => navigate('/billing')} className="p-2 rounded-lg hover:bg-light-gray dark:hover:bg-gray-700 transition-colors">
           <ArrowLeft size={20} className="text-warm-gray" />
         </button>
-        <h1 className="text-2xl font-bold text-charcoal">Charge Patient</h1>
+        <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100">Charge Patient</h1>
       </div>
 
       <div className="max-w-lg space-y-6">
         {/* Customer selection */}
         <Card>
-          <h3 className="font-semibold text-charcoal mb-3">Patient</h3>
+          <h3 className="font-semibold text-charcoal dark:text-gray-100 mb-3">Patient</h3>
           {autoSearching ? (
             <div className="flex items-center gap-3 py-2">
               <LoadingSpinner />
-              <span className="text-sm text-warm-gray">Finding patient...</span>
+              <span className="text-sm text-warm-gray dark:text-gray-400">Finding patient...</span>
             </div>
           ) : customerId ? (
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-charcoal">{customerName}</p>
+                <p className="font-medium text-charcoal dark:text-gray-100">{customerName}</p>
                 {customer?.defaultPaymentMethod ? (
-                  <p className="text-sm text-warm-gray">
+                  <p className="text-sm text-warm-gray dark:text-gray-400">
                     {formatCardBrand(customer.defaultPaymentMethod.brand)} ending in {customer.defaultPaymentMethod.last4}
                     {' '}&middot;{' '}
                     {String(customer.defaultPaymentMethod.expMonth).padStart(2, '0')}/{customer.defaultPaymentMethod.expYear}
                   </p>
                 ) : (
-                  <p className="text-sm text-warm-gray">No card on file</p>
+                  <p className="text-sm text-warm-gray dark:text-gray-400">No card on file</p>
                 )}
               </div>
               <Button
@@ -229,10 +229,10 @@ export default function ChargePatient() {
                     <button
                       key={c.id}
                       onClick={() => selectCustomer(c)}
-                      className="w-full text-left p-3 rounded-lg border border-light-gray hover:bg-light-gray transition-colors"
+                      className="w-full text-left p-3 rounded-lg border border-light-gray dark:border-gray-600 hover:bg-light-gray dark:hover:bg-gray-700 dark:hover:bg-gray-700 transition-colors"
                     >
-                      <p className="font-medium text-charcoal">{c.name || 'No Name'}</p>
-                      <p className="text-sm text-warm-gray">{c.email}</p>
+                      <p className="font-medium text-charcoal dark:text-gray-100">{c.name || 'No Name'}</p>
+                      <p className="text-sm text-warm-gray dark:text-gray-400">{c.email}</p>
                     </button>
                   ))}
                 </div>
@@ -243,7 +243,7 @@ export default function ChargePatient() {
 
         {/* Service selection */}
         <Card>
-          <h3 className="font-semibold text-charcoal mb-3">Service</h3>
+          <h3 className="font-semibold text-charcoal dark:text-gray-100 mb-3">Service</h3>
           <Select
             options={packageOptions}
             value={selectedPackage}
@@ -269,10 +269,10 @@ export default function ChargePatient() {
           <Card className="bg-slate-blue/5 border-slate-blue/20">
             <div className="flex items-center justify-between mb-4">
               <span className="text-warm-gray">Amount</span>
-              <span className="text-2xl font-bold text-charcoal">{formatCents(amount)}</span>
+              <span className="text-2xl font-bold text-charcoal dark:text-gray-100">{formatCents(amount)}</span>
             </div>
             {customer?.defaultPaymentMethod && (
-              <p className="text-sm text-warm-gray mb-3">
+              <p className="text-sm text-warm-gray dark:text-gray-400 mb-3">
                 Charging {formatCardBrand(customer.defaultPaymentMethod.brand)} ending in {customer.defaultPaymentMethod.last4}
               </p>
             )}

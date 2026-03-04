@@ -9,7 +9,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { Tabs } from '../components/ui/Tabs'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useToast } from '../components/ui/Toast'
-import { Calendar, Clock, CreditCard, CheckCircle, DollarSign, UserPlus, UserCheck, UserX, XCircle } from 'lucide-react'
+import { Calendar, Clock, CreditCard, CheckCircle, DollarSign, UserPlus, UserCheck, UserX, XCircle, RefreshCw } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { listAppointments, cancelAppointment, markNoShow, completeAppointment, createTodo } from '../api/endpoints'
 import type { Appointment } from '../api/types'
@@ -59,6 +59,7 @@ export default function Appointments() {
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [noShowAppt, setNoShowAppt] = useState<Appointment | null>(null)
   const [completingAppt, setCompletingAppt] = useState<Appointment | null>(null)
+  const [changingStatusId, setChangingStatusId] = useState<string | null>(null)
 
   const cancelMutation = useMutation({
     mutationFn: (id: string) => cancelAppointment(id),
@@ -194,8 +195,8 @@ export default function Appointments() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-charcoal">Appointments</h1>
-          <p className="text-warm-gray text-sm mt-1">
+          <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100">Appointments</h1>
+          <p className="text-warm-gray dark:text-gray-400 text-sm mt-1">
             {filter === 'upcoming'
               ? 'Next 30 days'
               : filter === 'past'
@@ -212,7 +213,7 @@ export default function Appointments() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 border border-light-gray rounded-lg text-sm bg-white"
+            className="px-3 py-2 border border-light-gray dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
           />
         )}
       </div>
@@ -264,13 +265,13 @@ export default function Appointments() {
                           {appt.patientName}
                         </button>
                       ) : (
-                        <h3 className="font-semibold text-charcoal">{appt.patientName}</h3>
+                        <h3 className="font-semibold text-charcoal dark:text-gray-100">{appt.patientName}</h3>
                       )}
                       <Badge variant={statusVariants[appt.status] || 'gray'}>
                         {statusLabels[appt.status] || appt.status}
                       </Badge>
                     </div>
-                    <p className="text-sm text-charcoal">{appt.type}</p>
+                    <p className="text-sm text-charcoal dark:text-gray-200">{appt.type}</p>
                     <div className="flex items-center gap-4 mt-2 text-xs text-warm-gray">
                       {(filter === 'upcoming' || filter === 'past') && (
                         <span className="font-medium text-charcoal">
@@ -289,85 +290,10 @@ export default function Appointments() {
                     {appt.notes && (
                       <p className="text-xs text-warm-gray mt-1 italic">{appt.notes}</p>
                     )}
-                    {appt.status !== 'cancelled' && (
-                      <div className="mt-3 flex gap-2 flex-wrap">
-                        {appt.status !== 'completed' && (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            icon={<CreditCard size={14} />}
-                            onClick={() =>
-                              navigate(`/billing/charge?name=${encodeURIComponent(appt.patientName)}`)
-                            }
-                          >
-                            Collect Payment
-                          </Button>
-                        )}
-                        {/* Future (not today): Cancel */}
-                        {appt.status === 'scheduled' && !isPast && !isApptToday && (
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            icon={<XCircle size={14} />}
-                            onClick={() => setCancellingId(appt.id)}
-                          >
-                            Cancel
-                          </Button>
-                        )}
-                        {/* Day-of scheduled: No Show + Complete */}
-                        {appt.status === 'scheduled' && isApptToday && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="danger"
-                              icon={<UserX size={14} />}
-                              onClick={() => setNoShowAppt(appt)}
-                            >
-                              No Show
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="primary"
-                              icon={<CheckCircle size={14} />}
-                              onClick={() => setCompletingAppt(appt)}
-                            >
-                              Complete
-                            </Button>
-                          </>
-                        )}
-                        {/* Past (not today) + still scheduled: No Show + Complete + charge fee */}
-                        {appt.status === 'scheduled' && isPast && !isApptToday && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="danger"
-                              icon={<UserX size={14} />}
-                              onClick={() => setNoShowAppt(appt)}
-                            >
-                              No Show
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="primary"
-                              icon={<CheckCircle size={14} />}
-                              onClick={() => setCompletingAppt(appt)}
-                            >
-                              Complete
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="danger"
-                              icon={<DollarSign size={14} />}
-                              onClick={() =>
-                                navigate(`/billing/no-show?name=${encodeURIComponent(appt.patientName)}`)
-                              }
-                            >
-                              Charge $30 No-Show Fee
-                            </Button>
-                          </>
-                        )}
-                        {/* Already marked no-show: charge fee */}
-                        {appt.status === 'no_show' && (
+                    <div className="mt-3 flex gap-2 flex-wrap">
+                      {/* No-show: charge fee + change status */}
+                      {appt.status === 'no_show' && (
+                        <>
                           <Button
                             size="sm"
                             variant="danger"
@@ -378,9 +304,113 @@ export default function Appointments() {
                           >
                             Charge $30 No-Show Fee
                           </Button>
-                        )}
-                      </div>
-                    )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            icon={<RefreshCw size={14} />}
+                            onClick={() => setChangingStatusId(changingStatusId === appt.id ? null : appt.id)}
+                          >
+                            Change Status
+                          </Button>
+                          {changingStatusId === appt.id && (
+                            <div className="w-full flex gap-2 mt-1">
+                              <Button size="sm" variant="primary" icon={<CheckCircle size={14} />} onClick={() => { setChangingStatusId(null); setCompletingAppt(appt) }}>
+                                Complete
+                              </Button>
+                              <Button size="sm" variant="danger" icon={<XCircle size={14} />} onClick={() => { setChangingStatusId(null); setCancellingId(appt.id) }}>
+                                Cancel
+                              </Button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      {/* Completed: collect payment + change status */}
+                      {appt.status === 'completed' && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            icon={<CreditCard size={14} />}
+                            onClick={() =>
+                              navigate(`/billing/charge?name=${encodeURIComponent(appt.patientName)}`)
+                            }
+                          >
+                            Collect Payment
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            icon={<RefreshCw size={14} />}
+                            onClick={() => setChangingStatusId(changingStatusId === appt.id ? null : appt.id)}
+                          >
+                            Change Status
+                          </Button>
+                          {changingStatusId === appt.id && (
+                            <div className="w-full flex gap-2 mt-1">
+                              <Button size="sm" variant="danger" icon={<UserX size={14} />} onClick={() => { setChangingStatusId(null); setNoShowAppt(appt) }}>
+                                No Show
+                              </Button>
+                              <Button size="sm" variant="danger" icon={<XCircle size={14} />} onClick={() => { setChangingStatusId(null); setCancellingId(appt.id) }}>
+                                Cancel
+                              </Button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      {/* Future (not today): Cancel */}
+                      {appt.status === 'scheduled' && !isPast && !isApptToday && (
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          icon={<XCircle size={14} />}
+                          onClick={() => setCancellingId(appt.id)}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                      {/* Day-of scheduled: No Show + Complete */}
+                      {appt.status === 'scheduled' && isApptToday && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            icon={<UserX size={14} />}
+                            onClick={() => setNoShowAppt(appt)}
+                          >
+                            No Show
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            icon={<CheckCircle size={14} />}
+                            onClick={() => setCompletingAppt(appt)}
+                          >
+                            Complete
+                          </Button>
+                        </>
+                      )}
+                      {/* Past (not today) + still scheduled: No Show + Complete */}
+                      {appt.status === 'scheduled' && isPast && !isApptToday && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            icon={<UserX size={14} />}
+                            onClick={() => setNoShowAppt(appt)}
+                          >
+                            No Show
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            icon={<CheckCircle size={14} />}
+                            onClick={() => setCompletingAppt(appt)}
+                          >
+                            Complete
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Card>
