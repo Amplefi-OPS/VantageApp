@@ -11,6 +11,7 @@ export interface ServicePackage {
 export const SERVICE_PACKAGES: ServicePackage[] = [
   { id: 'initial-consult', name: 'Initial Consultation', price: 35000 },
   { id: 'follow-up', name: 'Follow-Up Visit', price: 17500 },
+  { id: 'no-show-fee', name: 'No-Show Fee', price: 3000 },
   { id: 'hormone-package', name: 'Hormone Optimization Package', price: 120000 },
   { id: 'wellness-package', name: 'Total Wellness Package', price: 240000 },
 ]

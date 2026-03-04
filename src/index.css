@@ -66,6 +66,10 @@ audio::-webkit-media-controls-panel {
 }
 
 /* Dark mode overrides */
+.dark body {
+  color: #FFFFFF;
+}
+
 .dark ::-webkit-scrollbar-thumb {
   background-color: #374151;
 }

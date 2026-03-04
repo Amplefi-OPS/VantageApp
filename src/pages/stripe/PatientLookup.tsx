@@ -29,7 +29,7 @@ export default function PatientLookup() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-6">Patient Lookup</h1>
+      <h1 className="text-2xl font-bold text-charcoal dark:text-white mb-6">Patient Lookup</h1>
 
       <form onSubmit={handleSearch} className="flex gap-3 mb-6">
         <div className="flex-1">
@@ -51,13 +51,13 @@ export default function PatientLookup() {
           {customers.map((customer) => (
             <Card key={customer.id} className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-charcoal dark:text-gray-100">{customer.name || 'No Name'}</p>
-                <p className="text-sm text-warm-gray dark:text-gray-400">{customer.email}</p>
+                <p className="font-semibold text-charcoal dark:text-white">{customer.name || 'No Name'}</p>
+                <p className="text-sm text-warm-gray dark:text-gray-300">{customer.email}</p>
                 {customer.phone && (
-                  <p className="text-sm text-warm-gray dark:text-gray-400">{customer.phone}</p>
+                  <p className="text-sm text-warm-gray dark:text-gray-300">{customer.phone}</p>
                 )}
                 {customer.defaultPaymentMethod && (
-                  <p className="text-sm text-warm-gray dark:text-gray-400 mt-1">
+                  <p className="text-sm text-warm-gray dark:text-gray-300 mt-1">
                     {customer.defaultPaymentMethod.brand.toUpperCase()} ****
                     {customer.defaultPaymentMethod.last4} &middot; Exp{' '}
                     {customer.defaultPaymentMethod.expMonth}/{customer.defaultPaymentMethod.expYear}

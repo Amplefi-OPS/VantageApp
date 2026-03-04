@@ -15,7 +15,7 @@ const variantStyles: Record<Variant, string> = {
   primary: 'bg-slate-blue text-white hover:bg-slate-blue/90 focus-visible:ring-slate-blue',
   secondary: 'bg-tan text-charcoal hover:bg-tan/90 focus-visible:ring-tan',
   danger: 'bg-red-500 text-white hover:bg-red-600 focus-visible:ring-red-500',
-  ghost: 'bg-transparent text-charcoal dark:text-gray-300 hover:bg-light-gray dark:hover:bg-gray-700 focus-visible:ring-warm-gray',
+  ghost: 'bg-transparent text-charcoal dark:text-white hover:bg-light-gray dark:hover:bg-gray-700 focus-visible:ring-warm-gray',
 }
 
 const sizeStyles: Record<Size, string> = {

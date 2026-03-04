@@ -42,7 +42,7 @@ export function BottomNav() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-2 px-2">
-              <span className="font-semibold text-charcoal dark:text-gray-100">More</span>
+              <span className="font-semibold text-charcoal dark:text-white">More</span>
               <button
                 onClick={() => setMoreOpen(false)}
                 className="p-2 rounded-lg hover:bg-light-gray dark:hover:bg-gray-700"

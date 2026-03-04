@@ -19,7 +19,7 @@ export function Tabs({ tabs, active, onChange }: TabsProps) {
             'px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px min-h-[44px]',
             tab.key === active
               ? 'border-slate-blue text-slate-blue'
-              : 'border-transparent text-warm-gray hover:text-charcoal dark:hover:text-gray-100 hover:border-light-gray dark:hover:border-gray-600',
+              : 'border-transparent text-warm-gray hover:text-charcoal dark:hover:text-white hover:border-light-gray dark:hover:border-gray-600',
           )}
         >
           {tab.label}

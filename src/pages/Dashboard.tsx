@@ -36,7 +36,7 @@ export default function Dashboard() {
       icon: Phone,
       count: voicemails?.filter((v) => v.status !== 'Reviewed' && v.status !== 'Archived').length,
       countLabel: 'new',
-      color: 'bg-blue-50 text-blue-700',
+      color: 'bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
       path: '/voicemails',
     },
     {
@@ -44,7 +44,7 @@ export default function Dashboard() {
       icon: ClipboardList,
       count: counts?.openTodos,
       countLabel: 'open',
-      color: 'bg-amber-50 text-amber-700',
+      color: 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
       path: '/todos',
     },
     {
@@ -52,7 +52,7 @@ export default function Dashboard() {
       icon: Users,
       count: counts?.totalPatients,
       countLabel: 'total',
-      color: 'bg-green-50 text-green-700',
+      color: 'bg-green-50 text-green-700 dark:bg-green-500/20 dark:text-green-300',
       path: '/patients',
     },
     {
@@ -60,7 +60,7 @@ export default function Dashboard() {
       icon: Send,
       count: undefined,
       countLabel: '',
-      color: 'bg-purple-50 text-purple-700',
+      color: 'bg-purple-50 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300',
       path: '/fax',
     },
     {
@@ -68,14 +68,14 @@ export default function Dashboard() {
       icon: Settings,
       count: undefined,
       countLabel: '',
-      color: 'bg-gray-50 text-gray-600',
+      color: 'bg-gray-50 text-gray-600 dark:bg-gray-600/30 dark:text-gray-300',
       path: '/settings',
     },
   ]
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100 dark:text-gray-100 mb-6">Good morning</h1>
+      <h1 className="text-2xl font-bold text-charcoal dark:text-white mb-6">Good morning</h1>
 
       {/* Alert: overdue todos */}
       {counts && counts.overdueTodos > 0 && (
@@ -107,11 +107,11 @@ export default function Dashboard() {
               <div className={`inline-flex p-3 rounded-xl ${tile.color} mb-3`}>
                 <tile.icon size={28} />
               </div>
-              <h2 className="text-base font-semibold text-charcoal dark:text-gray-100 mb-1">{tile.label}</h2>
+              <h2 className="text-base font-semibold text-charcoal dark:text-white mb-1">{tile.label}</h2>
               {tile.count !== undefined && (
-                <p className="text-2xl font-bold text-charcoal dark:text-gray-100 dark:text-gray-100">
+                <p className="text-2xl font-bold text-charcoal dark:text-white">
                   {tile.count}
-                  <span className="text-sm font-normal text-warm-gray dark:text-gray-400 ml-1.5">
+                  <span className="text-sm font-normal text-warm-gray dark:text-gray-300 ml-1.5">
                     {tile.countLabel}
                   </span>
                 </p>

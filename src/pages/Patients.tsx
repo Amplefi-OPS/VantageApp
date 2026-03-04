@@ -34,7 +34,7 @@ export default function Patients() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100">Patients</h1>
+        <h1 className="text-2xl font-bold text-charcoal dark:text-white">Patients</h1>
         <Button onClick={() => setShowNewPatient(true)} icon={<UserPlus size={18} />}>
           New Patient
         </Button>
@@ -51,7 +51,7 @@ export default function Patients() {
           placeholder="Search by name or phone..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 rounded-lg border border-light-gray dark:border-gray-600 text-base bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-slate-blue min-h-[48px]"
+          className="w-full pl-10 pr-4 py-3 rounded-lg border border-light-gray dark:border-gray-600 text-base bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-blue min-h-[48px]"
           aria-label="Search patients"
         />
       </div>
@@ -83,12 +83,12 @@ export default function Patients() {
                   {p.lastName[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-charcoal dark:text-gray-100 text-base">
+                  <p className="font-semibold text-charcoal dark:text-white text-base">
                     {p.firstName} {p.lastName}
                   </p>
-                  <p className="text-sm text-warm-gray dark:text-gray-400">{p.phone}</p>
+                  <p className="text-sm text-warm-gray dark:text-gray-300">{p.phone}</p>
                   {p.dob && (
-                    <p className="text-xs text-warm-gray dark:text-gray-400">DOB: {formatDate(p.dob)}</p>
+                    <p className="text-xs text-warm-gray dark:text-gray-300">DOB: {formatDate(p.dob)}</p>
                   )}
                 </div>
                 <ChevronRight size={20} className="text-warm-gray shrink-0" />

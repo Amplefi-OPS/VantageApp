@@ -56,7 +56,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
         )}
       >
         <div className="flex items-center justify-between p-5 border-b border-light-gray dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-charcoal dark:text-gray-100">{title}</h2>
+          <h2 className="text-xl font-semibold text-charcoal dark:text-white">{title}</h2>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-light-gray dark:hover:bg-gray-700 transition-colors text-charcoal dark:text-gray-300"

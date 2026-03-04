@@ -59,12 +59,12 @@ export default function Settings() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-6">Settings</h1>
+      <h1 className="text-2xl font-bold text-charcoal dark:text-white mb-6">Settings</h1>
 
       {/* Security */}
       <Card className="mb-6">
         <CardTitle className="mb-4">Security</CardTitle>
-        <p className="text-sm text-warm-gray dark:text-gray-400 mb-4">Change your account password.</p>
+        <p className="text-sm text-warm-gray dark:text-gray-300 mb-4">Change your account password.</p>
         <div className="space-y-3 max-w-md">
           <Input
             label="Current Password"
@@ -103,8 +103,8 @@ export default function Settings() {
         <CardTitle className="mb-4">Appearance</CardTitle>
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-charcoal dark:text-gray-100">Dark Mode</p>
-            <p className="text-sm text-warm-gray dark:text-gray-400">Switch between light and dark themes</p>
+            <p className="font-medium text-charcoal dark:text-white">Dark Mode</p>
+            <p className="text-sm text-warm-gray dark:text-gray-300">Switch between light and dark themes</p>
           </div>
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

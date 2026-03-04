@@ -10,6 +10,9 @@ import {
   ChevronDown,
   ChevronUp,
   DollarSign,
+  CreditCard,
+  User,
+  ExternalLink,
 } from 'lucide-react'
 import { listTodos, updateTodo, listPatients } from '../api/endpoints'
 import type { Todo } from '../api/types'
@@ -133,7 +136,7 @@ export default function Todos() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100 mb-6">To-Do List</h1>
+      <h1 className="text-2xl font-bold text-charcoal dark:text-white mb-6">To-Do List</h1>
 
       <Tabs
         tabs={[
@@ -200,7 +203,7 @@ export default function Todos() {
                     <Badge variant={typeBadge[todo.type]}>{typeLabel[todo.type]}</Badge>
                     <Badge variant={priorityBadge[todo.priority]}>{todo.priority}</Badge>
                     {todo.patientId && (
-                      <span className="text-xs text-warm-gray dark:text-gray-400">
+                      <span className="text-xs text-warm-gray dark:text-gray-300">
                         {getPatientName(todo.patientId)}
                       </span>
                     )}
@@ -221,31 +224,63 @@ export default function Todos() {
                     </p>
                   )}
 
-                  {todo.status === 'Open' && todo.dueDate && isOverdue(todo.dueDate) && todo.patientId && (
-                    <div className="mt-2">
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        icon={<DollarSign size={14} />}
-                        onClick={() => {
-                          const name = getPatientName(todo.patientId)
-                          navigate(`/billing/no-show${name ? `?name=${encodeURIComponent(name)}` : ''}`)
-                        }}
-                      >
-                        Charge $30 No-Show Fee
-                      </Button>
+                  {todo.status === 'Open' && (
+                    <div className="mt-2 flex gap-2 flex-wrap">
+                      {todo.title.toLowerCase().includes('no-show fee') && (
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          icon={<DollarSign size={14} />}
+                          onClick={() => {
+                            const name = getPatientName(todo.patientId)
+                            navigate(`/billing/no-show${name ? `?name=${encodeURIComponent(name)}` : ''}`)
+                          }}
+                        >
+                          Charge $30 Fee
+                        </Button>
+                      )}
+                      {todo.title.toLowerCase().includes("doctor's notes") && todo.patientId && (
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          icon={<User size={14} />}
+                          onClick={() => navigate(`/patients/${todo.patientId}`)}
+                        >
+                          Open Patient
+                        </Button>
+                      )}
+                      {!todo.title.toLowerCase().includes('no-show fee') && !todo.title.toLowerCase().includes("doctor's notes") && todo.patientId && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          icon={<ExternalLink size={14} />}
+                          onClick={() => navigate(`/patients/${todo.patientId}`)}
+                        >
+                          View Patient
+                        </Button>
+                      )}
+                      {!todo.title.toLowerCase().includes('no-show fee') && !todo.title.toLowerCase().includes("doctor's notes") && !todo.patientId && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          icon={<CreditCard size={14} />}
+                          onClick={() => navigate('/billing/charge')}
+                        >
+                          Payment Center
+                        </Button>
+                      )}
                     </div>
                   )}
 
                   {todo.notes && (
-                    <p className="text-sm text-warm-gray dark:text-gray-400 mt-1">
+                    <p className="text-sm text-warm-gray dark:text-gray-300 mt-1">
                       <MessageSquare size={12} className="inline mr-1" />
                       {todo.notes}
                     </p>
                   )}
 
                   {todo.assignedTo && (
-                    <p className="text-xs text-warm-gray dark:text-gray-400 mt-1 flex items-center gap-1">
+                    <p className="text-xs text-warm-gray dark:text-gray-300 mt-1 flex items-center gap-1">
                       <UserCircle size={12} />
                       {todo.assignedTo}
                     </p>

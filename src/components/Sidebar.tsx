@@ -34,7 +34,7 @@ export function Sidebar() {
         <div className="w-9 h-9 rounded-lg bg-slate-blue flex items-center justify-center">
           <span className="text-white font-bold text-lg">V</span>
         </div>
-        <span className="text-lg font-semibold text-charcoal dark:text-gray-100">Vantage</span>
+        <span className="text-lg font-semibold text-charcoal dark:text-white">Vantage</span>
       </div>
 
       {/* Nav links */}
@@ -64,10 +64,10 @@ export function Sidebar() {
         {user && (
           <div className="flex items-center justify-between">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-charcoal dark:text-gray-100 truncate">
+              <p className="text-sm font-medium text-charcoal dark:text-white truncate">
                 {user.givenName} {user.familyName}
               </p>
-              <p className="text-xs text-warm-gray dark:text-gray-400 truncate">{user.email}</p>
+              <p className="text-xs text-warm-gray dark:text-gray-300 truncate">{user.email}</p>
             </div>
             <button
               onClick={logout}

@@ -114,7 +114,7 @@ export default function Fax() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100">Fax</h1>
+        <h1 className="text-2xl font-bold text-charcoal dark:text-white">Fax</h1>
         <Button onClick={() => setShowCompose(true)} icon={<Plus size={18} />}>
           New Fax
         </Button>
@@ -156,31 +156,31 @@ export default function Fax() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <DirIcon size={16} className={dirColor} />
-                    <span className="font-semibold text-charcoal dark:text-gray-100">{fax.pharmacyName}</span>
+                    <span className="font-semibold text-charcoal dark:text-white">{fax.pharmacyName}</span>
                     <Badge variant={config.variant}>
                       <config.icon size={12} className="mr-1" />
                       {config.label}
                     </Badge>
                   </div>
-                  <p className="text-sm text-warm-gray dark:text-gray-400">Fax: {fax.pharmacyFax}</p>
+                  <p className="text-sm text-warm-gray dark:text-gray-300">Fax: {fax.pharmacyFax}</p>
                   {fax.patientId && (
-                    <p className="text-sm text-warm-gray dark:text-gray-400">
+                    <p className="text-sm text-warm-gray dark:text-gray-300">
                       Patient: {getPatientName(fax.patientId)}
                     </p>
                   )}
                   {fax.rxDetails ? (
-                    <p className="text-sm text-charcoal dark:text-gray-200 mt-2">
+                    <p className="text-sm text-charcoal dark:text-gray-100 mt-2">
                       <strong>Rx:</strong> {fax.rxDetails.medication} {fax.rxDetails.dosage}
                     </p>
                   ) : fax.pages ? (
-                    <p className="text-sm text-charcoal dark:text-gray-200 mt-2">
+                    <p className="text-sm text-charcoal dark:text-gray-100 mt-2">
                       <FileText size={14} className="inline mr-1" />
                       {fax.pages} page{fax.pages > 1 ? 's' : ''}
                     </p>
                   ) : (
-                    <p className="text-sm text-warm-gray dark:text-gray-400 mt-2">Fax document</p>
+                    <p className="text-sm text-warm-gray dark:text-gray-300 mt-2">Fax document</p>
                   )}
-                  <p className="text-xs text-warm-gray dark:text-gray-400 mt-1">
+                  <p className="text-xs text-warm-gray dark:text-gray-300 mt-1">
                     {formatDateTime(fax.createdAt)}
                   </p>
                 </div>
@@ -213,7 +213,7 @@ export default function Fax() {
           />
 
           <div className="border-t border-light-gray dark:border-gray-700 pt-4">
-            <h3 className="font-semibold text-charcoal dark:text-gray-100 mb-3">Pharmacy</h3>
+            <h3 className="font-semibold text-charcoal dark:text-white mb-3">Pharmacy</h3>
             <div className="grid sm:grid-cols-2 gap-3">
               <Input
                 label="Pharmacy Name"
@@ -239,7 +239,7 @@ export default function Fax() {
           </div>
 
           <div className="border-t border-light-gray dark:border-gray-700 pt-4">
-            <h3 className="font-semibold text-charcoal dark:text-gray-100 mb-3">Prescription</h3>
+            <h3 className="font-semibold text-charcoal dark:text-white mb-3">Prescription</h3>
             <div className="grid sm:grid-cols-2 gap-3">
               <Input
                 label="Medication"
@@ -286,16 +286,16 @@ export default function Fax() {
 
           {/* Attachment */}
           <div className="border-t border-light-gray dark:border-gray-700 pt-4">
-            <h3 className="font-semibold text-charcoal dark:text-gray-100 mb-3">Attachment (optional)</h3>
+            <h3 className="font-semibold text-charcoal dark:text-white mb-3">Attachment (optional)</h3>
             <label className="flex items-center gap-3 p-4 border-2 border-dashed border-light-gray dark:border-gray-600 rounded-lg cursor-pointer hover:border-slate-blue hover:bg-slate-blue/5 transition-colors min-h-[64px]">
               <Upload size={22} className="text-warm-gray" />
               <div>
                 {file ? (
-                  <span className="font-medium text-charcoal dark:text-gray-100">{file.name}</span>
+                  <span className="font-medium text-charcoal dark:text-white">{file.name}</span>
                 ) : (
                   <>
-                    <span className="font-medium text-charcoal dark:text-gray-100">Upload PDF or image</span>
-                    <p className="text-xs text-warm-gray dark:text-gray-400">Click to choose a file</p>
+                    <span className="font-medium text-charcoal dark:text-white">Upload PDF or image</span>
+                    <p className="text-xs text-warm-gray dark:text-gray-300">Click to choose a file</p>
                   </>
                 )}
               </div>

@@ -262,10 +262,10 @@ export default function PatientProfile() {
           <ArrowLeft size={22} />
         </button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100">
+          <h1 className="text-2xl font-bold text-charcoal dark:text-white">
             {patient.firstName} {patient.lastName}
           </h1>
-          <p className="text-sm text-warm-gray dark:text-gray-400">{patient.phone}</p>
+          <p className="text-sm text-warm-gray dark:text-gray-300">{patient.phone}</p>
         </div>
         <Button
           onClick={() => setDictating(true)}
@@ -300,7 +300,7 @@ export default function PatientProfile() {
                   {patient.lastName[0]}
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold dark:text-gray-100">
+                  <h2 className="text-xl font-semibold dark:text-white">
                     {patient.firstName} {patient.lastName}
                   </h2>
                 </div>
@@ -309,7 +309,7 @@ export default function PatientProfile() {
                 <div className="flex items-center gap-3">
                   <Phone size={18} className="text-warm-gray" />
                   <div>
-                    <p className="text-xs text-warm-gray dark:text-gray-400">Phone</p>
+                    <p className="text-xs text-warm-gray dark:text-gray-300">Phone</p>
                     <p className="font-medium">{patient.phone}</p>
                   </div>
                 </div>
@@ -317,7 +317,7 @@ export default function PatientProfile() {
                   <div className="flex items-center gap-3">
                     <Calendar size={18} className="text-warm-gray" />
                     <div>
-                      <p className="text-xs text-warm-gray dark:text-gray-400">Date of Birth</p>
+                      <p className="text-xs text-warm-gray dark:text-gray-300">Date of Birth</p>
                       <p className="font-medium">{formatDate(patient.dob)}</p>
                     </div>
                   </div>
@@ -326,7 +326,7 @@ export default function PatientProfile() {
                   <div className="flex items-center gap-3">
                     <Mail size={18} className="text-warm-gray" />
                     <div>
-                      <p className="text-xs text-warm-gray dark:text-gray-400">Email</p>
+                      <p className="text-xs text-warm-gray dark:text-gray-300">Email</p>
                       <p className="font-medium">{patient.email}</p>
                     </div>
                   </div>
@@ -335,7 +335,7 @@ export default function PatientProfile() {
                   <div className="flex items-center gap-3">
                     <User size={18} className="text-warm-gray" />
                     <div>
-                      <p className="text-xs text-warm-gray dark:text-gray-400">Gender</p>
+                      <p className="text-xs text-warm-gray dark:text-gray-300">Gender</p>
                       <p className="font-medium">{patient.gender}</p>
                     </div>
                   </div>
@@ -344,7 +344,7 @@ export default function PatientProfile() {
                   <div className="flex items-center gap-3">
                     <Languages size={18} className="text-warm-gray" />
                     <div>
-                      <p className="text-xs text-warm-gray dark:text-gray-400">Preferred Language</p>
+                      <p className="text-xs text-warm-gray dark:text-gray-300">Preferred Language</p>
                       <p className="font-medium">{patient.preferredLanguage}</p>
                     </div>
                   </div>
@@ -352,7 +352,7 @@ export default function PatientProfile() {
                 <div className="flex items-center gap-3">
                   <User size={18} className="text-warm-gray" />
                   <div>
-                    <p className="text-xs text-warm-gray dark:text-gray-400">Patient Since</p>
+                    <p className="text-xs text-warm-gray dark:text-gray-300">Patient Since</p>
                     <p className="font-medium">{formatDate(patient.createdAt)}</p>
                   </div>
                 </div>
@@ -364,7 +364,7 @@ export default function PatientProfile() {
                   <div className="flex items-center gap-3">
                     <MapPin size={18} className="text-warm-gray" />
                     <div>
-                      <p className="text-xs text-warm-gray dark:text-gray-400">Address</p>
+                      <p className="text-xs text-warm-gray dark:text-gray-300">Address</p>
                       <p className="font-medium">
                         {[patient.addressStreet, patient.addressCity, patient.addressState, patient.addressZip]
                           .filter(Boolean)
@@ -381,13 +381,13 @@ export default function PatientProfile() {
                   <div className="flex items-center gap-3">
                     <Heart size={18} className="text-warm-gray" />
                     <div>
-                      <p className="text-xs text-warm-gray dark:text-gray-400">Emergency Contact</p>
+                      <p className="text-xs text-warm-gray dark:text-gray-300">Emergency Contact</p>
                       <p className="font-medium">
                         {patient.emergencyContactName}
                         {patient.emergencyContactRelationship && ` (${patient.emergencyContactRelationship})`}
                       </p>
                       {patient.emergencyContactPhone && (
-                        <p className="text-sm text-warm-gray dark:text-gray-400">{patient.emergencyContactPhone}</p>
+                        <p className="text-sm text-warm-gray dark:text-gray-300">{patient.emergencyContactPhone}</p>
                       )}
                     </div>
                   </div>
@@ -401,7 +401,7 @@ export default function PatientProfile() {
                     <div className="flex items-center gap-3">
                       <Stethoscope size={18} className="text-warm-gray" />
                       <div>
-                        <p className="text-xs text-warm-gray dark:text-gray-400">Primary Care Provider</p>
+                        <p className="text-xs text-warm-gray dark:text-gray-300">Primary Care Provider</p>
                         <p className="font-medium">{patient.primaryCareProvider}</p>
                       </div>
                     </div>
@@ -410,7 +410,7 @@ export default function PatientProfile() {
                     <div className="flex items-center gap-3">
                       <AlertTriangle size={18} className="text-warm-gray" />
                       <div>
-                        <p className="text-xs text-warm-gray dark:text-gray-400">Allergies</p>
+                        <p className="text-xs text-warm-gray dark:text-gray-300">Allergies</p>
                         <p className="font-medium">{patient.allergies}</p>
                       </div>
                     </div>
@@ -424,10 +424,10 @@ export default function PatientProfile() {
                   <div className="flex items-center gap-3">
                     <Shield size={18} className="text-warm-gray" />
                     <div>
-                      <p className="text-xs text-warm-gray dark:text-gray-400">Insurance</p>
+                      <p className="text-xs text-warm-gray dark:text-gray-300">Insurance</p>
                       <p className="font-medium">{patient.insuranceProvider}</p>
                       {patient.insuranceId && (
-                        <p className="text-sm text-warm-gray dark:text-gray-400">ID: {patient.insuranceId}</p>
+                        <p className="text-sm text-warm-gray dark:text-gray-300">ID: {patient.insuranceId}</p>
                       )}
                     </div>
                   </div>
@@ -435,10 +435,10 @@ export default function PatientProfile() {
                     <div className="flex items-center gap-3">
                       <Shield size={18} className="text-warm-gray" />
                       <div>
-                        <p className="text-xs text-warm-gray dark:text-gray-400">Group / Policy Holder</p>
+                        <p className="text-xs text-warm-gray dark:text-gray-300">Group / Policy Holder</p>
                         <p className="font-medium">{patient.insuranceGroupNumber}</p>
                         {patient.insurancePolicyHolder && (
-                          <p className="text-sm text-warm-gray dark:text-gray-400">{patient.insurancePolicyHolder}</p>
+                          <p className="text-sm text-warm-gray dark:text-gray-300">{patient.insurancePolicyHolder}</p>
                         )}
                       </div>
                     </div>
@@ -452,7 +452,7 @@ export default function PatientProfile() {
                   <div className="flex items-start gap-3">
                     <StickyNote size={18} className="text-warm-gray mt-0.5" />
                     <div>
-                      <p className="text-xs text-warm-gray dark:text-gray-400">Notes</p>
+                      <p className="text-xs text-warm-gray dark:text-gray-300">Notes</p>
                       <p className="font-medium whitespace-pre-wrap">{patient.notes}</p>
                     </div>
                   </div>
@@ -507,7 +507,7 @@ export default function PatientProfile() {
                           year: 'numeric',
                         })}
                       </p>
-                      <p className="text-sm text-warm-gray dark:text-gray-400">
+                      <p className="text-sm text-warm-gray dark:text-gray-300">
                         {new Date(appt.startTime).toLocaleTimeString([], {
                           hour: 'numeric',
                           minute: '2-digit',
@@ -520,7 +520,7 @@ export default function PatientProfile() {
                         ({appt.duration} min)
                       </p>
                       {appt.notes && (
-                        <p className="text-sm text-warm-gray dark:text-gray-400 mt-1 italic">{appt.notes}</p>
+                        <p className="text-sm text-warm-gray dark:text-gray-300 mt-1 italic">{appt.notes}</p>
                       )}
                       {(() => {
                         const apptDate = appt.startTime.slice(0, 10)
@@ -597,16 +597,36 @@ export default function PatientProfile() {
                                 )}
                               </>
                             )}
-                            {/* Future (not today): Cancel */}
+                            {/* Future (not today): Cancel + Change Status */}
                             {appt.status === 'scheduled' && !isPast && !isApptToday && (
-                              <Button
-                                size="sm"
-                                variant="danger"
-                                icon={<XCircle size={14} />}
-                                onClick={() => setCancellingApptId(appt.id)}
-                              >
-                                Cancel
-                              </Button>
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="danger"
+                                  icon={<XCircle size={14} />}
+                                  onClick={() => setCancellingApptId(appt.id)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  icon={<RefreshCw size={14} />}
+                                  onClick={() => setChangingStatusId(changingStatusId === appt.id ? null : appt.id)}
+                                >
+                                  Change Status
+                                </Button>
+                                {changingStatusId === appt.id && (
+                                  <div className="w-full flex gap-2 mt-1">
+                                    <Button size="sm" variant="danger" icon={<UserX size={14} />} onClick={() => { setChangingStatusId(null); setNoShowAppt(appt) }}>
+                                      No Show
+                                    </Button>
+                                    <Button size="sm" variant="primary" icon={<CheckCircle size={14} />} onClick={() => { setChangingStatusId(null); setCompletingAppt(appt) }}>
+                                      Complete
+                                    </Button>
+                                  </div>
+                                )}
+                              </>
                             )}
                             {/* Day-of scheduled: No Show + Complete */}
                             {appt.status === 'scheduled' && isApptToday && (
@@ -688,8 +708,8 @@ export default function PatientProfile() {
                       >
                         {vm.category}
                       </Badge>
-                      <span className="text-sm text-warm-gray dark:text-gray-400">{timeAgo(vm.receivedAt)}</span>
-                      <span className="text-sm text-warm-gray dark:text-gray-400">
+                      <span className="text-sm text-warm-gray dark:text-gray-300">{timeAgo(vm.receivedAt)}</span>
+                      <span className="text-sm text-warm-gray dark:text-gray-300">
                         {formatDuration(vm.durationSeconds)}
                       </span>
                     </div>
@@ -730,8 +750,8 @@ export default function PatientProfile() {
                       </Badge>
                     </div>
                     <p className="font-medium">{t.title}</p>
-                    {t.notes && <p className="text-sm text-warm-gray dark:text-gray-400 mt-1">{t.notes}</p>}
-                    <p className="text-xs text-warm-gray dark:text-gray-400 mt-1">{formatDateTime(t.createdAt)}</p>
+                    {t.notes && <p className="text-sm text-warm-gray dark:text-gray-300 mt-1">{t.notes}</p>}
+                    <p className="text-xs text-warm-gray dark:text-gray-300 mt-1">{formatDateTime(t.createdAt)}</p>
                     {t.status === 'Open' && t.dueDate && isOverdue(t.dueDate) && (
                       <div className="mt-2">
                         <Button
@@ -783,7 +803,7 @@ export default function PatientProfile() {
                   <Card key={note.id}>
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-charcoal">{note.title}</h3>
-                      <span className="text-xs text-warm-gray dark:text-gray-400">{formatDate(note.createdAt)}</span>
+                      <span className="text-xs text-warm-gray dark:text-gray-300">{formatDate(note.createdAt)}</span>
                     </div>
                     <pre className="text-sm text-charcoal whitespace-pre-wrap font-sans leading-relaxed">
                       {note.body}
@@ -833,19 +853,19 @@ export default function PatientProfile() {
                           <StatusIcon size={12} className="mr-1" />
                           {fax.status}
                         </Badge>
-                        <span className="text-sm text-warm-gray dark:text-gray-400 dark:text-gray-400">
+                        <span className="text-sm text-warm-gray dark:text-gray-300 dark:text-gray-300">
                           {fax.pharmacyName}
                         </span>
                       </div>
                       {fax.rxDetails && (
-                        <p className="font-medium text-charcoal dark:text-gray-100">
+                        <p className="font-medium text-charcoal dark:text-white">
                           {fax.rxDetails.medication} {fax.rxDetails.dosage}
                         </p>
                       )}
-                      <p className="text-sm text-warm-gray dark:text-gray-400 dark:text-gray-400">
+                      <p className="text-sm text-warm-gray dark:text-gray-300 dark:text-gray-300">
                         Fax: {fax.pharmacyFax}
                       </p>
-                      <p className="text-xs text-warm-gray dark:text-gray-400 dark:text-gray-500 mt-1">
+                      <p className="text-xs text-warm-gray dark:text-gray-300 dark:text-gray-500 mt-1">
                         {formatDateTime(fax.createdAt)}
                       </p>
                     </Card>
@@ -863,7 +883,7 @@ export default function PatientProfile() {
             >
               <div className="space-y-4">
                 <div className="border-b border-light-gray dark:border-gray-700 dark:border-gray-700 pb-4">
-                  <h3 className="font-semibold text-charcoal dark:text-gray-100 mb-3">Pharmacy</h3>
+                  <h3 className="font-semibold text-charcoal dark:text-white mb-3">Pharmacy</h3>
                   <div className="grid sm:grid-cols-2 gap-3">
                     <Input
                       label="Pharmacy Name"
@@ -882,7 +902,7 @@ export default function PatientProfile() {
                 </div>
 
                 <div className="border-b border-light-gray dark:border-gray-700 dark:border-gray-700 pb-4">
-                  <h3 className="font-semibold text-charcoal dark:text-gray-100 mb-3">Prescription</h3>
+                  <h3 className="font-semibold text-charcoal dark:text-white mb-3">Prescription</h3>
                   <div className="grid sm:grid-cols-2 gap-3">
                     <Input
                       label="Medication"
@@ -928,16 +948,16 @@ export default function PatientProfile() {
                 </div>
 
                 <div className="border-b border-light-gray dark:border-gray-700 dark:border-gray-700 pb-4">
-                  <h3 className="font-semibold text-charcoal dark:text-gray-100 mb-3">Attachment (optional)</h3>
+                  <h3 className="font-semibold text-charcoal dark:text-white mb-3">Attachment (optional)</h3>
                   <label className="flex items-center gap-3 p-4 border-2 border-dashed border-light-gray dark:border-gray-600 rounded-lg cursor-pointer hover:border-slate-blue hover:bg-slate-blue/5 transition-colors min-h-[64px]">
                     <Upload size={22} className="text-warm-gray" />
                     <div>
                       {rxFile ? (
-                        <span className="font-medium text-charcoal dark:text-gray-100">{rxFile.name}</span>
+                        <span className="font-medium text-charcoal dark:text-white">{rxFile.name}</span>
                       ) : (
                         <>
-                          <span className="font-medium text-charcoal dark:text-gray-100">Upload PDF or image</span>
-                          <p className="text-xs text-warm-gray dark:text-gray-400 dark:text-gray-400">Click to choose a file</p>
+                          <span className="font-medium text-charcoal dark:text-white">Upload PDF or image</span>
+                          <p className="text-xs text-warm-gray dark:text-gray-300 dark:text-gray-300">Click to choose a file</p>
                         </>
                       )}
                     </div>

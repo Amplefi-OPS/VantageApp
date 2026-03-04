@@ -92,16 +92,30 @@ export default function Appointments() {
         notes: `Patient did not show for ${appt.type} appointment. Charge $30 no-show fee.`,
       })
     },
+    onMutate: async (appt) => {
+      // Optimistic update — immediately show no_show status
+      const keys = [['appointments', selectedDate], ['appointments-upcoming', today, rangeEnd], ['appointments-past', pastStart, pastEnd]]
+      for (const key of keys) {
+        await queryClient.cancelQueries({ queryKey: key })
+        queryClient.setQueryData<Appointment[]>(key, (old) =>
+          old?.map((a) => a.id === appt.id ? { ...a, status: 'no_show' } : a)
+        )
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
       queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
       queryClient.invalidateQueries({ queryKey: ['todos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
-      toast('success', 'Marked as no-show. To-do created for $30 fee.')
+      toast('success', 'Marked as no-show. Collect $30 no-show fee.')
       setNoShowAppt(null)
     },
     onError: (err) => {
+      // Refetch to restore real state
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
+      queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
       toast('error', `Failed: ${(err as Error).message}`)
       setNoShowAppt(null)
     },
@@ -120,16 +134,28 @@ export default function Appointments() {
         notes: `Complete doctor's notes for ${appt.type} appointment.`,
       })
     },
+    onMutate: async (appt) => {
+      const keys = [['appointments', selectedDate], ['appointments-upcoming', today, rangeEnd], ['appointments-past', pastStart, pastEnd]]
+      for (const key of keys) {
+        await queryClient.cancelQueries({ queryKey: key })
+        queryClient.setQueryData<Appointment[]>(key, (old) =>
+          old?.map((a) => a.id === appt.id ? { ...a, status: 'completed' } : a)
+        )
+      }
+    },
     onSuccess: (_data, appt) => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
       queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
       queryClient.invalidateQueries({ queryKey: ['todos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
-      toast('success', `${appt.patientName}'s appointment marked complete. To-do created for doctor's notes.`)
+      toast('success', `${appt.patientName}'s appointment marked complete.`)
       setCompletingAppt(null)
     },
     onError: (err) => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
+      queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
       toast('error', `Failed: ${(err as Error).message}`)
       setCompletingAppt(null)
     },
@@ -195,8 +221,8 @@ export default function Appointments() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-charcoal dark:text-gray-100">Appointments</h1>
-          <p className="text-warm-gray dark:text-gray-400 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-charcoal dark:text-white">Appointments</h1>
+          <p className="text-warm-gray dark:text-gray-300 text-sm mt-1">
             {filter === 'upcoming'
               ? 'Next 30 days'
               : filter === 'past'
@@ -213,7 +239,7 @@ export default function Appointments() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 border border-light-gray dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
+            className="px-3 py-2 border border-light-gray dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
           />
         )}
       </div>
@@ -265,13 +291,13 @@ export default function Appointments() {
                           {appt.patientName}
                         </button>
                       ) : (
-                        <h3 className="font-semibold text-charcoal dark:text-gray-100">{appt.patientName}</h3>
+                        <h3 className="font-semibold text-charcoal dark:text-white">{appt.patientName}</h3>
                       )}
                       <Badge variant={statusVariants[appt.status] || 'gray'}>
                         {statusLabels[appt.status] || appt.status}
                       </Badge>
                     </div>
-                    <p className="text-sm text-charcoal dark:text-gray-200">{appt.type}</p>
+                    <p className="text-sm text-charcoal dark:text-gray-100">{appt.type}</p>
                     <div className="flex items-center gap-4 mt-2 text-xs text-warm-gray">
                       {(filter === 'upcoming' || filter === 'past') && (
                         <span className="font-medium text-charcoal">
@@ -357,16 +383,36 @@ export default function Appointments() {
                           )}
                         </>
                       )}
-                      {/* Future (not today): Cancel */}
+                      {/* Future (not today): Cancel + Change Status */}
                       {appt.status === 'scheduled' && !isPast && !isApptToday && (
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          icon={<XCircle size={14} />}
-                          onClick={() => setCancellingId(appt.id)}
-                        >
-                          Cancel
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            icon={<XCircle size={14} />}
+                            onClick={() => setCancellingId(appt.id)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            icon={<RefreshCw size={14} />}
+                            onClick={() => setChangingStatusId(changingStatusId === appt.id ? null : appt.id)}
+                          >
+                            Change Status
+                          </Button>
+                          {changingStatusId === appt.id && (
+                            <div className="w-full flex gap-2 mt-1">
+                              <Button size="sm" variant="danger" icon={<UserX size={14} />} onClick={() => { setChangingStatusId(null); setNoShowAppt(appt) }}>
+                                No Show
+                              </Button>
+                              <Button size="sm" variant="primary" icon={<CheckCircle size={14} />} onClick={() => { setChangingStatusId(null); setCompletingAppt(appt) }}>
+                                Complete
+                              </Button>
+                            </div>
+                          )}
+                        </>
                       )}
                       {/* Day-of scheduled: No Show + Complete */}
                       {appt.status === 'scheduled' && isApptToday && (
