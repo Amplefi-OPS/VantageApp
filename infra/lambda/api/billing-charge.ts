@@ -37,6 +37,7 @@ import { randomUUID } from 'crypto';
 import { getCallerIdentity, canAccessProvider } from '../shared/auth';
 import { putItem, writeAuditLog } from '../shared/dynamo';
 import { success, badRequest, forbidden, serverError, parseBody } from '../shared/response';
+import { sendSlackAlert } from '../shared/slack';
 
 const eb = new EventBridgeClient({});
 const BILLING_EVENT_BUS = process.env.BILLING_EVENT_BUS!;
@@ -154,6 +155,15 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       },
     });
 
+    const amountStr = `$${(amount_cents / 100).toFixed(2)}`;
+    await sendSlackAlert(`Billing ${action}: ${amountStr}`, 'info', [
+      { label: 'Amount', value: amountStr },
+      { label: 'Action', value: action },
+      { label: 'Provider', value: provider_type },
+      { label: 'Submitted by', value: caller.email },
+      { label: 'Event ID', value: billingEventId },
+    ]);
+
     return success({
       billing_event_id: billingEventId,
       status: 'submitted',
@@ -161,6 +171,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     });
   } catch (err) {
     console.error('Billing charge error:', (err as Error).message);
+    await sendSlackAlert('Billing Event Failed', 'critical', [
+      { label: 'Error', value: (err as Error).message },
+    ]);
     return serverError('Failed to submit billing event');
   }
 };

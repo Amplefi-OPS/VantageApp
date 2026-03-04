@@ -34,6 +34,7 @@ import { randomUUID } from 'crypto';
 import { getCallerIdentity } from '../shared/auth';
 import { putItem, writeAuditLog } from '../shared/dynamo';
 import { created, badRequest, serverError, parseBody } from '../shared/response';
+import { sendSlackAlert } from '../shared/slack';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
@@ -87,6 +88,12 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     };
 
     await putItem(item);
+
+    // Slack notification — no PHI (only first name initial + last name)
+    await sendSlackAlert('New Patient Created', 'info', [
+      { label: 'Patient', value: `${firstName.charAt(0)}. ${lastName}` },
+      { label: 'Created by', value: caller.email },
+    ]);
 
     // HIPAA: Audit log — no PHI in details
     await writeAuditLog({

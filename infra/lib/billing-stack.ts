@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambdaNode from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
@@ -45,7 +46,6 @@ export class BillingStack extends cdk.Stack {
       environment: {
         TABLE_NAME: props.table.tableName,
         STAGE: props.stageName,
-        // STRIPE_SECRET_KEY stored in Secrets Manager, fetched at runtime
         STRIPE_SECRET_ARN: `arn:aws:secretsmanager:${this.region}:${this.account}:secret:vantage/stripe-key-${props.stageName}`,
       },
       deadLetterQueue: dlq,
@@ -54,7 +54,6 @@ export class BillingStack extends cdk.Stack {
     });
     props.table.grantReadWriteData(stripeProcessorFn);
 
-    // Grant Secrets Manager read for Stripe key
     stripeProcessorFn.addToRolePolicy(
       new cdk.aws_iam.PolicyStatement({
         actions: ['secretsmanager:GetSecretValue'],
@@ -91,7 +90,6 @@ export class BillingStack extends cdk.Stack {
 
     // ── EventBridge Rules ──
 
-    // Route "charge" events to Stripe processor
     new events.Rule(this, 'StripeChargeRule', {
       eventBus: billingBus,
       ruleName: `vantage-stripe-charge-${props.stageName}`,
@@ -105,7 +103,6 @@ export class BillingStack extends cdk.Stack {
       targets: [new targets.LambdaFunction(stripeProcessorFn)],
     });
 
-    // Route "record" events to QuickBooks processor
     new events.Rule(this, 'QuickBooksRecordRule', {
       eventBus: billingBus,
       ruleName: `vantage-quickbooks-record-${props.stageName}`,
@@ -119,41 +116,32 @@ export class BillingStack extends cdk.Stack {
       targets: [new targets.LambdaFunction(quickbooksProcessorFn)],
     });
 
-    // ── Lambda: DLQ Monitor (Slack alerts) ──
+    // ── Lambda: DLQ Alert → Slack (triggers instantly on DLQ message) ──
     const appSecret = secretsmanager.Secret.fromSecretNameV2(
       this, 'AppCredentials', `vantage/credentials/${props.stageName}`,
     );
 
-    const dlqMonitorFn = new lambdaNode.NodejsFunction(this, 'DlqMonitorFn', {
-      functionName: `vantage-dlq-monitor-${props.stageName}`,
+    const dlqAlertFn = new lambdaNode.NodejsFunction(this, 'DlqAlertFn', {
+      functionName: `vantage-dlq-alert-${props.stageName}`,
       runtime: lambda.Runtime.NODEJS_20_X,
       architecture: lambda.Architecture.ARM_64,
-      entry: path.join(lambdaDir, 'billing', 'dlq-monitor.ts'),
+      entry: path.join(lambdaDir, 'notifications', 'dlq-alert.ts'),
       handler: 'handler',
       memorySize: 128,
       timeout: cdk.Duration.seconds(15),
       environment: {
-        STAGE: props.stageName,
-        DLQ_URL: dlq.queueUrl,
         SECRET_NAME: `vantage/credentials/${props.stageName}`,
+        STAGE: props.stageName,
       },
       logRetention: logs.RetentionDays.ONE_YEAR,
     });
-    dlq.grantSendMessages(dlqMonitorFn); // read attributes
-    dlqMonitorFn.addToRolePolicy(
-      new cdk.aws_iam.PolicyStatement({
-        actions: ['sqs:GetQueueAttributes'],
-        resources: [dlq.queueArn],
-      }),
-    );
-    appSecret.grantRead(dlqMonitorFn);
 
-    // Run every 5 minutes
-    new events.Rule(this, 'DlqMonitorSchedule', {
-      ruleName: `vantage-dlq-monitor-schedule-${props.stageName}`,
-      schedule: events.Schedule.rate(cdk.Duration.minutes(5)),
-      targets: [new targets.LambdaFunction(dlqMonitorFn)],
-    });
+    appSecret.grantRead(dlqAlertFn);
+
+    // SQS event source — triggers immediately when messages hit the DLQ
+    dlqAlertFn.addEventSource(new lambdaEventSources.SqsEventSource(dlq, {
+      batchSize: 1,
+    }));
 
     // ── Outputs ──
     new cdk.CfnOutput(this, 'BillingEventBusArn', { value: billingBus.eventBusArn });

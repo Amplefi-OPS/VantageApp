@@ -1,64 +1,99 @@
 /**
- * Shared Slack webhook utility.
+ * Slack Notification Helper
  *
- * Sends alerts to a Slack channel via an incoming webhook.
- * **Never throws** — Slack failure must never break a billing operation.
+ * Sends formatted alerts to a Slack channel via incoming webhook.
+ * Non-throwing — Slack failures never break app functionality.
  */
 
 import { getSecrets } from './secrets';
 
-export interface SlackAlert {
-  level: 'error' | 'warning' | 'info';
-  title: string;
-  details: Record<string, string>;
-  source: string;
-}
+export type AlertLevel = 'critical' | 'warning' | 'info';
 
-const LEVEL_EMOJI: Record<SlackAlert['level'], string> = {
-  error: ':red_circle:',
-  warning: ':large_yellow_circle:',
-  info: ':large_blue_circle:',
+const LEVEL_COLORS: Record<AlertLevel, string> = {
+  critical: '#dc2626',
+  warning: '#f59e0b',
+  info: '#22c55e',
 };
 
-export async function sendSlackAlert(alert: SlackAlert): Promise<void> {
+const LEVEL_EMOJI: Record<AlertLevel, string> = {
+  critical: ':rotating_light:',
+  warning: ':warning:',
+  info: ':white_check_mark:',
+};
+
+interface SlackField {
+  label: string;
+  value: string;
+}
+
+/**
+ * Send a formatted alert to Slack. Never throws.
+ *
+ * @param title   - Alert headline (e.g., "Failed Login Attempt")
+ * @param level   - critical | warning | info
+ * @param fields  - Key-value pairs shown in the message body
+ */
+export async function sendSlackAlert(
+  title: string,
+  level: AlertLevel,
+  fields: SlackField[],
+): Promise<void> {
   try {
     const secrets = await getSecrets();
     const webhookUrl = secrets.SLACK_WEBHOOK_URL;
-    if (!webhookUrl) return; // Slack not configured — skip silently
 
-    const stage = process.env.STAGE || 'unknown';
-    const fields = Object.entries(alert.details).map(([key, value]) => ({
-      type: 'mrkdwn' as const,
-      text: `*${key}:*\n${value}`,
-    }));
+    if (!webhookUrl) {
+      console.warn('SLACK_WEBHOOK_URL not configured — skipping alert');
+      return;
+    }
 
-    const blocks = [
-      {
-        type: 'header',
-        text: { type: 'plain_text', text: `${LEVEL_EMOJI[alert.level]} ${alert.title}` },
-      },
-      {
-        type: 'section',
-        fields,
-      },
-      {
-        type: 'context',
-        elements: [
-          {
-            type: 'mrkdwn',
-            text: `*Source:* ${alert.source} | *Stage:* ${stage} | *Time:* ${new Date().toISOString()}`,
-          },
-        ],
-      },
-    ];
+    const env = process.env.STAGE || 'dev';
+    const timestamp = new Date().toISOString();
+    const fieldLines = fields.map((f) => `*${f.label}:* ${f.value}`).join('\n');
 
-    await fetch(webhookUrl, {
+    const payload = {
+      attachments: [
+        {
+          color: LEVEL_COLORS[level],
+          blocks: [
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: `${LEVEL_EMOJI[level]} *${title}*`,
+              },
+            },
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: fieldLines || '_No details_',
+              },
+            },
+            {
+              type: 'context',
+              elements: [
+                {
+                  type: 'mrkdwn',
+                  text: `*Environment:* ${env} | *Time:* ${timestamp}`,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ blocks }),
+      body: JSON.stringify(payload),
     });
-  } catch {
-    // Never throw — Slack failure must not break billing operations
-    console.warn('Slack alert failed (non-fatal):', alert.title);
+
+    if (!response.ok) {
+      console.error(`Slack webhook failed (${response.status}):`, await response.text());
+    }
+  } catch (err) {
+    console.error('Slack alert failed (non-fatal):', (err as Error).message);
   }
 }

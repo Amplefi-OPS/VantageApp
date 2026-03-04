@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './AuthProvider'
+import { reportLoginFailure } from '../api/endpoints'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Card } from '../components/ui/Card'
@@ -44,6 +45,7 @@ export default function LoginPage() {
     const result = await login(email, password)
     if (!result.success && result.error !== 'MFA required' && result.error !== 'New password required') {
       setError(result.error || 'Login failed')
+      reportLoginFailure(email, result.error || 'Login failed')
     }
   }
 

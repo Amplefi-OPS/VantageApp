@@ -115,6 +115,13 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     const pi = (await stripePost('/payment_intents', params)) as StripePaymentIntent;
 
+    await sendSlackAlert('No-Show Fee Charged', 'warning', [
+      { label: 'Amount', value: '$30.00' },
+      { label: 'Customer', value: customerId },
+      { label: 'Status', value: pi.status },
+      { label: 'Payment Intent', value: pi.id },
+    ]);
+
     return success({
       id: pi.id,
       status: pi.status,
@@ -122,14 +129,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       created: pi.created,
     });
   } catch (err) {
-    const message = (err as Error).message;
-    console.error('Stripe no-show charge error:', message);
-    await sendSlackAlert({
-      level: 'error',
-      title: 'No-Show Charge Failed',
-      details: { Customer: customerId || 'unknown', Error: message },
-      source: 'stripe-charge-noshow',
-    });
+    console.error('Stripe no-show charge error:', (err as Error).message);
+    await sendSlackAlert('No-Show Fee Failed', 'critical', [
+      { label: 'Error', value: (err as Error).message },
+    ]);
     return serverError('Failed to charge no-show fee');
   }
 };

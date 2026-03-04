@@ -238,3 +238,17 @@ export async function getPatientVoicemails(patientId: string): Promise<Voicemail
 export async function getPatientTodos(patientId: string): Promise<Todo[]> {
   return apiGet<Todo[]>(`/patients/${patientId}/todos`)
 }
+
+// ── Notifications ──────────────────────────────────────
+
+/** Fire-and-forget login failure report for Slack alerting. */
+export function reportLoginFailure(email: string, reason: string): void {
+  const url = `${import.meta.env.VITE_API_BASE_URL || '/api'}/notifications/login-failure`
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, reason }),
+  }).catch(() => {
+    // Silent — never block the UI for notification failures
+  })
+}

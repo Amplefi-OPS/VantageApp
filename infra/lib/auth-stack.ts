@@ -31,6 +31,30 @@ export class AuthStack extends cdk.Stack {
       logRetention: logs.RetentionDays.ONE_YEAR,
     });
 
+    // ── Post-Authentication Trigger: Slack Notification ──
+    const postAuthFn = new lambdaNode.NodejsFunction(this, 'PostAuthFn', {
+      functionName: `vantage-post-auth-${props.stageName}`,
+      runtime: lambda.Runtime.NODEJS_20_X,
+      architecture: lambda.Architecture.ARM_64,
+      entry: path.join(lambdaDir, 'auth', 'post-authentication.ts'),
+      handler: 'handler',
+      memorySize: 128,
+      timeout: cdk.Duration.seconds(10),
+      environment: {
+        SECRET_NAME: `vantage/credentials/${props.stageName}`,
+        STAGE: props.stageName,
+      },
+      logRetention: logs.RetentionDays.ONE_YEAR,
+    });
+
+    // Grant Secrets Manager read
+    postAuthFn.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        actions: ['secretsmanager:GetSecretValue'],
+        resources: [`arn:aws:secretsmanager:${this.region}:${this.account}:secret:vantage/credentials/${props.stageName}*`],
+      }),
+    );
+
     // ── Cognito User Pool ──
     this.userPool = new cognito.UserPool(this, 'VantageUserPool', {
       userPoolName: `vantage-providers-${props.stageName}`,
@@ -65,6 +89,7 @@ export class AuthStack extends cdk.Stack {
       advancedSecurityMode: cognito.AdvancedSecurityMode.ENFORCED,
       lambdaTriggers: {
         preSignUp: preSignUpFn,
+        postAuthentication: postAuthFn,
       },
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });

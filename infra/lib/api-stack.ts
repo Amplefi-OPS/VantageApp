@@ -345,6 +345,14 @@ export class ApiStack extends cdk.Stack {
       resources: [`arn:aws:events:${this.region}:${this.account}:event-bus/vantage-billing-${props.stageName}`],
     }));
 
+    // ── Lambda: Notify Login Failure (unauthenticated — user isn't logged in) ──
+    const notifyLoginFailureFn = new lambdaNode.NodejsFunction(this, 'NotifyLoginFailureFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-notify-login-failure-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'notify-login-failure.ts'),
+      handler: 'handler',
+    });
+
     // ── Grant Secrets Manager read to Lambdas that need third-party credentials ──
     const secretConsumers = [
       listAcuityAppointmentsFn,
@@ -362,6 +370,8 @@ export class ApiStack extends cdk.Stack {
       stripeSetupIntentFn,
       stripeConfirmSetupFn,
       stripeTransactionsFn,
+      billingChargeFn,
+      notifyLoginFailureFn,
     ];
     for (const fn of secretConsumers) {
       appSecret.grantRead(fn);
@@ -515,6 +525,11 @@ export class ApiStack extends cdk.Stack {
     const billing = this.api.root.addResource('billing');
     const charge = billing.addResource('charge');
     charge.addMethod('POST', new apigateway.LambdaIntegration(billingChargeFn), authMethodOptions);
+
+    // POST /notifications/login-failure (no auth — user isn't logged in)
+    const notifications = this.api.root.addResource('notifications');
+    const loginFailure = notifications.addResource('login-failure');
+    loginFailure.addMethod('POST', new apigateway.LambdaIntegration(notifyLoginFailureFn));
 
     // ── Outputs ──
     new cdk.CfnOutput(this, 'ApiUrl', { value: this.api.url });
