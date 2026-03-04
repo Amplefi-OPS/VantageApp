@@ -36,7 +36,7 @@ import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge
 import { randomUUID } from 'crypto';
 import { getCallerIdentity, canAccessProvider } from '../shared/auth';
 import { putItem, writeAuditLog } from '../shared/dynamo';
-import { success, badRequest, forbidden, serverError } from '../shared/response';
+import { success, badRequest, forbidden, serverError, parseBody } from '../shared/response';
 
 const eb = new EventBridgeClient({});
 const BILLING_EVENT_BUS = process.env.BILLING_EVENT_BUS!;
@@ -47,7 +47,8 @@ const VALID_PROVIDERS = new Set(['stripe', 'quickbooks', 'both']);
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const caller = getCallerIdentity(event);
-    const body = JSON.parse(event.body || '{}');
+    const body = parseBody(event);
+    if (!body) return badRequest('Invalid JSON in request body');
 
     const {
       provider_id,
@@ -111,7 +112,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       }),
     }));
 
-    await eb.send(new PutEventsCommand({ Entries: entries }));
+    const ebResult = await eb.send(new PutEventsCommand({ Entries: entries }));
+    if (ebResult.FailedEntryCount && ebResult.FailedEntryCount > 0) {
+      console.error('EventBridge PutEvents partial failure:', JSON.stringify(ebResult.Entries));
+    }
 
     // Record billing event in DynamoDB
     await putItem({
@@ -156,7 +160,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       message: 'Billing event submitted for processing',
     });
   } catch (err) {
-    console.error('Billing charge error:', err);
+    console.error('Billing charge error:', (err as Error).message);
     return serverError('Failed to submit billing event');
   }
 };

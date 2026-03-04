@@ -10,13 +10,17 @@ import {
   type QueryCommandInput,
   type UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb';
+import { randomUUID } from 'crypto';
 
 const client = new DynamoDBClient({});
 const ddb = DynamoDBDocumentClient.from(client, {
   marshallOptions: { removeUndefinedValues: true },
 });
 
-const TABLE_NAME = process.env.TABLE_NAME!;
+const TABLE_NAME = process.env.TABLE_NAME;
+if (!TABLE_NAME) {
+  console.error('FATAL: TABLE_NAME environment variable is not set');
+}
 
 export async function putItem(item: Record<string, unknown>) {
   const params: PutCommandInput = {
@@ -73,7 +77,7 @@ export function buildUpdateExpression(fields: Record<string, unknown>) {
   };
 }
 
-/** Write an audit log entry */
+/** Write an audit log entry. Never throws — logs errors instead. */
 export async function writeAuditLog(entry: {
   providerId: string;
   action: string;
@@ -81,20 +85,25 @@ export async function writeAuditLog(entry: {
   entityId: string;
   details?: Record<string, unknown>;
 }) {
-  const now = new Date();
-  const dateKey = now.toISOString().slice(0, 10);
-  const timestamp = now.toISOString();
+  try {
+    const now = new Date();
+    const dateKey = now.toISOString().slice(0, 10);
+    const timestamp = now.toISOString();
+    const uid = randomUUID().slice(0, 8);
 
-  await putItem({
-    PK: `AUDIT#${dateKey}`,
-    SK: `${timestamp}#${entry.entityType}#${entry.entityId}`,
-    providerId: entry.providerId,
-    action: entry.action,
-    entityType: entry.entityType,
-    entityId: entry.entityId,
-    details: entry.details || {},
-    createdAt: timestamp,
-    // Auto-expire audit logs after 7 years
-    ttl: Math.floor(now.getTime() / 1000) + 7 * 365 * 24 * 60 * 60,
-  });
+    await putItem({
+      PK: `AUDIT#${dateKey}`,
+      SK: `${timestamp}#${uid}#${entry.entityType}#${entry.entityId}`,
+      providerId: entry.providerId,
+      action: entry.action,
+      entityType: entry.entityType,
+      entityId: entry.entityId,
+      details: entry.details || {},
+      createdAt: timestamp,
+      // Auto-expire audit logs after 7 years
+      ttl: Math.floor(now.getTime() / 1000) + 7 * 365 * 24 * 60 * 60,
+    });
+  } catch (err) {
+    console.error('Audit log write failed (non-fatal):', (err as Error).message);
+  }
 }

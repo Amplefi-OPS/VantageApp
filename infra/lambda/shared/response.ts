@@ -1,61 +1,111 @@
-import type { APIGatewayProxyResult } from 'aws-lambda';
+import type { APIGatewayProxyResult, APIGatewayProxyEvent } from 'aws-lambda';
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*', // Tighten to portal domain in production
-  'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key',
-  'Access-Control-Allow-Methods': 'GET,POST,PATCH,PUT,DELETE,OPTIONS',
-  'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
-  'X-Content-Type-Options': 'nosniff',
-};
+const PROD_ORIGIN = 'https://main.dvufomlgdfium.amplifyapp.com';
+const DEV_ORIGINS = ['http://localhost:5173', 'http://localhost:4173'];
 
-export function success(body: unknown, statusCode = 200): APIGatewayProxyResult {
+const STAGE = process.env.STAGE || 'dev';
+const ALLOWED_ORIGINS = [PROD_ORIGIN, ...(STAGE === 'dev' ? DEV_ORIGINS : [])];
+
+function corsOrigin(requestOrigin?: string): string {
+  if (requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)) {
+    return requestOrigin;
+  }
+  return PROD_ORIGIN;
+}
+
+function headersForOrigin(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': corsOrigin(origin),
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key',
+    'Access-Control-Allow-Methods': 'GET,POST,PATCH,PUT,DELETE,OPTIONS',
+    'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
+    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'no-store',
+  };
+}
+
+/**
+ * Extract the request origin from an API Gateway event.
+ * Call this once at the top of each handler and pass the result to response helpers.
+ */
+export function getOrigin(event: APIGatewayProxyEvent): string | undefined {
+  return event.headers?.origin || event.headers?.Origin;
+}
+
+// Keep setRequestOrigin as a no-op for backwards compatibility during migration
+export function setRequestOrigin(_origin?: string) { /* no-op — use getOrigin() */ }
+
+export function success(body: unknown, statusCode = 200, origin?: string): APIGatewayProxyResult {
   return {
     statusCode,
-    headers: CORS_HEADERS,
+    headers: headersForOrigin(origin),
     body: JSON.stringify(body),
   };
 }
 
-export function created(body: unknown): APIGatewayProxyResult {
-  return success(body, 201);
+export function created(body: unknown, origin?: string): APIGatewayProxyResult {
+  return success(body, 201, origin);
 }
 
-export function badRequest(message: string): APIGatewayProxyResult {
+export function badRequest(message: string, origin?: string): APIGatewayProxyResult {
   return {
     statusCode: 400,
-    headers: CORS_HEADERS,
+    headers: headersForOrigin(origin),
     body: JSON.stringify({ error: message }),
   };
 }
 
-export function unauthorized(message = 'Unauthorized'): APIGatewayProxyResult {
+export function unauthorized(message = 'Unauthorized', origin?: string): APIGatewayProxyResult {
   return {
     statusCode: 401,
-    headers: CORS_HEADERS,
+    headers: headersForOrigin(origin),
     body: JSON.stringify({ error: message }),
   };
 }
 
-export function forbidden(message = 'Forbidden'): APIGatewayProxyResult {
+export function forbidden(message = 'Forbidden', origin?: string): APIGatewayProxyResult {
   return {
     statusCode: 403,
-    headers: CORS_HEADERS,
+    headers: headersForOrigin(origin),
     body: JSON.stringify({ error: message }),
   };
 }
 
-export function notFound(message = 'Not found'): APIGatewayProxyResult {
+export function notFound(message = 'Not found', origin?: string): APIGatewayProxyResult {
   return {
     statusCode: 404,
-    headers: CORS_HEADERS,
+    headers: headersForOrigin(origin),
     body: JSON.stringify({ error: message }),
   };
 }
 
-export function serverError(message = 'Internal server error'): APIGatewayProxyResult {
+export function serverError(message = 'Internal server error', origin?: string): APIGatewayProxyResult {
   return {
     statusCode: 500,
-    headers: CORS_HEADERS,
+    headers: headersForOrigin(origin),
     body: JSON.stringify({ error: message }),
   };
+}
+
+/**
+ * Safely parse a JSON request body. Returns the parsed object or null on failure.
+ * Use with: const body = parseBody(event); if (!body) return badRequest('Invalid JSON');
+ */
+export function parseBody(event: { body?: string | null }): Record<string, unknown> | null {
+  try {
+    return JSON.parse(event.body || '{}');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Safely parse a JSON string. Returns undefined on failure instead of throwing.
+ */
+export function safeJsonParse<T = unknown>(str: string): T | undefined {
+  try {
+    return JSON.parse(str) as T;
+  } catch {
+    return undefined;
+  }
 }

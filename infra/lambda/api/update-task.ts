@@ -20,7 +20,7 @@
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { getCallerIdentity, canAccessProvider } from '../shared/auth';
 import { getItem, updateItem, buildUpdateExpression, writeAuditLog } from '../shared/dynamo';
-import { success, badRequest, forbidden, notFound, serverError } from '../shared/response';
+import { success, badRequest, forbidden, notFound, serverError, parseBody } from '../shared/response';
 
 const VALID_STATUSES = new Set([
   'Open', 'Done', 'AwaitingTranscription', 'DraftReady', 'TranscriptionFailed',
@@ -33,7 +33,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const taskId = event.pathParameters?.task_id;
     if (!taskId) return badRequest('Missing path parameter: task_id');
 
-    const body = JSON.parse(event.body || '{}');
+    const body = parseBody(event);
+    if (!body) return badRequest('Invalid JSON in request body');
     const provider_id = body.provider_id || caller.providerId;
 
     if (!canAccessProvider(caller, provider_id)) {
@@ -104,7 +105,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       updated_at: updated?.updatedAt,
     });
   } catch (err) {
-    console.error('Update task error:', err);
+    console.error('Update task error:', (err as Error).message);
     return serverError('Failed to update task');
   }
 };

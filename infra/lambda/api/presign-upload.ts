@@ -32,7 +32,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
 import { getCallerIdentity, canAccessProvider } from '../shared/auth';
 import { putItem, writeAuditLog } from '../shared/dynamo';
-import { success, badRequest, forbidden, serverError } from '../shared/response';
+import { success, badRequest, forbidden, serverError, parseBody } from '../shared/response';
 
 const s3 = new S3Client({});
 const AUDIO_BUCKET = process.env.AUDIO_BUCKET!;
@@ -53,7 +53,8 @@ const ACCEPTED_TYPES = new Set([
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const caller = getCallerIdentity(event);
-    const body = JSON.parse(event.body || '{}');
+    const body = parseBody(event);
+    if (!body) return badRequest('Invalid JSON in request body');
 
     const {
       provider_id,
@@ -157,7 +158,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       expires_in: PRESIGN_EXPIRY,
     });
   } catch (err) {
-    console.error('Presign upload error:', err);
+    console.error('Presign upload error:', (err as Error).message);
     return serverError('Failed to generate upload URL');
   }
 };

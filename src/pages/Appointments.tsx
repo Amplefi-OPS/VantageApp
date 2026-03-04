@@ -77,45 +77,61 @@ export default function Appointments() {
     },
   })
 
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['appointments'] })
+    queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
+    queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
+    queryClient.invalidateQueries({ queryKey: ['todos'] })
+    queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
+  }
+
   const noShowMutation = useMutation({
     mutationFn: async (appt: Appointment) => {
       await markNoShow(appt.id)
-      const tomorrow = new Date()
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      await createTodo({
-        type: 'General',
-        title: `No-show fee — ${appt.patientName}`,
-        status: 'Open',
-        priority: 'High',
-        patientId: appt.patientId || undefined,
-        dueDate: tomorrow.toISOString(),
-        notes: `Patient did not show for ${appt.type} appointment. Charge $30 no-show fee.`,
-      })
+      // Todo creation is best-effort — don't fail the whole operation
+      try {
+        const tomorrow = new Date()
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        await createTodo({
+          type: 'General',
+          title: `No-show fee — ${appt.patientName}`,
+          status: 'Open',
+          priority: 'High',
+          patientId: appt.patientId || undefined,
+          dueDate: tomorrow.toISOString(),
+          notes: `Patient did not show for ${appt.type} appointment. Charge $30 no-show fee.`,
+        })
+      } catch {
+        console.warn('Failed to create no-show todo — appointment was still marked no-show')
+      }
     },
     onMutate: async (appt) => {
-      // Optimistic update — immediately show no_show status
       const keys = [['appointments', selectedDate], ['appointments-upcoming', today, rangeEnd], ['appointments-past', pastStart, pastEnd]]
+      const previousData: Record<string, Appointment[] | undefined> = {}
       for (const key of keys) {
         await queryClient.cancelQueries({ queryKey: key })
+        previousData[key.join(',')] = queryClient.getQueryData<Appointment[]>(key)
         queryClient.setQueryData<Appointment[]>(key, (old) =>
           old?.map((a) => a.id === appt.id ? { ...a, status: 'no_show' } : a)
         )
       }
+      return { previousData }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments'] })
-      queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
-      queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
-      queryClient.invalidateQueries({ queryKey: ['todos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
+      invalidateAll()
       toast('success', 'Marked as no-show. Collect $30 no-show fee.')
       setNoShowAppt(null)
     },
-    onError: (err) => {
-      // Refetch to restore real state
-      queryClient.invalidateQueries({ queryKey: ['appointments'] })
-      queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
-      queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
+    onError: (err, _appt, context) => {
+      // Restore previous cache state
+      if (context?.previousData) {
+        const keys = [['appointments', selectedDate], ['appointments-upcoming', today, rangeEnd], ['appointments-past', pastStart, pastEnd]]
+        for (const key of keys) {
+          const prev = context.previousData[key.join(',')]
+          if (prev) queryClient.setQueryData(key, prev)
+        }
+      }
+      invalidateAll()
       toast('error', `Failed: ${(err as Error).message}`)
       setNoShowAppt(null)
     },
@@ -124,38 +140,46 @@ export default function Appointments() {
   const completeMutation = useMutation({
     mutationFn: async (appt: Appointment) => {
       await completeAppointment(appt.id)
-      await createTodo({
-        type: 'General',
-        title: `Doctor's notes — ${appt.patientName}`,
-        status: 'Open',
-        priority: 'Med',
-        patientId: appt.patientId || undefined,
-        dueDate: new Date().toISOString(),
-        notes: `Complete doctor's notes for ${appt.type} appointment.`,
-      })
+      try {
+        await createTodo({
+          type: 'General',
+          title: `Doctor's notes — ${appt.patientName}`,
+          status: 'Open',
+          priority: 'Med',
+          patientId: appt.patientId || undefined,
+          dueDate: new Date().toISOString(),
+          notes: `Complete doctor's notes for ${appt.type} appointment.`,
+        })
+      } catch {
+        console.warn('Failed to create notes todo — appointment was still marked complete')
+      }
     },
     onMutate: async (appt) => {
       const keys = [['appointments', selectedDate], ['appointments-upcoming', today, rangeEnd], ['appointments-past', pastStart, pastEnd]]
+      const previousData: Record<string, Appointment[] | undefined> = {}
       for (const key of keys) {
         await queryClient.cancelQueries({ queryKey: key })
+        previousData[key.join(',')] = queryClient.getQueryData<Appointment[]>(key)
         queryClient.setQueryData<Appointment[]>(key, (old) =>
           old?.map((a) => a.id === appt.id ? { ...a, status: 'completed' } : a)
         )
       }
+      return { previousData }
     },
     onSuccess: (_data, appt) => {
-      queryClient.invalidateQueries({ queryKey: ['appointments'] })
-      queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
-      queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
-      queryClient.invalidateQueries({ queryKey: ['todos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
+      invalidateAll()
       toast('success', `${appt.patientName}'s appointment marked complete.`)
       setCompletingAppt(null)
     },
-    onError: (err) => {
-      queryClient.invalidateQueries({ queryKey: ['appointments'] })
-      queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
-      queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
+    onError: (err, _appt, context) => {
+      if (context?.previousData) {
+        const keys = [['appointments', selectedDate], ['appointments-upcoming', today, rangeEnd], ['appointments-past', pastStart, pastEnd]]
+        for (const key of keys) {
+          const prev = context.previousData[key.join(',')]
+          if (prev) queryClient.setQueryData(key, prev)
+        }
+      }
+      invalidateAll()
       toast('error', `Failed: ${(err as Error).message}`)
       setCompletingAppt(null)
     },

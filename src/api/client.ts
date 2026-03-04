@@ -24,12 +24,45 @@ function authHeaders(): Record<string, string> {
   return auth ? { Authorization: auth } : {}
 }
 
+/** Safely parse JSON from a response, returning null on failure. */
+async function safeJson<T>(res: Response): Promise<T> {
+  try {
+    return await res.json()
+  } catch {
+    throw new ApiError(res.status, `Unexpected response (status ${res.status})`)
+  }
+}
+
+/** Handle 401 by clearing session — user will be redirected to login via AuthProvider. */
+function handleUnauthorized(res: Response) {
+  if (res.status === 401) {
+    sessionStorage.clear()
+    window.location.replace('/dashboard')
+  }
+}
+
+/** Extract a user-safe error message from a failed response. */
+async function errorMessage(res: Response): Promise<string> {
+  handleUnauthorized(res)
+  try {
+    const text = await res.text()
+    // Try to extract a structured error message
+    const parsed = JSON.parse(text)
+    if (parsed.error && typeof parsed.error === 'string') return parsed.error
+    if (parsed.message && typeof parsed.message === 'string') return parsed.message
+  } catch {
+    // ignore parse failures
+  }
+  // Fallback: generic message (never expose raw Lambda internals)
+  return `Request failed (${res.status})`
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`${baseUrl()}${path}`, {
     headers: { ...authHeaders() },
   })
-  if (!res.ok) throw new ApiError(res.status, await res.text())
-  return res.json()
+  if (!res.ok) throw new ApiError(res.status, await errorMessage(res))
+  return safeJson<T>(res)
 }
 
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
@@ -38,8 +71,8 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new ApiError(res.status, await res.text())
-  return res.json()
+  if (!res.ok) throw new ApiError(res.status, await errorMessage(res))
+  return safeJson<T>(res)
 }
 
 export async function apiPut<T>(path: string, body: unknown): Promise<T> {
@@ -48,8 +81,8 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new ApiError(res.status, await res.text())
-  return res.json()
+  if (!res.ok) throw new ApiError(res.status, await errorMessage(res))
+  return safeJson<T>(res)
 }
 
 export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
@@ -58,8 +91,8 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new ApiError(res.status, await res.text())
-  return res.json()
+  if (!res.ok) throw new ApiError(res.status, await errorMessage(res))
+  return safeJson<T>(res)
 }
 
 export async function apiDelete<T>(path: string): Promise<T> {
@@ -67,8 +100,10 @@ export async function apiDelete<T>(path: string): Promise<T> {
     method: 'DELETE',
     headers: { ...authHeaders() },
   })
-  if (!res.ok) throw new ApiError(res.status, await res.text())
-  return res.json()
+  if (!res.ok) throw new ApiError(res.status, await errorMessage(res))
+  // Handle 204 No Content (empty body)
+  if (res.status === 204) return undefined as T
+  return safeJson<T>(res)
 }
 
 /**
@@ -88,6 +123,6 @@ export async function apiUpload(
     headers: { ...authHeaders() },
     body: form,
   })
-  if (!res.ok) throw new ApiError(res.status, await res.text())
-  return res.json()
+  if (!res.ok) throw new ApiError(res.status, await errorMessage(res))
+  return safeJson<{ url: string; key: string }>(res)
 }

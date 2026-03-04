@@ -33,12 +33,13 @@ import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { randomUUID } from 'crypto';
 import { getCallerIdentity } from '../shared/auth';
 import { putItem, writeAuditLog } from '../shared/dynamo';
-import { created, badRequest, serverError } from '../shared/response';
+import { created, badRequest, serverError, parseBody } from '../shared/response';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const caller = getCallerIdentity(event);
-    const body = JSON.parse(event.body || '{}');
+    const body = parseBody(event);
+    if (!body) return badRequest('Invalid JSON in request body');
 
     const { firstName, lastName, phone } = body;
     if (!firstName || !lastName || !phone) {

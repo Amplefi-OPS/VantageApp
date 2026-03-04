@@ -7,11 +7,12 @@
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { getCallerIdentity } from '../shared/auth';
 import { success, badRequest, serverError } from '../shared/response';
+import { getSecrets } from '../shared/secrets';
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY!;
 const STRIPE_BASE = 'https://api.stripe.com/v1';
 
 async function stripeGet(path: string): Promise<unknown> {
+  const { STRIPE_SECRET_KEY } = await getSecrets();
   const res = await fetch(`${STRIPE_BASE}${path}`, {
     headers: {
       Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
@@ -71,7 +72,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       return badRequest('Search query must be at least 2 characters');
     }
 
-    const q = query.trim();
+    // Sanitize input — escape single quotes to prevent Stripe query injection
+    const q = query.trim().replace(/'/g, "\\'");
 
     // Use Stripe Search API — search by name or email
     const searchQuery = `name~'${q}' OR email~'${q}'`;
@@ -99,7 +101,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     return success({ customers });
   } catch (err) {
-    console.error('Stripe customer search error:', err);
+    console.error('Stripe customer search error:', (err as Error).message);
     return serverError('Failed to search customers');
   }
 };

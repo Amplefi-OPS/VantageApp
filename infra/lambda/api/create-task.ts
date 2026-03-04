@@ -22,7 +22,7 @@ import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { randomUUID } from 'crypto';
 import { getCallerIdentity, canAccessProvider } from '../shared/auth';
 import { putItem, writeAuditLog } from '../shared/dynamo';
-import { created, badRequest, forbidden, serverError } from '../shared/response';
+import { created, badRequest, forbidden, serverError, parseBody } from '../shared/response';
 
 const VALID_TYPES = new Set([
   'Schedule', 'Refill', 'CallBack', 'SendDocs', 'General', 'Dictation',
@@ -31,7 +31,8 @@ const VALID_TYPES = new Set([
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const caller = getCallerIdentity(event);
-    const body = JSON.parse(event.body || '{}');
+    const body = parseBody(event);
+    if (!body) return badRequest('Invalid JSON in request body');
 
     const provider_id = body.provider_id || caller.providerId;
     const { type, title } = body;
@@ -49,7 +50,11 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     const taskId = `task-${randomUUID().slice(0, 12)}`;
     const now = new Date().toISOString();
+    const VALID_STATUSES = new Set(['Open', 'In Progress', 'Done']);
     const status = body.status || 'Open';
+    if (!VALID_STATUSES.has(status as string)) {
+      return badRequest(`Invalid status. Valid values: ${[...VALID_STATUSES].join(', ')}`);
+    }
 
     const item = {
       PK: `PROVIDER#${provider_id}`,
@@ -101,7 +106,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       updated_at: now,
     });
   } catch (err) {
-    console.error('Create task error:', err);
+    console.error('Create task error:', (err as Error).message);
     return serverError('Failed to create task');
   }
 };

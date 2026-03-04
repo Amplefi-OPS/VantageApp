@@ -5,13 +5,13 @@
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
-import { getCallerIdentity } from '../shared/auth';
+import { getCallerIdentity, canAccessProvider } from '../shared/auth';
 import { getItem } from '../shared/dynamo';
-import { success, notFound, serverError } from '../shared/response';
+import { success, notFound, forbidden, serverError } from '../shared/response';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    getCallerIdentity(event); // Verify caller is authenticated
+    const caller = getCallerIdentity(event);
 
     const patientId = event.pathParameters?.id;
     if (!patientId) {
@@ -21,6 +21,11 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const item = await getItem(`PATIENT#${patientId}`, 'PROFILE');
     if (!item) {
       return notFound('Patient not found');
+    }
+
+    // Verify caller owns this patient's record
+    if (item.providerId && !canAccessProvider(caller, item.providerId as string)) {
+      return forbidden('You do not have access to this patient');
     }
 
     return success({

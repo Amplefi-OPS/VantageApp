@@ -55,7 +55,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
           Key: item.transcriptKey,
         }));
         transcriptText = await obj.Body?.transformToString('utf-8');
-      } catch {
+      } catch (s3Err) {
+        console.error('Failed to fetch transcript from S3:', (s3Err as Error).message);
         transcriptText = null;
       }
     }
@@ -78,7 +79,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       updated_at: item.updatedAt,
     });
   } catch (err) {
-    console.error('Get dictation error:', err);
+    console.error('Get dictation error:', (err as Error).message);
     return serverError('Failed to retrieve dictation');
   }
 };

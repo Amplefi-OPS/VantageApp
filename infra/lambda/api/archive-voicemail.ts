@@ -51,7 +51,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     return success({ status: 'Archived' });
   } catch (err) {
-    console.error('Archive voicemail error:', err);
+    console.error('Archive voicemail error:', (err as Error).message);
     return serverError('Failed to archive voicemail');
   }
 };

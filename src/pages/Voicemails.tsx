@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Phone, Search, User, UserPlus, Play, Pause, Archive } from 'lucide-react'
 import { listVoicemails, listPatients, attachVoicemail, archiveVoicemail, createPatient } from '../api/endpoints'
@@ -28,14 +28,28 @@ function AudioPlayer({ url }: { url: string }) {
     return null
   })
 
+  // Stop audio when component unmounts and listen for ended event
+  useEffect(() => {
+    if (!audioEl) return
+    const onEnded = () => setPlaying(false)
+    audioEl.addEventListener('ended', onEnded)
+    return () => {
+      audioEl.removeEventListener('ended', onEnded)
+      audioEl.pause()
+      audioEl.src = ''
+    }
+  }, [audioEl])
+
   const toggle = () => {
     if (!audioEl) return
     if (playing) {
       audioEl.pause()
+      setPlaying(false)
     } else {
-      audioEl.play().catch(() => {})
+      audioEl.play()
+        .then(() => setPlaying(true))
+        .catch(() => setPlaying(false))
     }
-    setPlaying(!playing)
   }
 
   return (
@@ -59,7 +73,7 @@ export default function Voicemails() {
   const [selectedPatientId, setSelectedPatientId] = useState('')
   const [newPatient, setNewPatient] = useState({ firstName: '', lastName: '', phone: '' })
 
-  const { data: voicemails, isLoading } = useQuery({
+  const { data: voicemails, isLoading, isError } = useQuery({
     queryKey: ['voicemails'],
     queryFn: listVoicemails,
   })
@@ -157,6 +171,7 @@ export default function Voicemails() {
   }
 
   if (isLoading) return <LoadingSpinner />
+  if (isError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load voicemails. Please refresh.</div>
 
   return (
     <div>

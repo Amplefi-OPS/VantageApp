@@ -11,6 +11,7 @@ import {
   isAuthenticated,
   type AuthUser,
 } from './cognito'
+import { queryClient } from '../App'
 
 interface AuthContextValue {
   user: AuthUser | null
@@ -198,6 +199,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     cognitoSignOut()
+    // Clear all cached data to prevent PHI leakage between sessions
+    queryClient.clear()
     setUser(null)
     setMfaRequired(false)
     setNewPasswordRequired(false)

@@ -78,7 +78,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       count: appointments.length,
     });
   } catch (err) {
-    console.error('Get appointments error:', err);
+    console.error('Get appointments error:', (err as Error).message);
     return serverError('Failed to retrieve appointments');
   }
 };

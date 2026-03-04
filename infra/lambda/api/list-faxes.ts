@@ -10,6 +10,7 @@ import { getCallerIdentity } from '../shared/auth';
 import { queryItems } from '../shared/dynamo';
 import { zoomGet } from '../shared/zoom';
 import { success, serverError } from '../shared/response';
+import { getSecrets } from '../shared/secrets';
 
 // ── Zoom fax log types ──
 
@@ -67,7 +68,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     }
 
     // 2. Fallback: try extension-level fax logs
-    const extensionId = process.env.ZOOM_FAX_EXTENSION_ID;
+    const secrets = await getSecrets();
+    const extensionId = secrets.ZOOM_FAX_EXTENSION_ID;
     if (extensionId && allFaxLogs.length === 0) {
       try {
         const extFax = await zoomGet<ZoomFaxLogResponse>(
@@ -141,7 +143,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       status: f.status as string,
       createdAt: f.createdAt as string,
       direction: 'outbound' as const,
-      rxDetails: f.rxDetails ? JSON.parse(f.rxDetails as string) : undefined,
+      rxDetails: f.rxDetails ? (() => { try { return JSON.parse(f.rxDetails as string); } catch { return undefined; } })() : undefined,
       attachmentUrl: (f.attachmentUrl as string) || undefined,
       source: 'local',
     }));

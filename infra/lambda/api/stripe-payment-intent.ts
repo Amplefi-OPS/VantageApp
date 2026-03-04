@@ -23,12 +23,13 @@
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { getCallerIdentity } from '../shared/auth';
-import { success, badRequest, serverError } from '../shared/response';
+import { success, badRequest, serverError, parseBody } from '../shared/response';
+import { getSecrets } from '../shared/secrets';
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY!;
 const STRIPE_BASE = 'https://api.stripe.com/v1';
 
 async function stripePost(path: string, body: Record<string, string>): Promise<unknown> {
+  const { STRIPE_SECRET_KEY } = await getSecrets();
   const res = await fetch(`${STRIPE_BASE}${path}`, {
     method: 'POST',
     headers: {
@@ -46,12 +47,12 @@ async function stripePost(path: string, body: Record<string, string>): Promise<u
 }
 
 async function stripeGet(path: string): Promise<unknown> {
+  const { STRIPE_SECRET_KEY } = await getSecrets();
   const res = await fetch(`${STRIPE_BASE}${path}`, {
     headers: { Authorization: `Bearer ${STRIPE_SECRET_KEY}` },
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Stripe API error (${res.status}): ${text}`);
+    throw new Error(`Stripe API error (${res.status})`);
   }
   return res.json();
 }
@@ -71,7 +72,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     getCallerIdentity(event);
 
-    const body = JSON.parse(event.body || '{}');
+    const body = parseBody(event);
+    if (!body) return badRequest('Invalid JSON in request body');
     const { customerId, amount, description, metadata } = body;
 
     if (!customerId || !amount) {
@@ -117,8 +119,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       created: pi.created,
     });
   } catch (err) {
-    console.error('Stripe payment intent error:', err);
-    const message = err instanceof Error ? err.message : 'Failed to process payment';
-    return serverError(message);
+    console.error('Stripe payment intent error:', (err as Error).message);
+    return serverError('Failed to process payment');
   }
 };

@@ -7,13 +7,13 @@
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { getCallerIdentity } from '../shared/auth';
 import { success, badRequest, serverError } from '../shared/response';
+import { getSecrets } from '../shared/secrets';
 
-const ACUITY_USER_ID = process.env.ACUITY_USER_ID!;
-const ACUITY_API_KEY = process.env.ACUITY_API_KEY!;
 const ACUITY_BASE = 'https://acuityscheduling.com/api/v1';
 
 async function acuityPut(path: string, body?: Record<string, unknown>): Promise<unknown> {
-  const auth = Buffer.from(`${ACUITY_USER_ID}:${ACUITY_API_KEY}`).toString('base64');
+  const secrets = await getSecrets();
+  const auth = Buffer.from(`${secrets.ACUITY_USER_ID}:${secrets.ACUITY_API_KEY}`).toString('base64');
   const res = await fetch(`${ACUITY_BASE}${path}`, {
     method: 'PUT',
     headers: {
@@ -34,11 +34,12 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     getCallerIdentity(event);
     const appointmentId = event.pathParameters?.id;
     if (!appointmentId) return badRequest('Missing appointment ID');
+    if (!/^\d+$/.test(appointmentId)) return badRequest('Invalid appointment ID');
 
     await acuityPut(`/appointments/${appointmentId}`, { noShow: true });
     return success({ noShow: true, appointmentId });
   } catch (err) {
-    console.error('No-show Acuity appointment error:', err);
+    console.error('No-show Acuity appointment error:', (err as Error).message);
     return serverError('Failed to mark appointment as no-show');
   }
 };

@@ -20,7 +20,7 @@ import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { randomUUID } from 'crypto';
 import { getCallerIdentity } from '../shared/auth';
 import { putItem, writeAuditLog } from '../shared/dynamo';
-import { created, badRequest, serverError } from '../shared/response';
+import { created, badRequest, serverError, parseBody } from '../shared/response';
 
 const VALID_TYPES = ['in_office', 'telehealth', 'phone'];
 const VALID_STATUSES = ['scheduled', 'checked_in', 'completed', 'cancelled', 'no_show'];
@@ -28,7 +28,8 @@ const VALID_STATUSES = ['scheduled', 'checked_in', 'completed', 'cancelled', 'no
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const caller = getCallerIdentity(event);
-    const body = JSON.parse(event.body || '{}');
+    const body = parseBody(event);
+    if (!body) return badRequest('Invalid JSON in request body');
 
     const { patientName, type, startTime, endTime, reason } = body;
 

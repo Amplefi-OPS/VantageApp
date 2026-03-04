@@ -71,6 +71,13 @@ export default function DictationMode({
 
       recognitionRef.current = recognition
     }
+
+    // Cleanup: stop recognition on unmount
+    return () => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop() } catch { /* already stopped */ }
+      }
+    }
   }, [])
 
   const toggleRecording = useCallback(() => {

@@ -18,7 +18,7 @@ import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { randomUUID } from 'crypto';
 import { getCallerIdentity } from '../shared/auth';
 import { putItem, getItem, writeAuditLog } from '../shared/dynamo';
-import { created, badRequest, serverError } from '../shared/response';
+import { created, badRequest, serverError, parseBody } from '../shared/response';
 
 const CATEGORY_TO_TODO_TYPE: Record<string, string> = {
   'Scheduling': 'Schedule',
@@ -32,7 +32,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const caller = getCallerIdentity(event);
     const providerId = caller.providerId;
-    const body = JSON.parse(event.body || '{}');
+    const body = parseBody(event);
+    if (!body) return badRequest('Invalid JSON in request body');
 
     const { voicemailId, patientId } = body;
     if (!voicemailId || !patientId) {

@@ -15,6 +15,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const caller = getCallerIdentity(event);
     const appointmentId = event.pathParameters?.id;
     if (!appointmentId) return badRequest('Missing appointment ID');
+    if (!/^\d+$/.test(appointmentId)) return badRequest('Invalid appointment ID');
 
     const now = new Date();
 
@@ -32,7 +33,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     return success({ completed: true, appointmentId });
   } catch (err) {
-    console.error('Complete appointment error:', err);
+    console.error('Complete appointment error:', (err as Error).message);
     return serverError('Failed to mark appointment as completed');
   }
 };

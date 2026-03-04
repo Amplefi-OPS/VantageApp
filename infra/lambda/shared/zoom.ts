@@ -1,9 +1,11 @@
 /**
  * Zoom Server-to-Server OAuth helper.
  *
- * Reads ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET from env vars.
+ * Reads Zoom credentials from Secrets Manager via getSecrets().
  * Caches the access token in-memory so warm Lambda invocations reuse it.
  */
+
+import { getSecrets } from './secrets';
 
 const ZOOM_AUTH_URL = 'https://zoom.us/oauth/token';
 const ZOOM_API_BASE = 'https://api.zoom.us/v2';
@@ -18,9 +20,10 @@ async function getAccessToken(): Promise<string> {
     return cachedToken;
   }
 
-  const accountId = process.env.ZOOM_ACCOUNT_ID!;
-  const clientId = process.env.ZOOM_CLIENT_ID!;
-  const clientSecret = process.env.ZOOM_CLIENT_SECRET!;
+  const secrets = await getSecrets();
+  const accountId = secrets.ZOOM_ACCOUNT_ID;
+  const clientId = secrets.ZOOM_CLIENT_ID;
+  const clientSecret = secrets.ZOOM_CLIENT_SECRET;
 
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 

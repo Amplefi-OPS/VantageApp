@@ -14,7 +14,7 @@ import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { randomUUID } from 'crypto';
 import { getCallerIdentity } from '../shared/auth';
 import { putItem, writeAuditLog } from '../shared/dynamo';
-import { created, badRequest, serverError } from '../shared/response';
+import { created, badRequest, serverError, parseBody } from '../shared/response';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
@@ -25,7 +25,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       return badRequest('Missing patient ID');
     }
 
-    const body = JSON.parse(event.body || '{}');
+    const body = parseBody(event);
+    if (!body) return badRequest('Invalid JSON in request body');
     const { title, body: noteBody } = body;
 
     if (!title || !noteBody) {

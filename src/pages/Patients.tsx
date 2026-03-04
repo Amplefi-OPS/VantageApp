@@ -15,7 +15,7 @@ export default function Patients() {
   const [search, setSearch] = useState('')
   const [showNewPatient, setShowNewPatient] = useState(false)
 
-  const { data: patients, isLoading } = useQuery({
+  const { data: patients, isLoading, isError } = useQuery({
     queryKey: ['patients'],
     queryFn: listPatients,
   })
@@ -30,6 +30,7 @@ export default function Patients() {
   })
 
   if (isLoading) return <LoadingSpinner />
+  if (isError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load patients. Please refresh.</div>
 
   return (
     <div>

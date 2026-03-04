@@ -8,6 +8,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
@@ -29,6 +30,11 @@ export class ApiStack extends cdk.Stack {
 
     const lambdaDir = path.join(__dirname, '..', 'lambda');
 
+    // ── Secrets Manager ──
+    const appSecret = secretsmanager.Secret.fromSecretNameV2(
+      this, 'AppCredentials', `vantage/credentials/${props.stageName}`,
+    );
+
     // ── Shared environment variables for all Lambdas ──
     const commonEnv: Record<string, string> = {
       TABLE_NAME: props.table.tableName,
@@ -36,6 +42,7 @@ export class ApiStack extends cdk.Stack {
       TRANSCRIPT_BUCKET: props.transcriptBucket.bucketName,
       KMS_KEY_ARN: props.kmsKey.keyArn,
       STAGE: props.stageName,
+      SECRET_NAME: `vantage/credentials/${props.stageName}`,
       PRESIGN_EXPIRY_SECONDS: '900', // 15 min
       MAX_UPLOAD_SIZE_MB: '100',
     };
@@ -51,6 +58,7 @@ export class ApiStack extends cdk.Stack {
         minify: true,
         sourceMap: true,
         target: 'node20',
+        externalModules: ['@aws-sdk/*'],
       },
       logRetention: logs.RetentionDays.ONE_YEAR,
     };
@@ -92,11 +100,8 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadWriteData(createTaskFn);
 
-    // ── Acuity environment (only for Acuity Lambdas) ──
-    const acuityEnv: Record<string, string> = {
-      ACUITY_USER_ID: process.env.ACUITY_USER_ID || '',
-      ACUITY_API_KEY: process.env.ACUITY_API_KEY || '',
-    };
+    // Acuity + Zoom + Stripe credentials are fetched at runtime via Secrets Manager.
+    // No secrets in Lambda environment variables.
 
     // ── Lambda: List Acuity Appointments ──
     const listAcuityAppointmentsFn = new lambdaNode.NodejsFunction(this, 'ListAcuityAppointmentsFn', {
@@ -104,7 +109,7 @@ export class ApiStack extends cdk.Stack {
       functionName: `vantage-list-acuity-appointments-${props.stageName}`,
       entry: path.join(lambdaDir, 'api', 'list-acuity-appointments.ts'),
       handler: 'handler',
-      environment: { ...commonEnv, ...acuityEnv },
+      environment: { ...commonEnv, },
     });
     props.table.grantReadData(listAcuityAppointmentsFn);
 
@@ -114,7 +119,7 @@ export class ApiStack extends cdk.Stack {
       functionName: `vantage-cancel-acuity-appointment-${props.stageName}`,
       entry: path.join(lambdaDir, 'api', 'cancel-acuity-appointment.ts'),
       handler: 'handler',
-      environment: { ...commonEnv, ...acuityEnv },
+      environment: { ...commonEnv, },
     });
 
     // ── Lambda: No-Show Acuity Appointment ──
@@ -123,7 +128,7 @@ export class ApiStack extends cdk.Stack {
       functionName: `vantage-noshow-acuity-appointment-${props.stageName}`,
       entry: path.join(lambdaDir, 'api', 'noshow-acuity-appointment.ts'),
       handler: 'handler',
-      environment: { ...commonEnv, ...acuityEnv },
+      environment: { ...commonEnv, },
     });
 
     // ── Lambda: Complete Appointment ──
@@ -200,15 +205,7 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadData(dashboardCountsFn);
 
-    // ── Zoom environment (only for Zoom Lambdas) ──
-    const zoomEnv: Record<string, string> = {
-      ZOOM_ACCOUNT_ID: process.env.ZOOM_ACCOUNT_ID || '',
-      ZOOM_CLIENT_ID: process.env.ZOOM_CLIENT_ID || '',
-      ZOOM_CLIENT_SECRET: process.env.ZOOM_CLIENT_SECRET || '',
-      ZOOM_USER_EMAIL: process.env.ZOOM_USER_EMAIL || '',
-      ZOOM_AUTO_RECEPTIONIST_IDS: process.env.ZOOM_AUTO_RECEPTIONIST_IDS || '',
-      ZOOM_FAX_EXTENSION_ID: process.env.ZOOM_FAX_EXTENSION_ID || '',
-    };
+    // Zoom credentials fetched at runtime via Secrets Manager.
 
     // ── Lambda: List Zoom Voicemails ──
     const listZoomVoicemailsFn = new lambdaNode.NodejsFunction(this, 'ListZoomVoicemailsFn', {
@@ -217,7 +214,7 @@ export class ApiStack extends cdk.Stack {
       entry: path.join(lambdaDir, 'api', 'list-zoom-voicemails.ts'),
       handler: 'handler',
       timeout: cdk.Duration.seconds(60), // longer timeout for downloading audio to S3
-      environment: { ...commonEnv, ...zoomEnv },
+      environment: { ...commonEnv, },
     });
     props.table.grantReadWriteData(listZoomVoicemailsFn);
     props.audioBucket.grantReadWrite(listZoomVoicemailsFn);
@@ -229,7 +226,7 @@ export class ApiStack extends cdk.Stack {
       functionName: `vantage-list-zoom-call-logs-${props.stageName}`,
       entry: path.join(lambdaDir, 'api', 'list-zoom-call-logs.ts'),
       handler: 'handler',
-      environment: { ...commonEnv, ...zoomEnv },
+      environment: { ...commonEnv, },
     });
 
     // ── Lambda: Attach Voicemail ──
@@ -256,7 +253,7 @@ export class ApiStack extends cdk.Stack {
       functionName: `vantage-list-faxes-${props.stageName}`,
       entry: path.join(lambdaDir, 'api', 'list-faxes.ts'),
       handler: 'handler',
-      environment: { ...commonEnv, ...zoomEnv },
+      environment: { ...commonEnv, },
     });
     props.table.grantReadData(listFaxesFn);
 
@@ -266,14 +263,11 @@ export class ApiStack extends cdk.Stack {
       functionName: `vantage-send-fax-${props.stageName}`,
       entry: path.join(lambdaDir, 'api', 'send-fax.ts'),
       handler: 'handler',
-      environment: { ...commonEnv, ...zoomEnv },
+      environment: { ...commonEnv, },
     });
     props.table.grantReadWriteData(sendFaxFn);
 
-    // ── Stripe environment ──
-    const stripeEnv: Record<string, string> = {
-      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
-    };
+    // Stripe credentials fetched at runtime via Secrets Manager.
 
     // ── Lambda: Stripe Customer Search ──
     const stripeCustomerSearchFn = new lambdaNode.NodejsFunction(this, 'StripeCustomerSearchFn', {
@@ -281,7 +275,7 @@ export class ApiStack extends cdk.Stack {
       functionName: `vantage-stripe-customer-search-${props.stageName}`,
       entry: path.join(lambdaDir, 'api', 'stripe-customer-search.ts'),
       handler: 'handler',
-      environment: { ...commonEnv, ...stripeEnv },
+      environment: { ...commonEnv, },
     });
 
     // ── Lambda: Stripe Payment Intent ──
@@ -290,7 +284,7 @@ export class ApiStack extends cdk.Stack {
       functionName: `vantage-stripe-payment-intent-${props.stageName}`,
       entry: path.join(lambdaDir, 'api', 'stripe-payment-intent.ts'),
       handler: 'handler',
-      environment: { ...commonEnv, ...stripeEnv },
+      environment: { ...commonEnv, },
     });
 
     // ── Lambda: Stripe Charge No-Show ──
@@ -299,7 +293,7 @@ export class ApiStack extends cdk.Stack {
       functionName: `vantage-stripe-charge-noshow-${props.stageName}`,
       entry: path.join(lambdaDir, 'api', 'stripe-charge-noshow.ts'),
       handler: 'handler',
-      environment: { ...commonEnv, ...stripeEnv },
+      environment: { ...commonEnv, },
     });
 
     // ── Lambda: Stripe Transactions ──
@@ -308,7 +302,7 @@ export class ApiStack extends cdk.Stack {
       functionName: `vantage-stripe-transactions-${props.stageName}`,
       entry: path.join(lambdaDir, 'api', 'stripe-transactions.ts'),
       handler: 'handler',
-      environment: { ...commonEnv, ...stripeEnv },
+      environment: { ...commonEnv, },
     });
 
     // ── Lambda: Billing Charge ──
@@ -330,6 +324,26 @@ export class ApiStack extends cdk.Stack {
       resources: [`arn:aws:events:${this.region}:${this.account}:event-bus/vantage-billing-${props.stageName}`],
     }));
 
+    // ── Grant Secrets Manager read to Lambdas that need third-party credentials ──
+    const secretConsumers = [
+      listAcuityAppointmentsFn,
+      cancelAcuityAppointmentFn,
+      noshowAcuityAppointmentFn,
+      listZoomVoicemailsFn,
+      listZoomCallLogsFn,
+      attachVoicemailFn,
+      archiveVoicemailFn,
+      listFaxesFn,
+      sendFaxFn,
+      stripeCustomerSearchFn,
+      stripePaymentIntentFn,
+      stripeChargeNoshowFn,
+      stripeTransactionsFn,
+    ];
+    for (const fn of secretConsumers) {
+      appSecret.grantRead(fn);
+    }
+
     // ── API Gateway ──
     this.api = new apigateway.RestApi(this, 'VantageApi', {
       restApiName: `vantage-api-${props.stageName}`,
@@ -343,7 +357,10 @@ export class ApiStack extends cdk.Stack {
         throttlingRateLimit: 50,
       },
       defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS, // Tighten in production
+        allowOrigins: [
+          'https://main.dvufomlgdfium.amplifyapp.com',
+          ...(props.stageName === 'dev' ? ['http://localhost:5173', 'http://localhost:4173'] : []),
+        ],
         allowMethods: apigateway.Cors.ALL_METHODS,
         allowHeaders: [
           'Content-Type',

@@ -113,7 +113,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       next_token: null, // Pagination token (implement with LastEvaluatedKey if needed)
     });
   } catch (err) {
-    console.error('Get tasks error:', err);
+    console.error('Get tasks error:', (err as Error).message);
     return serverError('Failed to retrieve tasks');
   }
 };

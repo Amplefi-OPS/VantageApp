@@ -60,7 +60,7 @@ export default function Todos() {
   const [confirmDoneId, setConfirmDoneId] = useState<string | null>(null)
   const settings = getSettings()
 
-  const { data: todos, isLoading } = useQuery({
+  const { data: todos, isLoading, isError } = useQuery({
     queryKey: ['todos'],
     queryFn: listTodos,
   })
@@ -116,7 +116,7 @@ export default function Todos() {
   })
 
   // Sort: open first, then by priority (High > Med > Low), then by date
-  const sorted = filtered?.sort((a, b) => {
+  const sorted = [...(filtered || [])].sort((a, b) => {
     if (a.status !== b.status) return a.status === 'Open' ? -1 : 1
     const prioOrder = { High: 0, Med: 1, Low: 2 }
     const pa = prioOrder[a.priority as keyof typeof prioOrder] ?? 2
@@ -133,6 +133,7 @@ export default function Todos() {
   const doneCount = todos?.filter((t) => t.status === 'Done').length ?? 0
 
   if (isLoading) return <LoadingSpinner />
+  if (isError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load to-dos. Please refresh.</div>
 
   return (
     <div>

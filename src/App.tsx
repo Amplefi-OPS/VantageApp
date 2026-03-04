@@ -18,7 +18,7 @@ import ChargePatient from './pages/stripe/ChargePatient'
 import NoShowFee from './pages/stripe/NoShowFee'
 import Settings from './pages/Settings'
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,

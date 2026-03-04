@@ -18,26 +18,34 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const caller = getCallerIdentity(event);
     const providerId = caller.providerId;
 
-    // Query patients for this provider (only need count, project minimal fields)
-    const patients = await queryItems({
-      IndexName: 'GSI1',
-      KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
-      ExpressionAttributeValues: {
-        ':pk': `PROVIDER#${providerId}`,
-        ':sk': 'PATIENT#',
-      },
-      ProjectionExpression: 'PK',
-    });
-
-    // Query tasks for this provider (GSI1SK uses TASKSTATUS# prefix)
-    const tasks = await queryItems({
-      IndexName: 'GSI1',
-      KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
-      ExpressionAttributeValues: {
-        ':pk': `PROVIDER#${providerId}`,
-        ':sk': 'TASKSTATUS#',
-      },
-    });
+    // Run all three queries in parallel for faster response
+    const [patients, tasks, voicemails] = await Promise.all([
+      queryItems({
+        IndexName: 'GSI1',
+        KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+        ExpressionAttributeValues: {
+          ':pk': `PROVIDER#${providerId}`,
+          ':sk': 'PATIENT#',
+        },
+        ProjectionExpression: 'PK',
+      }),
+      queryItems({
+        IndexName: 'GSI1',
+        KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+        ExpressionAttributeValues: {
+          ':pk': `PROVIDER#${providerId}`,
+          ':sk': 'TASKSTATUS#',
+        },
+      }),
+      queryItems({
+        IndexName: 'GSI1',
+        KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+        ExpressionAttributeValues: {
+          ':pk': `PROVIDER#${providerId}`,
+          ':sk': 'VOICEMAIL#',
+        },
+      }),
+    ]);
 
     const now = new Date().toISOString();
     let openTodos = 0;
@@ -50,16 +58,6 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         }
       }
     }
-
-    // Query voicemails for this provider
-    const voicemails = await queryItems({
-      IndexName: 'GSI1',
-      KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
-      ExpressionAttributeValues: {
-        ':pk': `PROVIDER#${providerId}`,
-        ':sk': 'VOICEMAIL#',
-      },
-    });
 
     let unattachedVoicemails = 0;
     for (const vm of voicemails) {

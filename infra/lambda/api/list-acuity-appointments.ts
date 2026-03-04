@@ -13,9 +13,8 @@ import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { getCallerIdentity } from '../shared/auth';
 import { queryItems } from '../shared/dynamo';
 import { success, serverError } from '../shared/response';
+import { getSecrets } from '../shared/secrets';
 
-const ACUITY_USER_ID = process.env.ACUITY_USER_ID!;
-const ACUITY_API_KEY = process.env.ACUITY_API_KEY!;
 const ACUITY_BASE = 'https://acuityscheduling.com/api/v1';
 
 // Only show appointments from the medical calendar
@@ -48,7 +47,8 @@ interface AcuityAppointment {
 }
 
 async function acuityGet<T>(path: string): Promise<T> {
-  const auth = Buffer.from(`${ACUITY_USER_ID}:${ACUITY_API_KEY}`).toString('base64');
+  const secrets = await getSecrets();
+  const auth = Buffer.from(`${secrets.ACUITY_USER_ID}:${secrets.ACUITY_API_KEY}`).toString('base64');
   const res = await fetch(`${ACUITY_BASE}${path}`, {
     headers: { Authorization: `Basic ${auth}` },
   });
@@ -223,7 +223,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       count: mapped.length,
     });
   } catch (err) {
-    console.error('List Acuity appointments error:', err);
+    console.error('List Acuity appointments error:', (err as Error).message);
     return serverError('Failed to retrieve appointments');
   }
 };

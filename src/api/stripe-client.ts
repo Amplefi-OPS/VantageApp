@@ -9,7 +9,11 @@ import { ApiError } from './client'
 import { getAuthHeader } from '../auth/cognito'
 
 function stripeBaseUrl(): string {
-  return import.meta.env.VITE_STRIPE_API_BASE_URL || ''
+  const url = import.meta.env.VITE_STRIPE_API_BASE_URL
+  if (!url) {
+    console.warn('VITE_STRIPE_API_BASE_URL is not set — Stripe calls will fail')
+  }
+  return url || ''
 }
 
 function cognitoHeaders(): Record<string, string> {
@@ -17,13 +21,31 @@ function cognitoHeaders(): Record<string, string> {
   return auth ? { Authorization: auth } : {}
 }
 
+async function safeJson<T>(res: Response): Promise<T> {
+  try {
+    return await res.json()
+  } catch {
+    throw new ApiError(res.status, `Unexpected response (status ${res.status})`)
+  }
+}
+
+async function errorMessage(res: Response): Promise<string> {
+  try {
+    const text = await res.text()
+    const parsed = JSON.parse(text)
+    if (parsed.error && typeof parsed.error === 'string') return parsed.error
+    if (parsed.message && typeof parsed.message === 'string') return parsed.message
+  } catch { /* ignore */ }
+  return `Request failed (${res.status})`
+}
+
 /** GET request to the Stripe API using Cognito auth. */
 export async function stripeGet<T>(path: string): Promise<T> {
   const res = await fetch(`${stripeBaseUrl()}${path}`, {
     headers: { ...cognitoHeaders() },
   })
-  if (!res.ok) throw new ApiError(res.status, await res.text())
-  return res.json()
+  if (!res.ok) throw new ApiError(res.status, await errorMessage(res))
+  return safeJson<T>(res)
 }
 
 /** POST request to the Stripe API using Cognito auth. */
@@ -33,6 +55,6 @@ export async function stripePost<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...cognitoHeaders() },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new ApiError(res.status, await res.text())
-  return res.json()
+  if (!res.ok) throw new ApiError(res.status, await errorMessage(res))
+  return safeJson<T>(res)
 }

@@ -6,17 +6,26 @@
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
-import { getCallerIdentity } from '../shared/auth';
-import { queryItems } from '../shared/dynamo';
-import { success, badRequest, serverError } from '../shared/response';
+import { getCallerIdentity, canAccessProvider } from '../shared/auth';
+import { queryItems, getItem } from '../shared/dynamo';
+import { success, badRequest, forbidden, notFound, serverError } from '../shared/response';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    getCallerIdentity(event); // Validates auth
+    const caller = getCallerIdentity(event);
     const patientId = event.pathParameters?.id;
 
     if (!patientId) {
       return badRequest('Missing patient ID');
+    }
+
+    // Verify caller owns this patient
+    const patient = await getItem(`PATIENT#${patientId}`, 'PROFILE');
+    if (!patient) {
+      return notFound('Patient not found');
+    }
+    if (patient.providerId && !canAccessProvider(caller, patient.providerId as string)) {
+      return forbidden('You do not have access to this patient');
     }
 
     const items = await queryItems({

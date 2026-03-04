@@ -14,11 +14,12 @@
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { getCallerIdentity } from '../shared/auth';
 import { success, serverError } from '../shared/response';
+import { getSecrets } from '../shared/secrets';
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY!;
 const STRIPE_BASE = 'https://api.stripe.com/v1';
 
 async function stripeGet(path: string): Promise<unknown> {
+  const { STRIPE_SECRET_KEY } = await getSecrets();
   const res = await fetch(`${STRIPE_BASE}${path}`, {
     headers: { Authorization: `Bearer ${STRIPE_SECRET_KEY}` },
   });
@@ -104,7 +105,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       totalCount: transactions.length,
     });
   } catch (err) {
-    console.error('Stripe transactions error:', err);
+    console.error('Stripe transactions error:', (err as Error).message);
     return serverError('Failed to list transactions');
   }
 };

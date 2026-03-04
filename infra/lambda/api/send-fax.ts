@@ -20,13 +20,15 @@ import { randomUUID } from 'crypto';
 import { getCallerIdentity } from '../shared/auth';
 import { putItem, writeAuditLog } from '../shared/dynamo';
 import { zoomPost } from '../shared/zoom';
-import { created, badRequest, serverError } from '../shared/response';
+import { created, badRequest, serverError, parseBody } from '../shared/response';
+import { getSecrets } from '../shared/secrets';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const caller = getCallerIdentity(event);
     const providerId = caller.providerId;
-    const body = JSON.parse(event.body || '{}');
+    const body = parseBody(event);
+    if (!body) return badRequest('Invalid JSON in request body');
 
     const pharmacyName = body.pharmacy_name;
     const pharmacyFax = body.pharmacy_fax;
@@ -40,7 +42,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     let zoomFaxId: string | undefined;
 
     // Try to send via Zoom API
-    const zoomUser = process.env.ZOOM_USER_EMAIL || 'me';
+    const secrets = await getSecrets();
+    const zoomUser = secrets.ZOOM_USER_EMAIL || 'me';
     try {
       const zoomResult = await zoomPost<{ id?: string; fax_id?: string; status?: string }>(
         `/phone/users/${encodeURIComponent(zoomUser)}/fax`,
@@ -53,9 +56,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       status = 'Queued';
       console.log(`Fax sent via Zoom API: ${zoomFaxId}`);
     } catch (err) {
-      console.warn('Zoom send fax failed (storing locally):', (err as Error).message);
-      // Store locally even if Zoom send fails
-      status = 'Queued';
+      console.warn('Zoom send fax failed:', (err as Error).message);
+      status = 'Failed';
     }
 
     const rxDetails = body.rx_details || null;
@@ -104,7 +106,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       created_at: now,
     });
   } catch (err) {
-    console.error('Send fax error:', err);
+    console.error('Send fax error:', (err as Error).message);
     return serverError('Failed to send fax');
   }
 };

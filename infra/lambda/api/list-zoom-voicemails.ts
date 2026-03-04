@@ -18,6 +18,7 @@ import { getCallerIdentity } from '../shared/auth';
 import { putItem, queryItems, writeAuditLog } from '../shared/dynamo';
 import { zoomGet, zoomDownload } from '../shared/zoom';
 import { success, serverError } from '../shared/response';
+import { getSecrets } from '../shared/secrets';
 
 const s3 = new S3Client({});
 const AUDIO_BUCKET = process.env.AUDIO_BUCKET!;
@@ -207,7 +208,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     }
 
     // 2. Fetch user-level voicemails
-    const zoomUser = process.env.ZOOM_USER_EMAIL || 'me';
+    const secrets = await getSecrets();
+    const zoomUser = secrets.ZOOM_USER_EMAIL || 'me';
     try {
       const userData = await zoomGet<ZoomVoicemailResponse>(
         `/phone/users/${encodeURIComponent(zoomUser)}/voice_mails`,
@@ -223,7 +225,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     // 3. Fetch voicemails from hardcoded auto receptionist IDs (env var fallback)
     //    Set ZOOM_AUTO_RECEPTIONIST_IDS=id1,id2,id3 to bypass listing
-    const hardcodedArIds = (process.env.ZOOM_AUTO_RECEPTIONIST_IDS || '').split(',').filter(Boolean);
+    const hardcodedArIds = (secrets.ZOOM_AUTO_RECEPTIONIST_IDS || '').split(',').filter(Boolean);
     if (hardcodedArIds.length > 0) {
       console.log(`Trying ${hardcodedArIds.length} hardcoded auto receptionist IDs`);
       for (const arId of hardcodedArIds) {

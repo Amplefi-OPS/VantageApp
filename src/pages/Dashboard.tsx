@@ -14,7 +14,7 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { data: counts, isLoading } = useQuery({
+  const { data: counts, isLoading, isError } = useQuery({
     queryKey: ['dashboard-counts'],
     queryFn: getDashboardCounts,
     refetchInterval: 30000,
@@ -29,6 +29,7 @@ export default function Dashboard() {
   })
 
   if (isLoading) return <LoadingSpinner />
+  if (isError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load dashboard. Please refresh.</div>
 
   const tiles = [
     {
