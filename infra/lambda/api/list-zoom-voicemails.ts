@@ -107,15 +107,23 @@ const CATEGORY_TO_TODO_TYPE: Record<string, string> = {
 function resolveCategory(calleeName: string, calleeNumber: string): string {
   if (calleeName) {
     const key = calleeName.toLowerCase().trim();
-    // Check for partial matches (e.g., "Scheduling (Main Auto Receptionist)")
+    // Check for partial matches (e.g., "Scheduling - Ext. 540")
     for (const [pattern, category] of Object.entries(CALLEE_NAME_TO_CATEGORY)) {
       if (key.includes(pattern)) return category;
     }
   }
   if (calleeNumber) {
-    const ext = calleeNumber.replace(/\D/g, '');
-    if (EXTENSION_TO_CATEGORY[ext]) return EXTENSION_TO_CATEGORY[ext];
+    const digits = calleeNumber.replace(/\D/g, '');
+    // Try exact match first (e.g., "540")
+    if (EXTENSION_TO_CATEGORY[digits]) return EXTENSION_TO_CATEGORY[digits];
+    // Try last 3 digits (Zoom may return full DID like "+18005550540")
+    const last3 = digits.slice(-3);
+    if (EXTENSION_TO_CATEGORY[last3]) return EXTENSION_TO_CATEGORY[last3];
+    // Try last 4 digits
+    const last4 = digits.slice(-4);
+    if (EXTENSION_TO_CATEGORY[last4]) return EXTENSION_TO_CATEGORY[last4];
   }
+  console.log(`Could not categorize voicemail: calleeName="${calleeName}", calleeNumber="${calleeNumber}" → defaulting to Everything Else`);
   return 'Everything Else';
 }
 

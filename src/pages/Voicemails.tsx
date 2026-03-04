@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Phone, Search, User, UserPlus, Play, Pause, Archive } from 'lucide-react'
 import { listVoicemails, listPatients, attachVoicemail, archiveVoicemail, createPatient } from '../api/endpoints'
@@ -14,39 +14,42 @@ import { Tabs } from '../components/ui/Tabs'
 import { useToast } from '../components/ui/Toast'
 import { formatDateTime, formatDuration, timeAgo } from '../lib/utils'
 
-const categoryBadge: Record<string, 'blue' | 'green' | 'yellow' | 'gray'> = {
+const categoryBadge: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'> = {
   Scheduling: 'blue',
   Refills: 'green',
-  'Basic Questions': 'yellow',
+  Billing: 'yellow',
+  'New Patient': 'red',
   'Everything Else': 'gray',
 }
 
 function AudioPlayer({ url }: { url: string }) {
   const [playing, setPlaying] = useState(false)
-  const [audioEl] = useState(() => {
-    if (typeof Audio !== 'undefined') return new Audio(url)
-    return null
-  })
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  // Stop audio when component unmounts and listen for ended event
+  // Create/update audio element when URL changes
   useEffect(() => {
-    if (!audioEl) return
-    const onEnded = () => setPlaying(false)
-    audioEl.addEventListener('ended', onEnded)
+    if (typeof Audio === 'undefined') return
+    const audio = new Audio(url)
+    audio.addEventListener('ended', () => setPlaying(false))
+    audio.addEventListener('error', () => setPlaying(false))
+    audioRef.current = audio
     return () => {
-      audioEl.removeEventListener('ended', onEnded)
-      audioEl.pause()
-      audioEl.src = ''
+      audio.pause()
+      audio.removeEventListener('ended', () => setPlaying(false))
+      audio.removeEventListener('error', () => setPlaying(false))
+      audio.src = ''
+      audioRef.current = null
     }
-  }, [audioEl])
+  }, [url])
 
   const toggle = () => {
-    if (!audioEl) return
+    const audio = audioRef.current
+    if (!audio) return
     if (playing) {
-      audioEl.pause()
+      audio.pause()
       setPlaying(false)
     } else {
-      audioEl.play()
+      audio.play()
         .then(() => setPlaying(true))
         .catch(() => setPlaying(false))
     }

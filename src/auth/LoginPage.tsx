@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from './AuthProvider'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -18,6 +18,16 @@ export default function LoginPage() {
   const [mfaCode, setMfaCode] = useState('')
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
+
+  // Force light mode on login page
+  useEffect(() => {
+    const html = document.documentElement
+    const wasDark = html.classList.contains('dark')
+    html.classList.remove('dark')
+    return () => {
+      if (wasDark) html.classList.add('dark')
+    }
+  }, [])
 
   // Sign-up fields
   const [suFirstName, setSuFirstName] = useState('')
