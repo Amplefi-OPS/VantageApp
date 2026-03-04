@@ -331,6 +331,66 @@
         }
       }
     },
+    "80eb2b42ebdc30ae4302656697a21b50164a5639ef8642ee8d8af439de071877": {
+      "displayName": "StripeCustomerSearchFn/Code",
+      "source": {
+        "path": "asset.80eb2b42ebdc30ae4302656697a21b50164a5639ef8642ee8d8af439de071877",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "841722554807-us-east-1-c96596da": {
+          "bucketName": "cdk-hnb659fds-assets-841722554807-us-east-1",
+          "objectKey": "80eb2b42ebdc30ae4302656697a21b50164a5639ef8642ee8d8af439de071877.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-file-publishing-role-841722554807-us-east-1"
+        }
+      }
+    },
+    "6322bb1fe87519daaf99121d690baf08c93e1c2f17dd5c65ca28b1fda43f1e10": {
+      "displayName": "StripePaymentIntentFn/Code",
+      "source": {
+        "path": "asset.6322bb1fe87519daaf99121d690baf08c93e1c2f17dd5c65ca28b1fda43f1e10",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "841722554807-us-east-1-ec516d3a": {
+          "bucketName": "cdk-hnb659fds-assets-841722554807-us-east-1",
+          "objectKey": "6322bb1fe87519daaf99121d690baf08c93e1c2f17dd5c65ca28b1fda43f1e10.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-file-publishing-role-841722554807-us-east-1"
+        }
+      }
+    },
+    "2df8b1d5a5f6a4ba8e71be96841a9407b0cb76f1aa223033bf2d0e10f866c966": {
+      "displayName": "StripeChargeNoshowFn/Code",
+      "source": {
+        "path": "asset.2df8b1d5a5f6a4ba8e71be96841a9407b0cb76f1aa223033bf2d0e10f866c966",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "841722554807-us-east-1-9d1613f0": {
+          "bucketName": "cdk-hnb659fds-assets-841722554807-us-east-1",
+          "objectKey": "2df8b1d5a5f6a4ba8e71be96841a9407b0cb76f1aa223033bf2d0e10f866c966.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-file-publishing-role-841722554807-us-east-1"
+        }
+      }
+    },
+    "10464a19dc17ec0ce4da8c3447635da5abc82130aa9020ee6e40daf8b24b85d7": {
+      "displayName": "StripeTransactionsFn/Code",
+      "source": {
+        "path": "asset.10464a19dc17ec0ce4da8c3447635da5abc82130aa9020ee6e40daf8b24b85d7",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "841722554807-us-east-1-ddf4784a": {
+          "bucketName": "cdk-hnb659fds-assets-841722554807-us-east-1",
+          "objectKey": "10464a19dc17ec0ce4da8c3447635da5abc82130aa9020ee6e40daf8b24b85d7.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-file-publishing-role-841722554807-us-east-1"
+        }
+      }
+    },
     "5f86e3549fabc20b06dcf13aa9b8cb7331a4bea49dc34efaa747af1332ffcadc": {
       "displayName": "BillingChargeFn/Code",
       "source": {
@@ -346,16 +406,16 @@
         }
       }
     },
-    "fd4328eb4eb46ba2d54b5c9ecbbdfa0d12a119db3ecd5efc21b7fcffee735432": {
+    "1becf8bb61e4fb2130a1dad380bca7d4b4cd72e4b52cac5e1f8a646025c7187d": {
       "displayName": "Vantage-Api-dev Template",
       "source": {
         "path": "Vantage-Api-dev.template.json",
         "packaging": "file"
       },
       "destinations": {
-        "841722554807-us-east-1-f6f35e41": {
+        "841722554807-us-east-1-43bff853": {
           "bucketName": "cdk-hnb659fds-assets-841722554807-us-east-1",
-          "objectKey": "fd4328eb4eb46ba2d54b5c9ecbbdfa0d12a119db3ecd5efc21b7fcffee735432.json",
+          "objectKey": "1becf8bb61e4fb2130a1dad380bca7d4b4cd72e4b52cac5e1f8a646025c7187d.json",
           "region": "us-east-1",
           "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-file-publishing-role-841722554807-us-east-1"
         }

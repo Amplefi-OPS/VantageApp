@@ -284,6 +284,33 @@ export class ApiStack extends cdk.Stack {
       environment: { ...commonEnv, ...stripeEnv },
     });
 
+    // ── Lambda: Stripe Payment Intent ──
+    const stripePaymentIntentFn = new lambdaNode.NodejsFunction(this, 'StripePaymentIntentFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-stripe-payment-intent-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'stripe-payment-intent.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, ...stripeEnv },
+    });
+
+    // ── Lambda: Stripe Charge No-Show ──
+    const stripeChargeNoshowFn = new lambdaNode.NodejsFunction(this, 'StripeChargeNoshowFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-stripe-charge-noshow-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'stripe-charge-noshow.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, ...stripeEnv },
+    });
+
+    // ── Lambda: Stripe Transactions ──
+    const stripeTransactionsFn = new lambdaNode.NodejsFunction(this, 'StripeTransactionsFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-stripe-transactions-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'stripe-transactions.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, ...stripeEnv },
+    });
+
     // ── Lambda: Billing Charge ──
     const billingChargeFn = new lambdaNode.NodejsFunction(this, 'BillingChargeFn', {
       ...lambdaDefaults,
@@ -422,6 +449,18 @@ export class ApiStack extends cdk.Stack {
     const stripe = this.api.root.addResource('stripe');
     const stripeCustomers = stripe.addResource('customers');
     stripeCustomers.addMethod('GET', new apigateway.LambdaIntegration(stripeCustomerSearchFn), authMethodOptions);
+
+    // POST /stripe/payment-intent
+    const stripePaymentIntent = stripe.addResource('payment-intent');
+    stripePaymentIntent.addMethod('POST', new apigateway.LambdaIntegration(stripePaymentIntentFn), authMethodOptions);
+
+    // POST /stripe/charge-no-show
+    const stripeChargeNoShow = stripe.addResource('charge-no-show');
+    stripeChargeNoShow.addMethod('POST', new apigateway.LambdaIntegration(stripeChargeNoshowFn), authMethodOptions);
+
+    // GET /stripe/transactions
+    const stripeTransactions = stripe.addResource('transactions');
+    stripeTransactions.addMethod('GET', new apigateway.LambdaIntegration(stripeTransactionsFn), authMethodOptions);
 
     // POST /billing/charge
     const billing = this.api.root.addResource('billing');

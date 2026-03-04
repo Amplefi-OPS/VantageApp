@@ -4012,6 +4012,454 @@
     "aws:cdk:path": "Vantage-Api-dev/SendFaxFn/LogRetention/Resource"
    }
   },
+  "StripeCustomerSearchFnServiceRole23D84E21": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeCustomerSearchFn/ServiceRole/Resource"
+   }
+  },
+  "StripeCustomerSearchFn2CD812E6": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "80eb2b42ebdc30ae4302656697a21b50164a5639ef8642ee8d8af439de071877.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_NAME": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefVantageTableA92A5E33483C0F3E"
+      },
+      "AUDIO_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefAudioBucket96BEECBAEFFB6375"
+      },
+      "TRANSCRIPT_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefTranscriptBucketB04D660A43F395AF"
+      },
+      "KMS_KEY_ARN": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+      },
+      "STAGE": "dev",
+      "PRESIGN_EXPIRY_SECONDS": "900",
+      "MAX_UPLOAD_SIZE_MB": "100",
+      "STRIPE_SECRET_KEY": "sk_test_51SP9M2AfwHErZSTyGP0vZQCPnsDjiva7H245NL2QgLgoEyBtcQaaRDxSXs87FSfp0JFolrIEUq4qogEaJr1wDfI500S3NngkCc"
+     }
+    },
+    "FunctionName": "vantage-stripe-customer-search-dev",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "StripeCustomerSearchFnServiceRole23D84E21",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "StripeCustomerSearchFnServiceRole23D84E21"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeCustomerSearchFn/Resource",
+    "aws:asset:path": "asset.80eb2b42ebdc30ae4302656697a21b50164a5639ef8642ee8d8af439de071877",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StripeCustomerSearchFnLogRetention492DCDC7": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "StripeCustomerSearchFn2CD812E6"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeCustomerSearchFn/LogRetention/Resource"
+   }
+  },
+  "StripePaymentIntentFnServiceRole80AA3A30": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripePaymentIntentFn/ServiceRole/Resource"
+   }
+  },
+  "StripePaymentIntentFnDBE032B0": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "6322bb1fe87519daaf99121d690baf08c93e1c2f17dd5c65ca28b1fda43f1e10.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_NAME": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefVantageTableA92A5E33483C0F3E"
+      },
+      "AUDIO_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefAudioBucket96BEECBAEFFB6375"
+      },
+      "TRANSCRIPT_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefTranscriptBucketB04D660A43F395AF"
+      },
+      "KMS_KEY_ARN": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+      },
+      "STAGE": "dev",
+      "PRESIGN_EXPIRY_SECONDS": "900",
+      "MAX_UPLOAD_SIZE_MB": "100",
+      "STRIPE_SECRET_KEY": "sk_test_51SP9M2AfwHErZSTyGP0vZQCPnsDjiva7H245NL2QgLgoEyBtcQaaRDxSXs87FSfp0JFolrIEUq4qogEaJr1wDfI500S3NngkCc"
+     }
+    },
+    "FunctionName": "vantage-stripe-payment-intent-dev",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "StripePaymentIntentFnServiceRole80AA3A30",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "StripePaymentIntentFnServiceRole80AA3A30"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripePaymentIntentFn/Resource",
+    "aws:asset:path": "asset.6322bb1fe87519daaf99121d690baf08c93e1c2f17dd5c65ca28b1fda43f1e10",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StripePaymentIntentFnLogRetentionF30BA413": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "StripePaymentIntentFnDBE032B0"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripePaymentIntentFn/LogRetention/Resource"
+   }
+  },
+  "StripeChargeNoshowFnServiceRole1C6BBE41": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeChargeNoshowFn/ServiceRole/Resource"
+   }
+  },
+  "StripeChargeNoshowFn5181DA24": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "2df8b1d5a5f6a4ba8e71be96841a9407b0cb76f1aa223033bf2d0e10f866c966.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_NAME": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefVantageTableA92A5E33483C0F3E"
+      },
+      "AUDIO_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefAudioBucket96BEECBAEFFB6375"
+      },
+      "TRANSCRIPT_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefTranscriptBucketB04D660A43F395AF"
+      },
+      "KMS_KEY_ARN": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+      },
+      "STAGE": "dev",
+      "PRESIGN_EXPIRY_SECONDS": "900",
+      "MAX_UPLOAD_SIZE_MB": "100",
+      "STRIPE_SECRET_KEY": "sk_test_51SP9M2AfwHErZSTyGP0vZQCPnsDjiva7H245NL2QgLgoEyBtcQaaRDxSXs87FSfp0JFolrIEUq4qogEaJr1wDfI500S3NngkCc"
+     }
+    },
+    "FunctionName": "vantage-stripe-charge-noshow-dev",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "StripeChargeNoshowFnServiceRole1C6BBE41",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "StripeChargeNoshowFnServiceRole1C6BBE41"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeChargeNoshowFn/Resource",
+    "aws:asset:path": "asset.2df8b1d5a5f6a4ba8e71be96841a9407b0cb76f1aa223033bf2d0e10f866c966",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StripeChargeNoshowFnLogRetention88EBCCE0": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "StripeChargeNoshowFn5181DA24"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeChargeNoshowFn/LogRetention/Resource"
+   }
+  },
+  "StripeTransactionsFnServiceRole8D8BF51D": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeTransactionsFn/ServiceRole/Resource"
+   }
+  },
+  "StripeTransactionsFn0D1644A5": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "10464a19dc17ec0ce4da8c3447635da5abc82130aa9020ee6e40daf8b24b85d7.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_NAME": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefVantageTableA92A5E33483C0F3E"
+      },
+      "AUDIO_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefAudioBucket96BEECBAEFFB6375"
+      },
+      "TRANSCRIPT_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefTranscriptBucketB04D660A43F395AF"
+      },
+      "KMS_KEY_ARN": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+      },
+      "STAGE": "dev",
+      "PRESIGN_EXPIRY_SECONDS": "900",
+      "MAX_UPLOAD_SIZE_MB": "100",
+      "STRIPE_SECRET_KEY": "sk_test_51SP9M2AfwHErZSTyGP0vZQCPnsDjiva7H245NL2QgLgoEyBtcQaaRDxSXs87FSfp0JFolrIEUq4qogEaJr1wDfI500S3NngkCc"
+     }
+    },
+    "FunctionName": "vantage-stripe-transactions-dev",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "StripeTransactionsFnServiceRole8D8BF51D",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "StripeTransactionsFnServiceRole8D8BF51D"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeTransactionsFn/Resource",
+    "aws:asset:path": "asset.10464a19dc17ec0ce4da8c3447635da5abc82130aa9020ee6e40daf8b24b85d7",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StripeTransactionsFnLogRetention5C88229F": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "StripeTransactionsFn0D1644A5"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeTransactionsFn/LogRetention/Resource"
+   }
+  },
   "BillingChargeFnServiceRoleAF627016": {
    "Type": "AWS::IAM::Role",
    "Properties": {
@@ -4281,7 +4729,7 @@
     "aws:cdk:path": "Vantage-Api-dev/VantageApi/Account"
    }
   },
-  "VantageApiDeployment89164B335b5227247f92d842d37dcd79552b7c0a": {
+  "VantageApiDeployment89164B338afc67fd060ea767d8e7e46d51b1ecd1": {
    "Type": "AWS::ApiGateway::Deployment",
    "Properties": {
     "Description": "Vantage physician portal API",
@@ -4335,6 +4783,20 @@
     "VantageApipatientsOPTIONS694BDB45",
     "VantageApipatientsPOST5BBDEF75",
     "VantageApipatientsC44A0329",
+    "VantageApistripechargenoshowOPTIONS3B2F2E5E",
+    "VantageApistripechargenoshowPOST69F80A3C",
+    "VantageApistripechargenoshow77AF5587",
+    "VantageApistripecustomersGET70A123A8",
+    "VantageApistripecustomersOPTIONS70B45A4D",
+    "VantageApistripecustomers39025D42",
+    "VantageApistripeOPTIONSD53A5684",
+    "VantageApistripepaymentintentOPTIONS45FC10EE",
+    "VantageApistripepaymentintentPOSTF3433F78",
+    "VantageApistripepaymentintent10CC6978",
+    "VantageApistripeA49056A8",
+    "VantageApistripetransactionsGET3F6BFB0D",
+    "VantageApistripetransactionsOPTIONSE407EAC1",
+    "VantageApistripetransactions46D96A30",
     "VantageApitaskstaskidOPTIONS019B0305",
     "VantageApitaskstaskidPATCHFB350542",
     "VantageApitaskstaskid26620D20",
@@ -4375,7 +4837,7 @@
    "Type": "AWS::ApiGateway::Stage",
    "Properties": {
     "DeploymentId": {
-     "Ref": "VantageApiDeployment89164B335b5227247f92d842d37dcd79552b7c0a"
+     "Ref": "VantageApiDeployment89164B338afc67fd060ea767d8e7e46d51b1ecd1"
     },
     "MethodSettings": [
      {
@@ -8223,6 +8685,749 @@
    },
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/zoom/call-logs/GET/Resource"
+   }
+  },
+  "VantageApistripeA49056A8": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "VantageApi795310AC",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "stripe",
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/Resource"
+   }
+  },
+  "VantageApistripeOPTIONSD53A5684": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "VantageApistripeA49056A8"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/OPTIONS/Resource"
+   }
+  },
+  "VantageApistripecustomers39025D42": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "VantageApistripeA49056A8"
+    },
+    "PathPart": "customers",
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/customers/Resource"
+   }
+  },
+  "VantageApistripecustomersOPTIONS70B45A4D": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "VantageApistripecustomers39025D42"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/customers/OPTIONS/Resource"
+   }
+  },
+  "VantageApistripecustomersGETApiPermissionVantageApidevVantageApi61D49C06GETstripecustomersC63CBE60": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripeCustomerSearchFn2CD812E6",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/",
+       {
+        "Ref": "VantageApiDeploymentStagedevFF353021"
+       },
+       "/GET/stripe/customers"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/customers/GET/ApiPermission.VantageApidevVantageApi61D49C06.GET..stripe.customers"
+   }
+  },
+  "VantageApistripecustomersGETApiPermissionTestVantageApidevVantageApi61D49C06GETstripecustomersC208EFBB": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripeCustomerSearchFn2CD812E6",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/test-invoke-stage/GET/stripe/customers"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/customers/GET/ApiPermission.Test.VantageApidevVantageApi61D49C06.GET..stripe.customers"
+   }
+  },
+  "VantageApistripecustomersGET70A123A8": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth8E818E2A"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "StripeCustomerSearchFn2CD812E6",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "VantageApistripecustomers39025D42"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/customers/GET/Resource"
+   }
+  },
+  "VantageApistripepaymentintent10CC6978": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "VantageApistripeA49056A8"
+    },
+    "PathPart": "payment-intent",
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/payment-intent/Resource"
+   }
+  },
+  "VantageApistripepaymentintentOPTIONS45FC10EE": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "VantageApistripepaymentintent10CC6978"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/payment-intent/OPTIONS/Resource"
+   }
+  },
+  "VantageApistripepaymentintentPOSTApiPermissionVantageApidevVantageApi61D49C06POSTstripepaymentintentDB8044FA": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripePaymentIntentFnDBE032B0",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/",
+       {
+        "Ref": "VantageApiDeploymentStagedevFF353021"
+       },
+       "/POST/stripe/payment-intent"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/payment-intent/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..stripe.payment-intent"
+   }
+  },
+  "VantageApistripepaymentintentPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTstripepaymentintent6C1FB35B": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripePaymentIntentFnDBE032B0",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/test-invoke-stage/POST/stripe/payment-intent"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/payment-intent/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..stripe.payment-intent"
+   }
+  },
+  "VantageApistripepaymentintentPOSTF3433F78": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth8E818E2A"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "StripePaymentIntentFnDBE032B0",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "VantageApistripepaymentintent10CC6978"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/payment-intent/POST/Resource"
+   }
+  },
+  "VantageApistripechargenoshow77AF5587": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "VantageApistripeA49056A8"
+    },
+    "PathPart": "charge-no-show",
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/charge-no-show/Resource"
+   }
+  },
+  "VantageApistripechargenoshowOPTIONS3B2F2E5E": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "VantageApistripechargenoshow77AF5587"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/charge-no-show/OPTIONS/Resource"
+   }
+  },
+  "VantageApistripechargenoshowPOSTApiPermissionVantageApidevVantageApi61D49C06POSTstripechargenoshowAA205412": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripeChargeNoshowFn5181DA24",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/",
+       {
+        "Ref": "VantageApiDeploymentStagedevFF353021"
+       },
+       "/POST/stripe/charge-no-show"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/charge-no-show/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..stripe.charge-no-show"
+   }
+  },
+  "VantageApistripechargenoshowPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTstripechargenoshowF54F796F": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripeChargeNoshowFn5181DA24",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/test-invoke-stage/POST/stripe/charge-no-show"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/charge-no-show/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..stripe.charge-no-show"
+   }
+  },
+  "VantageApistripechargenoshowPOST69F80A3C": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth8E818E2A"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "StripeChargeNoshowFn5181DA24",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "VantageApistripechargenoshow77AF5587"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/charge-no-show/POST/Resource"
+   }
+  },
+  "VantageApistripetransactions46D96A30": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "VantageApistripeA49056A8"
+    },
+    "PathPart": "transactions",
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/transactions/Resource"
+   }
+  },
+  "VantageApistripetransactionsOPTIONSE407EAC1": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "VantageApistripetransactions46D96A30"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/transactions/OPTIONS/Resource"
+   }
+  },
+  "VantageApistripetransactionsGETApiPermissionVantageApidevVantageApi61D49C06GETstripetransactions83456393": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripeTransactionsFn0D1644A5",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/",
+       {
+        "Ref": "VantageApiDeploymentStagedevFF353021"
+       },
+       "/GET/stripe/transactions"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/transactions/GET/ApiPermission.VantageApidevVantageApi61D49C06.GET..stripe.transactions"
+   }
+  },
+  "VantageApistripetransactionsGETApiPermissionTestVantageApidevVantageApi61D49C06GETstripetransactionsE9F2CF24": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripeTransactionsFn0D1644A5",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/test-invoke-stage/GET/stripe/transactions"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/transactions/GET/ApiPermission.Test.VantageApidevVantageApi61D49C06.GET..stripe.transactions"
+   }
+  },
+  "VantageApistripetransactionsGET3F6BFB0D": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth8E818E2A"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "StripeTransactionsFn0D1644A5",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "VantageApistripetransactions46D96A30"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/transactions/GET/Resource"
    }
   },
   "VantageApibilling1CF654F0": {

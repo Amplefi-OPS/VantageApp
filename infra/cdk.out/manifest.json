@@ -380,7 +380,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/fd4328eb4eb46ba2d54b5c9ecbbdfa0d12a119db3ecd5efc21b7fcffee735432.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/1becf8bb61e4fb2130a1dad380bca7d4b4cd72e4b52cac5e1f8a646025c7187d.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -902,6 +902,78 @@
             "data": "SendFaxFnLogRetention2B82490C"
           }
         ],
+        "/Vantage-Api-dev/StripeCustomerSearchFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeCustomerSearchFnServiceRole23D84E21"
+          }
+        ],
+        "/Vantage-Api-dev/StripeCustomerSearchFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeCustomerSearchFn2CD812E6"
+          }
+        ],
+        "/Vantage-Api-dev/StripeCustomerSearchFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeCustomerSearchFnLogRetention492DCDC7"
+          }
+        ],
+        "/Vantage-Api-dev/StripePaymentIntentFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripePaymentIntentFnServiceRole80AA3A30"
+          }
+        ],
+        "/Vantage-Api-dev/StripePaymentIntentFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripePaymentIntentFnDBE032B0"
+          }
+        ],
+        "/Vantage-Api-dev/StripePaymentIntentFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripePaymentIntentFnLogRetentionF30BA413"
+          }
+        ],
+        "/Vantage-Api-dev/StripeChargeNoshowFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeChargeNoshowFnServiceRole1C6BBE41"
+          }
+        ],
+        "/Vantage-Api-dev/StripeChargeNoshowFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeChargeNoshowFn5181DA24"
+          }
+        ],
+        "/Vantage-Api-dev/StripeChargeNoshowFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeChargeNoshowFnLogRetention88EBCCE0"
+          }
+        ],
+        "/Vantage-Api-dev/StripeTransactionsFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeTransactionsFnServiceRole8D8BF51D"
+          }
+        ],
+        "/Vantage-Api-dev/StripeTransactionsFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeTransactionsFn0D1644A5"
+          }
+        ],
+        "/Vantage-Api-dev/StripeTransactionsFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StripeTransactionsFnLogRetention5C88229F"
+          }
+        ],
         "/Vantage-Api-dev/BillingChargeFn/ServiceRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -947,7 +1019,7 @@
         "/Vantage-Api-dev/VantageApi/Deployment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "VantageApiDeployment89164B335b5227247f92d842d37dcd79552b7c0a"
+            "data": "VantageApiDeployment89164B338afc67fd060ea767d8e7e46d51b1ecd1"
           }
         ],
         "/Vantage-Api-dev/VantageApi/DeploymentStage.dev/Resource": [
@@ -1632,6 +1704,138 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "VantageApizoomcalllogsGET031E18C2"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripeA49056A8"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripeOPTIONSD53A5684"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/customers/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripecustomers39025D42"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/customers/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripecustomersOPTIONS70B45A4D"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/customers/GET/ApiPermission.VantageApidevVantageApi61D49C06.GET..stripe.customers": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripecustomersGETApiPermissionVantageApidevVantageApi61D49C06GETstripecustomersC63CBE60"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/customers/GET/ApiPermission.Test.VantageApidevVantageApi61D49C06.GET..stripe.customers": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripecustomersGETApiPermissionTestVantageApidevVantageApi61D49C06GETstripecustomersC208EFBB"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/customers/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripecustomersGET70A123A8"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/payment-intent/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripepaymentintent10CC6978"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/payment-intent/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripepaymentintentOPTIONS45FC10EE"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/payment-intent/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..stripe.payment-intent": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripepaymentintentPOSTApiPermissionVantageApidevVantageApi61D49C06POSTstripepaymentintentDB8044FA"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/payment-intent/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..stripe.payment-intent": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripepaymentintentPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTstripepaymentintent6C1FB35B"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/payment-intent/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripepaymentintentPOSTF3433F78"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/charge-no-show/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripechargenoshow77AF5587"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/charge-no-show/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripechargenoshowOPTIONS3B2F2E5E"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/charge-no-show/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..stripe.charge-no-show": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripechargenoshowPOSTApiPermissionVantageApidevVantageApi61D49C06POSTstripechargenoshowAA205412"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/charge-no-show/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..stripe.charge-no-show": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripechargenoshowPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTstripechargenoshowF54F796F"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/charge-no-show/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripechargenoshowPOST69F80A3C"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/transactions/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripetransactions46D96A30"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/transactions/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripetransactionsOPTIONSE407EAC1"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/transactions/GET/ApiPermission.VantageApidevVantageApi61D49C06.GET..stripe.transactions": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripetransactionsGETApiPermissionVantageApidevVantageApi61D49C06GETstripetransactions83456393"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/transactions/GET/ApiPermission.Test.VantageApidevVantageApi61D49C06.GET..stripe.transactions": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripetransactionsGETApiPermissionTestVantageApidevVantageApi61D49C06GETstripetransactionsE9F2CF24"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/stripe/transactions/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApistripetransactionsGET3F6BFB0D"
           }
         ],
         "/Vantage-Api-dev/VantageApi/Default/billing/Resource": [

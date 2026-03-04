@@ -2,7 +2,7 @@
  * Stripe billing endpoint functions.
  */
 
-import { stripeGet, stripePost, staffPost } from './stripe-client'
+import { stripeGet, stripePost } from './stripe-client'
 import type {
   PaymentIntentRequest,
   NoShowChargeRequest,
@@ -31,7 +31,7 @@ export async function createPaymentIntent(req: PaymentIntentRequest): Promise<Pa
 // ── No-Show ──────────────────────────────────────────────
 
 export async function chargeNoShow(req: NoShowChargeRequest): Promise<PaymentResult> {
-  return staffPost<PaymentResult>('/stripe/charge-no-show', req)
+  return stripePost<PaymentResult>('/stripe/charge-no-show', req)
 }
 
 // ── Transactions ─────────────────────────────────────────
