@@ -14,6 +14,7 @@ export const SERVICE_PACKAGES: ServicePackage[] = [
   { id: 'no-show-fee', name: 'No-Show Fee', price: 3000 },
   { id: 'hormone-package', name: 'Hormone Optimization Package', price: 120000 },
   { id: 'wellness-package', name: 'Total Wellness Package', price: 240000 },
+  { id: 'meds-supplies', name: 'Medications & Supplies', price: 0 },
 ]
 
 export interface StripeCustomer {
@@ -69,4 +70,35 @@ export interface TransactionListResponse {
 
 export interface CustomerSearchResponse {
   customers: StripeCustomer[]
+}
+
+// ── SetupIntent (card-on-file collection) ────────────────
+
+export interface SetupIntentRequest {
+  customerId?: string
+  name?: string
+  email?: string
+  phone?: string
+}
+
+export interface SetupIntentResponse {
+  clientSecret: string
+  customerId: string
+  setupIntentId: string
+}
+
+export interface ConfirmSetupRequest {
+  customerId: string
+  paymentMethodId: string
+}
+
+export interface ConfirmSetupResponse {
+  customerId: string
+  paymentMethod: {
+    id: string
+    brand: string
+    last4: string
+    expMonth: number
+    expYear: number
+  }
 }

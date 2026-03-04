@@ -25,6 +25,7 @@ import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { getCallerIdentity } from '../shared/auth';
 import { success, badRequest, serverError, parseBody } from '../shared/response';
 import { getSecrets } from '../shared/secrets';
+import { sendSlackAlert } from '../shared/slack';
 
 const STRIPE_BASE = 'https://api.stripe.com/v1';
 
@@ -58,6 +59,7 @@ async function stripeGet(path: string): Promise<unknown> {
 }
 
 interface StripeCustomer {
+  email?: string | null;
   invoice_settings?: { default_payment_method?: string | null };
 }
 
@@ -97,6 +99,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     }
 
     // Create and confirm the PaymentIntent in one call
+    const customerEmail = customer.email;
     const params: Record<string, string> = {
       amount: String(amount),
       currency: 'usd',
@@ -106,6 +109,11 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       off_session: 'true',
       description: description || '',
     };
+
+    // Stripe auto-emails a receipt when receipt_email is set
+    if (customerEmail) {
+      params.receipt_email = customerEmail;
+    }
 
     // Add metadata fields
     if (metadata) {
@@ -123,7 +131,14 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       created: pi.created,
     });
   } catch (err) {
-    console.error('Stripe payment intent error:', (err as Error).message);
+    const message = (err as Error).message;
+    console.error('Stripe payment intent error:', message);
+    await sendSlackAlert({
+      level: 'error',
+      title: 'Payment Intent Failed',
+      details: { Customer: customerId || 'unknown', Error: message },
+      source: 'stripe-payment-intent',
+    });
     return serverError('Failed to process payment');
   }
 };

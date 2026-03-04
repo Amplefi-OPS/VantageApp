@@ -5,6 +5,7 @@ import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import * as path from 'path';
@@ -116,6 +117,42 @@ export class BillingStack extends cdk.Stack {
         },
       },
       targets: [new targets.LambdaFunction(quickbooksProcessorFn)],
+    });
+
+    // ── Lambda: DLQ Monitor (Slack alerts) ──
+    const appSecret = secretsmanager.Secret.fromSecretNameV2(
+      this, 'AppCredentials', `vantage/credentials/${props.stageName}`,
+    );
+
+    const dlqMonitorFn = new lambdaNode.NodejsFunction(this, 'DlqMonitorFn', {
+      functionName: `vantage-dlq-monitor-${props.stageName}`,
+      runtime: lambda.Runtime.NODEJS_20_X,
+      architecture: lambda.Architecture.ARM_64,
+      entry: path.join(lambdaDir, 'billing', 'dlq-monitor.ts'),
+      handler: 'handler',
+      memorySize: 128,
+      timeout: cdk.Duration.seconds(15),
+      environment: {
+        STAGE: props.stageName,
+        DLQ_URL: dlq.queueUrl,
+        SECRET_NAME: `vantage/credentials/${props.stageName}`,
+      },
+      logRetention: logs.RetentionDays.ONE_YEAR,
+    });
+    dlq.grantSendMessages(dlqMonitorFn); // read attributes
+    dlqMonitorFn.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        actions: ['sqs:GetQueueAttributes'],
+        resources: [dlq.queueArn],
+      }),
+    );
+    appSecret.grantRead(dlqMonitorFn);
+
+    // Run every 5 minutes
+    new events.Rule(this, 'DlqMonitorSchedule', {
+      ruleName: `vantage-dlq-monitor-schedule-${props.stageName}`,
+      schedule: events.Schedule.rate(cdk.Duration.minutes(5)),
+      targets: [new targets.LambdaFunction(dlqMonitorFn)],
     });
 
     // ── Outputs ──

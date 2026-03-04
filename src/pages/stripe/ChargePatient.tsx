@@ -75,16 +75,16 @@ export default function ChargePatient() {
     { value: '', label: 'Select a service...' },
     ...SERVICE_PACKAGES.map((p) => ({
       value: p.id,
-      label: `${p.name} — ${formatCents(p.price)}`,
+      label: p.price > 0 ? `${p.name} — ${formatCents(p.price)}` : `${p.name} — Custom`,
     })),
     { value: 'custom', label: 'Custom Amount' },
   ]
 
   const selectedPkg = SERVICE_PACKAGES.find((p) => p.id === selectedPackage)
-  const amount =
-    selectedPackage === 'custom'
-      ? Math.round(parseFloat(customAmount || '0') * 100)
-      : selectedPkg?.price || 0
+  const needsCustomAmount = selectedPackage === 'custom' || (selectedPkg && selectedPkg.price === 0)
+  const amount = needsCustomAmount
+    ? Math.round(parseFloat(customAmount || '0') * 100)
+    : selectedPkg?.price || 0
   const description =
     selectedPackage === 'custom'
       ? 'Custom Charge'
@@ -249,7 +249,7 @@ export default function ChargePatient() {
             value={selectedPackage}
             onChange={(e) => setSelectedPackage(e.target.value)}
           />
-          {selectedPackage === 'custom' && (
+          {needsCustomAmount && (
             <div className="mt-3">
               <Input
                 label="Amount ($)"

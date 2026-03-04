@@ -1,20 +1,19 @@
 /**
- * POST /stripe/charge-no-show
+ * POST /stripe/confirm-setup
  *
- * Charges a flat $30 no-show fee to a customer's default payment method.
+ * After a SetupIntent succeeds client-side, this Lambda attaches the
+ * payment method to the customer and sets it as the default for invoices.
  *
  * Request body:
  * {
  *   "customerId": "cus_xxx",
- *   "reason": "Patient did not show up"   // optional
+ *   "paymentMethodId": "pm_xxx"
  * }
  *
  * Returns:
  * {
- *   "id": "pi_xxx",
- *   "status": "succeeded",
- *   "amount": 3000,
- *   "created": 1709000000
+ *   "customerId": "cus_xxx",
+ *   "paymentMethod": { "id": "pm_xxx", "brand": "visa", "last4": "4242", "expMonth": 12, "expYear": 2026 }
  * }
  */
 
@@ -25,7 +24,6 @@ import { getSecrets } from '../shared/secrets';
 import { sendSlackAlert } from '../shared/slack';
 
 const STRIPE_BASE = 'https://api.stripe.com/v1';
-const NO_SHOW_FEE_CENTS = 3000; // $30.00
 
 async function stripePost(path: string, body: Record<string, string>): Promise<unknown> {
   const { STRIPE_SECRET_KEY } = await getSecrets();
@@ -56,16 +54,14 @@ async function stripeGet(path: string): Promise<unknown> {
   return res.json();
 }
 
-interface StripeCustomer {
-  email?: string | null;
-  invoice_settings?: { default_payment_method?: string | null };
-}
-
-interface StripePaymentIntent {
+interface StripePaymentMethod {
   id: string;
-  status: string;
-  amount: number;
-  created: number;
+  card?: {
+    brand: string;
+    last4: string;
+    exp_month: number;
+    exp_year: number;
+  };
 }
 
 export const handler: APIGatewayProxyHandler = async (event) => {
@@ -74,62 +70,51 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     const body = parseBody(event);
     if (!body) return badRequest('Invalid JSON in request body');
-    const { customerId, reason } = body;
+    const { customerId, paymentMethodId } = body;
 
-    if (!customerId) {
-      return badRequest('Missing required field: customerId');
+    if (!customerId || !paymentMethodId) {
+      return badRequest('Missing required fields: customerId, paymentMethodId');
     }
 
     if (typeof customerId !== 'string' || !/^cus_[A-Za-z0-9]+$/.test(customerId)) {
       return badRequest('Invalid customerId format');
     }
-
-    // Look up customer's default payment method
-    const customer = (await stripeGet(`/customers/${customerId}`)) as StripeCustomer;
-    const defaultPm = customer.invoice_settings?.default_payment_method;
-
-    if (!defaultPm) {
-      return badRequest('Customer has no default payment method on file');
+    if (typeof paymentMethodId !== 'string' || !/^pm_[A-Za-z0-9]+$/.test(paymentMethodId)) {
+      return badRequest('Invalid paymentMethodId format');
     }
 
-    const customerEmail = customer.email;
-    const params: Record<string, string> = {
-      amount: String(NO_SHOW_FEE_CENTS),
-      currency: 'usd',
+    // Attach payment method to customer
+    await stripePost(`/payment_methods/${paymentMethodId}/attach`, {
       customer: customerId,
-      payment_method: defaultPm,
-      confirm: 'true',
-      off_session: 'true',
-      description: 'No-Show Fee',
-      'metadata[type]': 'no-show',
-    };
+    });
 
-    // Stripe auto-emails a receipt when receipt_email is set
-    if (customerEmail) {
-      params.receipt_email = customerEmail;
-    }
+    // Set as default payment method for invoices / off-session charges
+    await stripePost(`/customers/${customerId}`, {
+      'invoice_settings[default_payment_method]': paymentMethodId,
+    });
 
-    if (reason) {
-      params['metadata[reason]'] = reason;
-    }
-
-    const pi = (await stripePost('/payment_intents', params)) as StripePaymentIntent;
+    // Fetch payment method details to return to the client
+    const pm = (await stripeGet(`/payment_methods/${paymentMethodId}`)) as StripePaymentMethod;
 
     return success({
-      id: pi.id,
-      status: pi.status,
-      amount: pi.amount,
-      created: pi.created,
+      customerId,
+      paymentMethod: {
+        id: pm.id,
+        brand: pm.card?.brand || 'unknown',
+        last4: pm.card?.last4 || '????',
+        expMonth: pm.card?.exp_month || 0,
+        expYear: pm.card?.exp_year || 0,
+      },
     });
   } catch (err) {
     const message = (err as Error).message;
-    console.error('Stripe no-show charge error:', message);
+    console.error('Stripe confirm setup error:', message);
     await sendSlackAlert({
       level: 'error',
-      title: 'No-Show Charge Failed',
-      details: { Customer: customerId || 'unknown', Error: message },
-      source: 'stripe-charge-noshow',
+      title: 'Confirm Setup Failed',
+      details: { Error: message },
+      source: 'stripe-confirm-setup',
     });
-    return serverError('Failed to charge no-show fee');
+    return serverError('Failed to confirm card setup');
   }
 };

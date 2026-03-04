@@ -24,6 +24,7 @@ export interface AppSecrets {
   ZOOM_FAX_EXTENSION_ID: string;
   ACUITY_USER_ID: string;
   ACUITY_API_KEY: string;
+  SLACK_WEBHOOK_URL?: string;
 }
 
 const SECRET_NAME = process.env.SECRET_NAME || 'vantage/credentials/dev';

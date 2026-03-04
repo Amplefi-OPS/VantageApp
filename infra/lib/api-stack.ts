@@ -299,6 +299,24 @@ export class ApiStack extends cdk.Stack {
       environment: { ...commonEnv, },
     });
 
+    // ── Lambda: Stripe Setup Intent ──
+    const stripeSetupIntentFn = new lambdaNode.NodejsFunction(this, 'StripeSetupIntentFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-stripe-setup-intent-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'stripe-setup-intent.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, },
+    });
+
+    // ── Lambda: Stripe Confirm Setup ──
+    const stripeConfirmSetupFn = new lambdaNode.NodejsFunction(this, 'StripeConfirmSetupFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-stripe-confirm-setup-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'stripe-confirm-setup.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, },
+    });
+
     // ── Lambda: Stripe Transactions ──
     const stripeTransactionsFn = new lambdaNode.NodejsFunction(this, 'StripeTransactionsFn', {
       ...lambdaDefaults,
@@ -341,6 +359,8 @@ export class ApiStack extends cdk.Stack {
       stripeCustomerSearchFn,
       stripePaymentIntentFn,
       stripeChargeNoshowFn,
+      stripeSetupIntentFn,
+      stripeConfirmSetupFn,
       stripeTransactionsFn,
     ];
     for (const fn of secretConsumers) {
@@ -478,6 +498,14 @@ export class ApiStack extends cdk.Stack {
     // POST /stripe/charge-no-show
     const stripeChargeNoShow = stripe.addResource('charge-no-show');
     stripeChargeNoShow.addMethod('POST', new apigateway.LambdaIntegration(stripeChargeNoshowFn), authMethodOptions);
+
+    // POST /stripe/setup-intent
+    const stripeSetupIntent = stripe.addResource('setup-intent');
+    stripeSetupIntent.addMethod('POST', new apigateway.LambdaIntegration(stripeSetupIntentFn), authMethodOptions);
+
+    // POST /stripe/confirm-setup
+    const stripeConfirmSetup = stripe.addResource('confirm-setup');
+    stripeConfirmSetup.addMethod('POST', new apigateway.LambdaIntegration(stripeConfirmSetupFn), authMethodOptions);
 
     // GET /stripe/transactions
     const stripeTransactions = stripe.addResource('transactions');

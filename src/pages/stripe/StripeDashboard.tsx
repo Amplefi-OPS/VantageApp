@@ -7,6 +7,7 @@ import {
   UserX,
   Search,
   CreditCard,
+  Plus,
 } from 'lucide-react'
 import { listTransactions } from '../../api/stripe-endpoints'
 import { Card } from '../../components/ui/Card'
@@ -119,6 +120,14 @@ export default function StripeDashboard() {
             onClick={() => navigate('/billing/lookup')}
           >
             Lookup
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={<Plus size={18} />}
+            onClick={() => navigate('/billing/add-card')}
+          >
+            Add Card
           </Button>
           <Button
             size="sm"

@@ -18,6 +18,7 @@ import StripeDashboard from './pages/stripe/StripeDashboard'
 import PatientLookup from './pages/stripe/PatientLookup'
 import ChargePatient from './pages/stripe/ChargePatient'
 import NoShowFee from './pages/stripe/NoShowFee'
+import AddCard from './pages/stripe/AddCard'
 import Settings from './pages/Settings'
 
 function InactivityWarning() {
@@ -67,6 +68,7 @@ function AppRoutes() {
           <Route path="/billing/lookup" element={<PatientLookup />} />
           <Route path="/billing/charge" element={<ChargePatient />} />
           <Route path="/billing/no-show" element={<NoShowFee />} />
+          <Route path="/billing/add-card" element={<AddCard />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
