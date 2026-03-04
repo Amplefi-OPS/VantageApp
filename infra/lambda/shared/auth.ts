@@ -1,4 +1,5 @@
 import type { APIGatewayProxyEvent } from 'aws-lambda';
+import { setRequestOrigin } from './response';
 
 export interface CallerIdentity {
   sub: string;          // Cognito user sub (UUID)
@@ -13,6 +14,9 @@ export interface CallerIdentity {
  * The authorizer populates claims in event.requestContext.authorizer.claims.
  */
 export function getCallerIdentity(event: APIGatewayProxyEvent): CallerIdentity {
+  // Set CORS origin for response helpers (reads Origin header from the request)
+  setRequestOrigin(event.headers?.origin || event.headers?.Origin);
+
   const claims = event.requestContext.authorizer?.claims;
   if (!claims) {
     throw new Error('No authorizer claims found');

@@ -362,6 +362,7 @@ export class ApiStack extends cdk.Stack {
       defaultCorsPreflightOptions: {
         allowOrigins: [
           'https://main.dvufomlgdfium.amplifyapp.com',
+          'https://providerdev.vantagerefinery.com',
           ...(props.stageName === 'dev' ? ['http://localhost:5173', 'http://localhost:4173'] : []),
         ],
         allowMethods: apigateway.Cors.ALL_METHODS,

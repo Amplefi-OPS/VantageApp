@@ -1,16 +1,20 @@
 import type { APIGatewayProxyResult, APIGatewayProxyEvent } from 'aws-lambda';
 
-const PROD_ORIGIN = 'https://main.dvufomlgdfium.amplifyapp.com';
+const PROD_ORIGINS = [
+  'https://main.dvufomlgdfium.amplifyapp.com',
+  'https://providerdev.vantagerefinery.com',
+];
 const DEV_ORIGINS = ['http://localhost:5173', 'http://localhost:4173'];
 
 const STAGE = process.env.STAGE || 'dev';
-const ALLOWED_ORIGINS = [PROD_ORIGIN, ...(STAGE === 'dev' ? DEV_ORIGINS : [])];
+const ALLOWED_ORIGINS = [...PROD_ORIGINS, ...(STAGE === 'dev' ? DEV_ORIGINS : [])];
 
 function corsOrigin(requestOrigin?: string): string {
-  if (requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)) {
-    return requestOrigin;
+  const origin = requestOrigin || _currentOrigin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    return origin;
   }
-  return PROD_ORIGIN;
+  return PROD_ORIGINS[0];
 }
 
 function headersForOrigin(origin?: string) {
@@ -32,8 +36,11 @@ export function getOrigin(event: APIGatewayProxyEvent): string | undefined {
   return event.headers?.origin || event.headers?.Origin;
 }
 
-// Keep setRequestOrigin as a no-op for backwards compatibility during migration
-export function setRequestOrigin(_origin?: string) { /* no-op — use getOrigin() */ }
+/** Set the request origin for the current invocation. Call once at the top of each handler. */
+let _currentOrigin: string | undefined;
+export function setRequestOrigin(origin?: string) {
+  _currentOrigin = origin;
+}
 
 export function success(body: unknown, statusCode = 200, origin?: string): APIGatewayProxyResult {
   return {
