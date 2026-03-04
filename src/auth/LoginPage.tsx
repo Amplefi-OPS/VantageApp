@@ -96,8 +96,10 @@ export default function LoginPage() {
     const result = await confirmSignUp(confirmCode)
     if (!result.success) {
       setError(result.error || 'Verification failed')
+    } else {
+      // Account verified — redirect to login form with success message
+      setSuccessMsg('Account verified! Please sign in with your credentials.')
     }
-    // On success, AuthProvider auto-logs in and transitions to MFA
   }
 
   function switchToSignUp() {
@@ -352,7 +354,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="dr.smith@clinic.com"
+                  placeholder="name@vantagerefinery.com"
                   required
                   autoComplete="email"
                 />
@@ -380,6 +382,9 @@ export default function LoginPage() {
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
               <p className="text-xs text-warm-gray text-center mt-3">
+                Forgot your password? Contact your administrator.
+              </p>
+              <p className="text-xs text-warm-gray text-center mt-1">
                 Don't have an account?{' '}
                 <button
                   type="button"

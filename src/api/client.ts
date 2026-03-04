@@ -36,7 +36,7 @@ async function safeJson<T>(res: Response): Promise<T> {
 /** Handle 401 by clearing session — user will be redirected to login via AuthProvider. */
 function handleUnauthorized(res: Response) {
   if (res.status === 401) {
-    sessionStorage.clear()
+    sessionStorage.removeItem('vantage-auth-tokens')
     window.location.replace('/dashboard')
   }
 }

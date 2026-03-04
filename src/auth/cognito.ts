@@ -1,11 +1,9 @@
 /**
  * Cognito Authentication Utilities
  *
- * Lightweight wrapper around Cognito USER_SRP_AUTH flow.
- * No Amplify SDK required — uses direct Cognito API calls via fetch.
- *
- * In production, install `amazon-cognito-identity-js` or use AWS Amplify Auth.
- * This module provides the interface that AuthProvider.tsx depends on.
+ * Direct Cognito API calls via fetch (no Amplify dependency).
+ * Uses USER_PASSWORD_AUTH — switch to USER_SRP_AUTH with
+ * amazon-cognito-identity-js for production SRP support.
  */
 
 export interface CognitoConfig {
@@ -18,7 +16,7 @@ export interface AuthTokens {
   idToken: string;
   accessToken: string;
   refreshToken: string;
-  expiresAt: number; // Unix timestamp
+  expiresAt: number; // Unix seconds
 }
 
 export interface AuthUser {
@@ -33,10 +31,6 @@ export interface AuthUser {
 
 const STORAGE_KEY = 'vantage-auth-tokens';
 
-// Track email across challenge steps (never stored persistently)
-let pendingEmail = '';
-let pendingChallengeName = '';
-
 // Default config — override via environment variables
 let config: CognitoConfig = {
   userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID || '',
@@ -48,7 +42,8 @@ export function configureCognito(c: Partial<CognitoConfig>) {
   config = { ...config, ...c };
 }
 
-/** Store tokens in sessionStorage (not localStorage) for security */
+// ── Token Storage ──
+
 function storeTokens(tokens: AuthTokens) {
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
 }
@@ -67,25 +62,118 @@ function clearTokens() {
   sessionStorage.removeItem(STORAGE_KEY);
 }
 
-/** Decode a JWT payload (without verification — verification happens server-side) */
+// ── JWT Decode ──
+
 function decodeJwtPayload(token: string): Record<string, unknown> {
   const payload = token.split('.')[1];
   const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
   return JSON.parse(decoded);
 }
 
-/** Get current auth tokens, refreshing if needed */
-export function getTokens(): AuthTokens | null {
+// ── Cognito API Helper ──
+
+async function cognitoFetch(target: string, body: Record<string, unknown>): Promise<any> {
+  const endpoint = `https://cognito-idp.${config.region}.amazonaws.com/`;
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-amz-json-1.1',
+      'X-Amz-Target': `AWSCognitoIdentityProviderService.${target}`,
+    },
+    body: JSON.stringify(body),
+  });
+  return response.json();
+}
+
+// ── Error Message Sanitization ──
+
+const COGNITO_ERROR_MAP: Record<string, string> = {
+  NotAuthorizedException: 'Incorrect email or password.',
+  UserNotFoundException: 'Incorrect email or password.',
+  UserNotConfirmedException: 'Please verify your email first.',
+  CodeMismatchException: 'Invalid verification code. Please try again.',
+  ExpiredCodeException: 'Verification code has expired. Please request a new one.',
+  LimitExceededException: 'Too many attempts. Please wait a few minutes.',
+  InvalidPasswordException: 'Password does not meet requirements.',
+  UsernameExistsException: 'An account with this email already exists.',
+  InvalidParameterException: 'Invalid input. Please check your entries.',
+  TooManyRequestsException: 'Too many requests. Please wait a moment.',
+};
+
+function sanitizeError(data: any, fallback: string): string {
+  const code = data?.__type?.split('#').pop() || '';
+  if (COGNITO_ERROR_MAP[code]) return COGNITO_ERROR_MAP[code];
+  // Never expose raw Cognito messages
+  return fallback;
+}
+
+// ── Token Refresh ──
+
+let refreshInProgress: Promise<AuthTokens | null> | null = null;
+
+async function refreshTokens(refreshToken: string): Promise<AuthTokens | null> {
+  try {
+    const data = await cognitoFetch('InitiateAuth', {
+      AuthFlow: 'REFRESH_TOKEN_AUTH',
+      ClientId: config.clientId,
+      AuthParameters: {
+        REFRESH_TOKEN: refreshToken,
+      },
+    });
+
+    if (data.AuthenticationResult) {
+      const tokens: AuthTokens = {
+        idToken: data.AuthenticationResult.IdToken,
+        accessToken: data.AuthenticationResult.AccessToken,
+        // Refresh token is NOT returned on refresh — keep the existing one
+        refreshToken: refreshToken,
+        expiresAt: Math.floor(Date.now() / 1000) + data.AuthenticationResult.ExpiresIn,
+      };
+      storeTokens(tokens);
+      return tokens;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Get current auth tokens, auto-refreshing if expired */
+export async function getTokensAsync(): Promise<AuthTokens | null> {
   const tokens = loadTokens();
   if (!tokens) return null;
 
-  // Check if expired (with 5-min buffer)
-  if (Date.now() > (tokens.expiresAt - 300) * 1000) {
-    // Token expired — caller should redirect to login
-    // In production, implement refresh token flow here
-    return null;
+  // Check if expired (with 5-min buffer). expiresAt is Unix seconds.
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (nowSeconds < tokens.expiresAt - 300) {
+    return tokens; // Still valid
   }
 
+  // Token expired or about to expire — try refresh
+  if (tokens.refreshToken) {
+    // Deduplicate concurrent refresh calls
+    if (!refreshInProgress) {
+      refreshInProgress = refreshTokens(tokens.refreshToken).finally(() => {
+        refreshInProgress = null;
+      });
+    }
+    const refreshed = await refreshInProgress;
+    if (refreshed) return refreshed;
+  }
+
+  // Refresh failed — session is dead
+  clearTokens();
+  return null;
+}
+
+/** Synchronous token check (for immediate use, no refresh) */
+export function getTokens(): AuthTokens | null {
+  const tokens = loadTokens();
+  if (!tokens) return null;
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (nowSeconds > tokens.expiresAt - 300) {
+    return null;
+  }
   return tokens;
 }
 
@@ -96,8 +184,6 @@ export function getCurrentUser(): AuthUser | null {
 
   try {
     const claims = decodeJwtPayload(tokens.idToken);
-
-    // cognito:groups is an array in the JWT, not a comma-separated string
     const groupsClaim = claims['cognito:groups'];
     let groups: string[] = [];
     if (Array.isArray(groupsClaim)) {
@@ -125,64 +211,45 @@ export function isAuthenticated(): boolean {
   return getTokens() !== null;
 }
 
-/**
- * Sign in with email and password.
- *
- * In production, replace this with proper SRP auth via:
- *   - amazon-cognito-identity-js
- *   - @aws-amplify/auth
- *   - AWS SDK InitiateAuth
- *
- * This stub simulates the flow for UI development.
- */
+// ── Sign In ──
+
 export async function signIn(email: string, password: string): Promise<{
   success: boolean;
   mfaRequired?: boolean;
   newPasswordRequired?: boolean;
   session?: string;
+  challengeName?: string;
   error?: string;
 }> {
   if (!config.userPoolId || !config.clientId) {
     return { success: false, error: 'Cognito is not configured. Set VITE_COGNITO_USER_POOL_ID and VITE_COGNITO_CLIENT_ID.' };
   }
 
-  pendingEmail = email;
-
   try {
-    const endpoint = `https://cognito-idp.${config.region}.amazonaws.com/`;
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-amz-json-1.1',
-        'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+    const data = await cognitoFetch('InitiateAuth', {
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      ClientId: config.clientId,
+      AuthParameters: {
+        USERNAME: email,
+        PASSWORD: password,
       },
-      body: JSON.stringify({
-        AuthFlow: 'USER_PASSWORD_AUTH',
-        ClientId: config.clientId,
-        AuthParameters: {
-          USERNAME: email,
-          PASSWORD: password,
-        },
-      }),
     });
 
-    const data = await response.json();
-
     if (data.ChallengeName === 'NEW_PASSWORD_REQUIRED') {
-      pendingChallengeName = 'NEW_PASSWORD_REQUIRED';
       return {
         success: false,
         newPasswordRequired: true,
         session: data.Session,
+        challengeName: data.ChallengeName,
       };
     }
 
     if (data.ChallengeName === 'EMAIL_OTP' || data.ChallengeName === 'SMS_MFA' || data.ChallengeName === 'SOFTWARE_TOKEN_MFA') {
-      pendingChallengeName = data.ChallengeName;
       return {
         success: false,
         mfaRequired: true,
         session: data.Session,
+        challengeName: data.ChallengeName,
       };
     }
 
@@ -197,49 +264,40 @@ export async function signIn(email: string, password: string): Promise<{
       return { success: true };
     }
 
-    return { success: false, error: data.message || 'Authentication failed' };
-  } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: sanitizeError(data, 'Authentication failed') };
+  } catch {
+    return { success: false, error: 'Unable to connect. Please try again.' };
   }
 }
 
-/** Complete NEW_PASSWORD_REQUIRED challenge (first login with temp password) */
+// ── Complete NEW_PASSWORD_REQUIRED Challenge ──
+
 export async function completeNewPasswordChallenge(
+  email: string,
   newPassword: string,
   session: string,
-): Promise<{ success: boolean; mfaRequired?: boolean; session?: string; error?: string }> {
+): Promise<{ success: boolean; mfaRequired?: boolean; session?: string; challengeName?: string; error?: string }> {
   if (!config.clientId) {
     return { success: false, error: 'Cognito is not configured.' };
   }
 
   try {
-    const endpoint = `https://cognito-idp.${config.region}.amazonaws.com/`;
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-amz-json-1.1',
-        'X-Amz-Target': 'AWSCognitoIdentityProviderService.RespondToAuthChallenge',
+    const data = await cognitoFetch('RespondToAuthChallenge', {
+      ChallengeName: 'NEW_PASSWORD_REQUIRED',
+      ClientId: config.clientId,
+      ChallengeResponses: {
+        USERNAME: email,
+        NEW_PASSWORD: newPassword,
       },
-      body: JSON.stringify({
-        ChallengeName: 'NEW_PASSWORD_REQUIRED',
-        ClientId: config.clientId,
-        ChallengeResponses: {
-          USERNAME: pendingEmail,
-          NEW_PASSWORD: newPassword,
-        },
-        Session: session,
-      }),
+      Session: session,
     });
 
-    const data = await response.json();
-
-    // After setting new password, Cognito may require MFA
     if (data.ChallengeName === 'EMAIL_OTP' || data.ChallengeName === 'MFA_SETUP' || data.ChallengeName === 'SMS_MFA' || data.ChallengeName === 'SOFTWARE_TOKEN_MFA') {
-      pendingChallengeName = data.ChallengeName;
       return {
         success: false,
         mfaRequired: true,
         session: data.Session,
+        challengeName: data.ChallengeName,
       };
     }
 
@@ -254,51 +312,44 @@ export async function completeNewPasswordChallenge(
       return { success: true };
     }
 
-    return { success: false, error: data.message || 'Failed to set new password' };
-  } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: sanitizeError(data, 'Failed to set new password') };
+  } catch {
+    return { success: false, error: 'Unable to connect. Please try again.' };
   }
 }
 
-/** Complete MFA challenge */
+// ── Complete MFA Challenge ──
+
 export async function completeMfaChallenge(
+  email: string,
   code: string,
   session: string,
+  challengeName: string,
 ): Promise<{ success: boolean; error?: string }> {
   if (!config.clientId) {
     return { success: false, error: 'Cognito is not configured.' };
   }
 
-  let challengeName = 'EMAIL_OTP';
+  let mfaChallengeName = 'EMAIL_OTP';
   let codeKey = 'EMAIL_OTP_CODE';
-  if (pendingChallengeName === 'SOFTWARE_TOKEN_MFA') {
-    challengeName = 'SOFTWARE_TOKEN_MFA';
+  if (challengeName === 'SOFTWARE_TOKEN_MFA') {
+    mfaChallengeName = 'SOFTWARE_TOKEN_MFA';
     codeKey = 'SOFTWARE_TOKEN_MFA_CODE';
-  } else if (pendingChallengeName === 'SMS_MFA') {
-    challengeName = 'SMS_MFA';
+  } else if (challengeName === 'SMS_MFA') {
+    mfaChallengeName = 'SMS_MFA';
     codeKey = 'SMS_MFA_CODE';
   }
 
   try {
-    const endpoint = `https://cognito-idp.${config.region}.amazonaws.com/`;
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-amz-json-1.1',
-        'X-Amz-Target': 'AWSCognitoIdentityProviderService.RespondToAuthChallenge',
+    const data = await cognitoFetch('RespondToAuthChallenge', {
+      ChallengeName: mfaChallengeName,
+      ClientId: config.clientId,
+      ChallengeResponses: {
+        [codeKey]: code,
+        USERNAME: email,
       },
-      body: JSON.stringify({
-        ChallengeName: challengeName,
-        ClientId: config.clientId,
-        ChallengeResponses: {
-          [codeKey]: code,
-          USERNAME: pendingEmail,
-        },
-        Session: session,
-      }),
+      Session: session,
     });
-
-    const data = await response.json();
 
     if (data.AuthenticationResult) {
       const tokens: AuthTokens = {
@@ -308,18 +359,17 @@ export async function completeMfaChallenge(
         expiresAt: Math.floor(Date.now() / 1000) + data.AuthenticationResult.ExpiresIn,
       };
       storeTokens(tokens);
-      pendingEmail = '';
-      pendingChallengeName = '';
       return { success: true };
     }
 
-    return { success: false, error: data.message || 'MFA verification failed' };
-  } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: sanitizeError(data, 'Verification failed') };
+  } catch {
+    return { success: false, error: 'Unable to connect. Please try again.' };
   }
 }
 
-/** Sign up a new user (domain validated by pre-sign-up Lambda trigger) */
+// ── Sign Up ──
+
 export async function signUp(
   email: string,
   password: string,
@@ -331,38 +381,29 @@ export async function signUp(
   }
 
   try {
-    const endpoint = `https://cognito-idp.${config.region}.amazonaws.com/`;
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-amz-json-1.1',
-        'X-Amz-Target': 'AWSCognitoIdentityProviderService.SignUp',
-      },
-      body: JSON.stringify({
-        ClientId: config.clientId,
-        Username: email,
-        Password: password,
-        UserAttributes: [
-          { Name: 'email', Value: email },
-          { Name: 'given_name', Value: firstName },
-          { Name: 'family_name', Value: lastName },
-        ],
-      }),
+    const data = await cognitoFetch('SignUp', {
+      ClientId: config.clientId,
+      Username: email,
+      Password: password,
+      UserAttributes: [
+        { Name: 'email', Value: email },
+        { Name: 'given_name', Value: firstName },
+        { Name: 'family_name', Value: lastName },
+      ],
     });
-
-    const data = await response.json();
 
     if (data.UserSub) {
       return { success: true };
     }
 
-    return { success: false, error: data.message || 'Sign up failed' };
-  } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: sanitizeError(data, 'Sign up failed') };
+  } catch {
+    return { success: false, error: 'Unable to connect. Please try again.' };
   }
 }
 
-/** Confirm sign-up with verification code */
+// ── Confirm Sign Up ──
+
 export async function confirmSignUp(
   email: string,
   code: string,
@@ -392,20 +433,22 @@ export async function confirmSignUp(
       return { success: true };
     }
 
-    return { success: false, error: data.message || 'Verification failed' };
-  } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: sanitizeError(data, 'Verification failed') };
+  } catch {
+    return { success: false, error: 'Unable to connect. Please try again.' };
   }
 }
 
-/** Change password for authenticated user */
+// ── Change Password ──
+
 export async function changePassword(
   previousPassword: string,
   proposedPassword: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const tokens = loadTokens();
+  // Use getTokens() (with expiry check) not loadTokens()
+  const tokens = getTokens();
   if (!tokens) {
-    return { success: false, error: 'Not authenticated' };
+    return { success: false, error: 'Session expired. Please sign in again.' };
   }
 
   try {
@@ -428,20 +471,46 @@ export async function changePassword(
     }
 
     const data = await response.json();
-    return { success: false, error: data.message || 'Failed to change password' };
-  } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: sanitizeError(data, 'Failed to change password') };
+  } catch {
+    return { success: false, error: 'Unable to connect. Please try again.' };
   }
 }
 
-/** Sign out */
-export function signOut() {
+// ── Sign Out (with server-side revocation) ──
+
+export async function signOut(): Promise<void> {
+  const tokens = loadTokens();
+
+  // Revoke refresh token server-side if available
+  if (tokens?.refreshToken && config.clientId) {
+    try {
+      await cognitoFetch('RevokeToken', {
+        Token: tokens.refreshToken,
+        ClientId: config.clientId,
+      });
+    } catch {
+      // Best-effort revocation — don't block logout
+    }
+  }
+
+  // Also call GlobalSignOut to invalidate all tokens for this user
+  if (tokens?.accessToken) {
+    try {
+      await cognitoFetch('GlobalSignOut', {
+        AccessToken: tokens.accessToken,
+      });
+    } catch {
+      // Best-effort — don't block logout
+    }
+  }
+
   clearTokens();
 }
 
-/** Get Authorization header value */
+// ── Auth Header ──
+
 export function getAuthHeader(): string | null {
   const tokens = getTokens();
   return tokens ? `Bearer ${tokens.idToken}` : null;
 }
-

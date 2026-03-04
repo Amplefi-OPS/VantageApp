@@ -31,7 +31,7 @@ async function safeJson<T>(res: Response): Promise<T> {
 
 function handleUnauthorized(res: Response) {
   if (res.status === 401) {
-    sessionStorage.clear()
+    sessionStorage.removeItem('vantage-auth-tokens')
     window.location.replace('/dashboard')
   }
 }

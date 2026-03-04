@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from './lib/queryClient'
 import { ToastProvider } from './components/ui/Toast'
 import { AuthProvider, useAuth } from './auth/AuthProvider'
+import { ConfirmDialog } from './components/ui/ConfirmDialog'
 import { Layout } from './components/Layout'
 import LoginPage from './auth/LoginPage'
 import Dashboard from './pages/Dashboard'
@@ -18,14 +20,20 @@ import ChargePatient from './pages/stripe/ChargePatient'
 import NoShowFee from './pages/stripe/NoShowFee'
 import Settings from './pages/Settings'
 
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-    },
-  },
-})
+function InactivityWarning() {
+  const { showInactivityWarning, extendSession, logout } = useAuth()
+  return (
+    <ConfirmDialog
+      open={showInactivityWarning}
+      onClose={extendSession}
+      onConfirm={logout}
+      title="Session Timeout"
+      message="You will be logged out in 2 minutes due to inactivity. Click 'Stay Signed In' to continue."
+      confirmLabel="Sign Out"
+      cancelLabel="Stay Signed In"
+    />
+  )
+}
 
 function AppRoutes() {
   const { isLoggedIn, isLoading } = useAuth()
@@ -43,24 +51,27 @@ function AppRoutes() {
   }
 
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/voicemails" element={<Voicemails />} />
-        <Route path="/todos" element={<Todos />} />
-        <Route path="/appointments" element={<Appointments />} />
-        <Route path="/dictations" element={<Dictations />} />
-        <Route path="/patients" element={<Patients />} />
-        <Route path="/patients/:id" element={<PatientProfile />} />
-        <Route path="/fax" element={<Fax />} />
-        <Route path="/billing" element={<StripeDashboard />} />
-        <Route path="/billing/lookup" element={<PatientLookup />} />
-        <Route path="/billing/charge" element={<ChargePatient />} />
-        <Route path="/billing/no-show" element={<NoShowFee />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Route>
-    </Routes>
+    <>
+      <InactivityWarning />
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/voicemails" element={<Voicemails />} />
+          <Route path="/todos" element={<Todos />} />
+          <Route path="/appointments" element={<Appointments />} />
+          <Route path="/dictations" element={<Dictations />} />
+          <Route path="/patients" element={<Patients />} />
+          <Route path="/patients/:id" element={<PatientProfile />} />
+          <Route path="/fax" element={<Fax />} />
+          <Route path="/billing" element={<StripeDashboard />} />
+          <Route path="/billing/lookup" element={<PatientLookup />} />
+          <Route path="/billing/charge" element={<ChargePatient />} />
+          <Route path="/billing/no-show" element={<NoShowFee />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Route>
+      </Routes>
+    </>
   )
 }
 
