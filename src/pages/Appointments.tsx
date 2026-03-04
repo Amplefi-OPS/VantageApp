@@ -186,7 +186,7 @@ export default function Appointments() {
   })
 
   // Daily query — for "All" and "Cancelled" tabs
-  const { data: dayAppointments = [], isLoading: dayLoading } = useQuery({
+  const { data: dayAppointments = [], isLoading: dayLoading, isError: dayError } = useQuery({
     queryKey: ['appointments', selectedDate],
     queryFn: () => listAppointments(selectedDate),
     staleTime: 30_000,
@@ -240,6 +240,7 @@ export default function Appointments() {
   ]
 
   if (isLoading) return <LoadingSpinner />
+  if (dayError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load appointments. Please refresh.</div>
 
   return (
     <div>

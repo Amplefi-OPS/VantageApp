@@ -80,6 +80,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       return badRequest('Missing required fields: customerId, amount');
     }
 
+    if (typeof customerId !== 'string' || !/^cus_[A-Za-z0-9]+$/.test(customerId)) {
+      return badRequest('Invalid customerId format');
+    }
+
     if (typeof amount !== 'number' || amount < 50) {
       return badRequest('Amount must be at least 50 cents');
     }

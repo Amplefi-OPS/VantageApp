@@ -12,9 +12,9 @@
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { randomUUID } from 'crypto';
-import { getCallerIdentity } from '../shared/auth';
-import { putItem, writeAuditLog } from '../shared/dynamo';
-import { created, badRequest, serverError, parseBody } from '../shared/response';
+import { getCallerIdentity, canAccessProvider } from '../shared/auth';
+import { getItem, putItem, writeAuditLog } from '../shared/dynamo';
+import { created, badRequest, forbidden, serverError, parseBody } from '../shared/response';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
@@ -23,6 +23,12 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     if (!patientId) {
       return badRequest('Missing patient ID');
+    }
+
+    // Verify caller owns this patient
+    const patient = await getItem(`PATIENT#${patientId}`, 'PROFILE');
+    if (patient?.providerId && !canAccessProvider(caller, patient.providerId as string)) {
+      return forbidden('You do not have access to this patient');
     }
 
     const body = parseBody(event);

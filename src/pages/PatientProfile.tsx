@@ -96,24 +96,28 @@ export default function PatientProfile() {
   const noShowMutation = useMutation({
     mutationFn: async (appt: Appointment) => {
       await markNoShow(appt.id)
-      const tomorrow = new Date()
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      await createTodo({
-        type: 'General',
-        title: `No-show fee — ${appt.patientName}`,
-        status: 'Open',
-        priority: 'High',
-        patientId: appt.patientId || undefined,
-        dueDate: tomorrow.toISOString(),
-        notes: `Patient did not show for ${appt.type} appointment. Charge $30 no-show fee.`,
-      })
+      try {
+        const tomorrow = new Date()
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        await createTodo({
+          type: 'General',
+          title: `No-show fee — ${appt.patientName}`,
+          status: 'Open',
+          priority: 'High',
+          patientId: appt.patientId || undefined,
+          dueDate: tomorrow.toISOString(),
+          notes: `Patient did not show for ${appt.type} appointment. Charge $30 no-show fee.`,
+        })
+      } catch {
+        console.warn('Failed to create no-show todo — appointment was still marked no-show')
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['patient-appointments'] })
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       queryClient.invalidateQueries({ queryKey: ['todos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
-      toast('success', 'Marked as no-show. To-do created for $30 fee.')
+      toast('success', 'Marked as no-show. Collect $30 no-show fee.')
       setNoShowAppt(null)
     },
     onError: (err) => {
@@ -125,15 +129,19 @@ export default function PatientProfile() {
   const completeMutation = useMutation({
     mutationFn: async (appt: Appointment) => {
       await completeAppointment(appt.id)
-      await createTodo({
-        type: 'General',
-        title: `Doctor's notes — ${appt.patientName}`,
-        status: 'Open',
-        priority: 'Med',
-        patientId: appt.patientId || undefined,
-        dueDate: new Date().toISOString(),
-        notes: `Complete doctor's notes for ${appt.type} appointment.`,
-      })
+      try {
+        await createTodo({
+          type: 'General',
+          title: `Doctor's notes — ${appt.patientName}`,
+          status: 'Open',
+          priority: 'Med',
+          patientId: appt.patientId || undefined,
+          dueDate: new Date().toISOString(),
+          notes: `Complete doctor's notes for ${appt.type} appointment.`,
+        })
+      } catch {
+        console.warn('Failed to create notes todo — appointment was still marked complete')
+      }
     },
     onSuccess: (_data, appt) => {
       queryClient.invalidateQueries({ queryKey: ['patient-appointments'] })
@@ -149,7 +157,7 @@ export default function PatientProfile() {
     },
   })
 
-  const { data: patient, isLoading } = useQuery({
+  const { data: patient, isLoading, isError } = useQuery({
     queryKey: ['patient', id],
     queryFn: () => getPatient(id!),
     enabled: !!id,
@@ -227,6 +235,7 @@ export default function PatientProfile() {
   }
 
   if (isLoading) return <LoadingSpinner />
+  if (isError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load patient. Please refresh.</div>
   if (!patient) {
     return (
       <EmptyState

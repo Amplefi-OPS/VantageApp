@@ -76,6 +76,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       notes: body.notes || null,
       createdAt: now,
       updatedAt: now,
+      providerId: caller.providerId,
       createdBy: caller.email,
       // GSI keys for provider-scoped queries
       GSI1PK: `PROVIDER#${caller.providerId}`,

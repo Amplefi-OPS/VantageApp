@@ -54,7 +54,7 @@ export default function Fax() {
   const [form, setForm] = useState<SendFaxRequest>({ ...emptyForm })
   const [file, setFile] = useState<File | null>(null)
 
-  const { data: faxes, isLoading } = useQuery({
+  const { data: faxes, isLoading, isError } = useQuery({
     queryKey: ['faxes'],
     queryFn: listFaxes,
   })
@@ -110,6 +110,7 @@ export default function Fax() {
   }
 
   if (isLoading) return <LoadingSpinner />
+  if (isError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load faxes. Please refresh.</div>
 
   return (
     <div>

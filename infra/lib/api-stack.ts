@@ -121,6 +121,7 @@ export class ApiStack extends cdk.Stack {
       handler: 'handler',
       environment: { ...commonEnv, },
     });
+    props.table.grantReadWriteData(cancelAcuityAppointmentFn);
 
     // ── Lambda: No-Show Acuity Appointment ──
     const noshowAcuityAppointmentFn = new lambdaNode.NodejsFunction(this, 'NoshowAcuityAppointmentFn', {
@@ -130,6 +131,7 @@ export class ApiStack extends cdk.Stack {
       handler: 'handler',
       environment: { ...commonEnv, },
     });
+    props.table.grantReadWriteData(noshowAcuityAppointmentFn);
 
     // ── Lambda: Complete Appointment ──
     const completeAppointmentFn = new lambdaNode.NodejsFunction(this, 'CompleteAppointmentFn', {
@@ -228,6 +230,7 @@ export class ApiStack extends cdk.Stack {
       handler: 'handler',
       environment: { ...commonEnv, },
     });
+    props.table.grantReadWriteData(listZoomCallLogsFn);
 
     // ── Lambda: Attach Voicemail ──
     const attachVoicemailFn = new lambdaNode.NodejsFunction(this, 'AttachVoicemailFn', {

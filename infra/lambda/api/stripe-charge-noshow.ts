@@ -78,6 +78,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       return badRequest('Missing required field: customerId');
     }
 
+    if (typeof customerId !== 'string' || !/^cus_[A-Za-z0-9]+$/.test(customerId)) {
+      return badRequest('Invalid customerId format');
+    }
+
     // Look up customer's default payment method
     const customer = (await stripeGet(`/customers/${customerId}`)) as StripeCustomer;
     const defaultPm = customer.invoice_settings?.default_payment_method;

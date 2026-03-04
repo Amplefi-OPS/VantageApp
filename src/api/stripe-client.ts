@@ -29,7 +29,15 @@ async function safeJson<T>(res: Response): Promise<T> {
   }
 }
 
+function handleUnauthorized(res: Response) {
+  if (res.status === 401) {
+    sessionStorage.clear()
+    window.location.replace('/dashboard')
+  }
+}
+
 async function errorMessage(res: Response): Promise<string> {
+  handleUnauthorized(res)
   try {
     const text = await res.text()
     const parsed = JSON.parse(text)
