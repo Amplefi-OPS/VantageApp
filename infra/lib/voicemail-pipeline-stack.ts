@@ -125,21 +125,31 @@ export class VoicemailPipelineStack extends cdk.Stack {
       outputPath: '$.Payload',
     });
 
-    const handleFailure = new sfn.Pass(this, 'VmTranscriptionFailed', {
-      parameters: {
-        'status': 'FAILED',
-        'error.$': '$.error',
-        'jobName.$': '$.jobName',
-      },
+    // Route FAILED to the same completion Lambda — it handles both
+    // COMPLETED and FAILED, updating DynamoDB accordingly.
+    const handleFailure = new tasks.LambdaInvoke(this, 'VmHandleTranscriptionFailure', {
+      lambdaFunction: vmCompleteTranscriptionFn,
+      outputPath: '$.Payload',
     });
+
+    const skipAlreadyDone = new sfn.Succeed(this, 'VmTranscriptionAlreadyDone');
 
     const isComplete = new sfn.Choice(this, 'VmIsTranscriptionComplete')
       .when(sfn.Condition.stringEquals('$.status', 'COMPLETED'), processResult)
       .when(sfn.Condition.stringEquals('$.status', 'FAILED'), handleFailure)
       .otherwise(waitForTranscription);
 
+    // After startJob, check if we should skip (idempotent re-trigger)
+    const shouldProceed = new sfn.Choice(this, 'VmShouldProceed')
+      .when(sfn.Condition.stringEquals('$.status', 'COMPLETED'), skipAlreadyDone)
+      .when(sfn.Condition.stringEquals('$.status', 'ALREADY_IN_PROGRESS'), skipAlreadyDone)
+      .otherwise(waitForTranscription);
+
     const definition = startJob
-      .next(waitForTranscription)
+      .next(shouldProceed);
+
+    // Wire the poll loop
+    waitForTranscription
       .next(checkStatus)
       .next(isComplete);
 

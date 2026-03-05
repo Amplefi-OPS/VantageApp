@@ -61,21 +61,10 @@ export default function Appointments() {
   const [completingAppt, setCompletingAppt] = useState<Appointment | null>(null)
   const [changingStatusId, setChangingStatusId] = useState<string | null>(null)
 
-  const cancelMutation = useMutation({
-    mutationFn: (id: string) => cancelAppointment(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments'] })
-      queryClient.invalidateQueries({ queryKey: ['appointments-upcoming'] })
-      queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
-      toast('success', 'Appointment cancelled')
-      setCancellingId(null)
-    },
-    onError: (err) => {
-      toast('error', `Failed to cancel: ${(err as Error).message}`)
-      setCancellingId(null)
-    },
-  })
+  // Date ranges — defined before mutations so optimistic update closures work cleanly
+  const rangeEnd = useMemo(() => daysFrom(today, 30), [today])
+  const pastStart = useMemo(() => daysFrom(today, -30), [today])
+  const pastEnd = useMemo(() => daysFrom(today, -1), [today])
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['appointments'] })
@@ -85,10 +74,22 @@ export default function Appointments() {
     queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
   }
 
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => cancelAppointment(id),
+    onSuccess: () => {
+      invalidateAll()
+      toast('success', 'Appointment cancelled')
+      setCancellingId(null)
+    },
+    onError: (err) => {
+      toast('error', `Failed to cancel: ${(err as Error).message}`)
+      setCancellingId(null)
+    },
+  })
+
   const noShowMutation = useMutation({
     mutationFn: async (appt: Appointment) => {
       await markNoShow(appt.id)
-      // Todo creation is best-effort — don't fail the whole operation
       try {
         const tomorrow = new Date()
         tomorrow.setDate(tomorrow.getDate() + 1)
@@ -123,7 +124,6 @@ export default function Appointments() {
       setNoShowAppt(null)
     },
     onError: (err, _appt, context) => {
-      // Restore previous cache state
       if (context?.previousData) {
         const keys = [['appointments', selectedDate], ['appointments-upcoming', today, rangeEnd], ['appointments-past', pastStart, pastEnd]]
         for (const key of keys) {
@@ -192,8 +192,7 @@ export default function Appointments() {
     staleTime: 30_000,
   })
 
-  // 30-day query — for "Upcoming" tab (today + 30 days)
-  const rangeEnd = useMemo(() => daysFrom(today, 30), [today])
+  // 30-day query — for "Upcoming" tab
   const { data: upcomingAppointments = [], isLoading: upcomingLoading } = useQuery({
     queryKey: ['appointments-upcoming', today, rangeEnd],
     queryFn: () => listAppointments(today, rangeEnd),
@@ -202,9 +201,7 @@ export default function Appointments() {
 
   const upcomingScheduled = upcomingAppointments.filter((a) => a.status === 'scheduled')
 
-  // 30-day back query — for "Past" tab (30 days ago through yesterday)
-  const pastStart = useMemo(() => daysFrom(today, -30), [today])
-  const pastEnd = useMemo(() => daysFrom(today, -1), [today])
+  // 30-day back query — for "Past" tab
   const { data: pastAppointments = [], isLoading: pastLoading } = useQuery({
     queryKey: ['appointments-past', pastStart, pastEnd],
     queryFn: () => listAppointments(pastStart, pastEnd),

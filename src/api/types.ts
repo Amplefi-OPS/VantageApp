@@ -5,6 +5,8 @@ import { z } from 'zod'
 export const VoicemailCategory = z.enum([
   'Scheduling',
   'Refills',
+  'Billing',
+  'New Patient',
   'Basic Questions',
   'Everything Else',
 ])

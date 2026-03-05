@@ -32,7 +32,7 @@ import {
   type Specialty,
   type Type,
 } from '@aws-sdk/client-transcribe';
-import { updateItem, buildUpdateExpression, writeAuditLog } from '../shared/dynamo';
+import { getItem, updateItem, buildUpdateExpression, writeAuditLog } from '../shared/dynamo';
 
 const transcribe = new TranscribeClient({});
 const TRANSCRIPT_BUCKET = process.env.TRANSCRIPT_BUCKET!;
@@ -55,6 +55,20 @@ const EXT_TO_FORMAT: Record<string, MediaFormat> = {
 
 export const handler: Handler<VmTranscriptionInput> = async (input) => {
   const { bucket, key, providerId, vmId } = input;
+
+  // ── Idempotency: skip if already transcribed or in progress ──
+  const existing = await getItem(`PROVIDER#${providerId}`, `VOICEMAIL#${vmId}`);
+  const existingStatus = existing?.transcriptStatus as string | undefined;
+  if (existingStatus === 'Complete' || existingStatus === 'Transcribing') {
+    console.log(`Skipping transcription for ${vmId}: already ${existingStatus}`);
+    return {
+      jobName: existing?.jobName || 'skipped',
+      vmId,
+      providerId,
+      outputKey: existing?.transcriptKey || '',
+      status: existingStatus === 'Complete' ? 'COMPLETED' : 'ALREADY_IN_PROGRESS',
+    };
+  }
 
   const ext = key.split('.').pop()?.toLowerCase() || 'mp3';
   const mediaFormat = EXT_TO_FORMAT[ext] || 'mp3';

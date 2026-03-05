@@ -10,8 +10,9 @@
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
+import { randomUUID } from 'crypto';
 import { getCallerIdentity } from '../shared/auth';
-import { queryItems } from '../shared/dynamo';
+import { putItem, queryItems, writeAuditLog } from '../shared/dynamo';
 import { success, serverError } from '../shared/response';
 import { getSecrets } from '../shared/secrets';
 
@@ -189,6 +190,50 @@ export const handler: APIGatewayProxyHandler = async (event) => {
           id: p.patientId as string,
           name: `${p.firstName} ${p.lastName}`,
         });
+      }
+    }
+
+    // ── Auto-create patient records for new appointments ──
+    const now = new Date().toISOString();
+    for (const a of allAcuity) {
+      if (a.canceled || a.noShow) continue;
+      const normPhone = a.phone ? normalizePhone(a.phone) : '';
+      if (!normPhone || phoneToPatient.has(normPhone)) continue;
+      if (!a.firstName?.trim() || !a.lastName?.trim()) continue;
+
+      const patientId = `patient-${randomUUID().slice(0, 12)}`;
+      const patientRecord = {
+        PK: `PROVIDER#${providerId}`,
+        SK: `PATIENT#${patientId}`,
+        patientId,
+        providerId,
+        firstName: a.firstName.trim(),
+        lastName: a.lastName.trim(),
+        phone: a.phone || '',
+        email: a.email || '',
+        createdAt: now,
+        updatedAt: now,
+        GSI1PK: `PROVIDER#${providerId}`,
+        GSI1SK: `PATIENT#${patientId}`,
+        GSI2PK: 'PATIENT',
+        GSI2SK: `${now}#${patientId}`,
+        entityType: 'Patient',
+        source: 'acuity-auto',
+      };
+
+      try {
+        await putItem(patientRecord);
+        phoneToPatient.set(normPhone, { id: patientId, name: `${a.firstName} ${a.lastName}` });
+        await writeAuditLog({
+          providerId,
+          action: 'AUTO_CREATE_PATIENT',
+          entityType: 'Patient',
+          entityId: patientId,
+          details: { source: 'acuity', appointmentId: String(a.id) },
+        });
+        console.log(`Auto-created patient ${patientId} from Acuity appointment ${a.id}: ${a.firstName} ${a.lastName}`);
+      } catch (err) {
+        console.warn(`Failed to auto-create patient for Acuity appt ${a.id}:`, (err as Error).message);
       }
     }
 

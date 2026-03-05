@@ -45,6 +45,12 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const callerName = body.callerName || null;
     const now = new Date().toISOString();
 
+    // Verify patient belongs to this provider
+    const patient = await getItem(`PROVIDER#${providerId}`, `PATIENT#${patientId}`);
+    if (!patient) {
+      return badRequest('Patient not found');
+    }
+
     // Check if already attached
     const existing = await getItem(`PROVIDER#${providerId}`, `VOICEMAIL#${voicemailId}`);
     if (existing && existing.attachmentType === 'patient') {

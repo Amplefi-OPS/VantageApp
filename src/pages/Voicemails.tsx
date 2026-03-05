@@ -19,6 +19,7 @@ const categoryBadge: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'
   Refills: 'green',
   Billing: 'yellow',
   'New Patient': 'red',
+  'Basic Questions': 'gray',
   'Everything Else': 'gray',
 }
 
@@ -27,6 +28,7 @@ const CATEGORY_TO_TODO_TYPE: Record<string, string> = {
   Refills: 'Refill',
   Billing: 'General',
   'New Patient': 'CallBack',
+  'Basic Questions': 'CallBack',
   'Everything Else': 'CallBack',
 }
 
@@ -100,6 +102,15 @@ function AudioPlayer({ url }: { url: string }) {
 
 function TranscriptDisplay({ vm }: { vm: Voicemail }) {
   const [expanded, setExpanded] = useState(false)
+
+  if (vm.transcriptStatus === 'Pending') {
+    return (
+      <div className="mt-2 flex items-center gap-2 text-sm text-warm-gray dark:text-gray-400">
+        <Loader2 size={14} className="animate-spin" />
+        <span>Queued for transcription...</span>
+      </div>
+    )
+  }
 
   if (vm.transcriptStatus === 'Transcribing') {
     return (

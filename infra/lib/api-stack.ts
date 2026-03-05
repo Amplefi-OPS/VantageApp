@@ -111,7 +111,7 @@ export class ApiStack extends cdk.Stack {
       handler: 'handler',
       environment: { ...commonEnv, },
     });
-    props.table.grantReadData(listAcuityAppointmentsFn);
+    props.table.grantReadWriteData(listAcuityAppointmentsFn);
 
     // ── Lambda: Cancel Acuity Appointment ──
     const cancelAcuityAppointmentFn = new lambdaNode.NodejsFunction(this, 'CancelAcuityAppointmentFn', {

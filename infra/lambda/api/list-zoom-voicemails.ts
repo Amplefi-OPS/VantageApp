@@ -179,12 +179,16 @@ async function getAudioUrl(vmId: string, zoomDownloadUrl: string, providerId: st
   }
 
   // Generate presigned GET URL
-  const url = await getSignedUrl(s3, new GetObjectCommand({
-    Bucket: AUDIO_BUCKET,
-    Key: s3Key,
-  }), { expiresIn: PRESIGN_EXPIRY });
-
-  return url;
+  try {
+    const url = await getSignedUrl(s3, new GetObjectCommand({
+      Bucket: AUDIO_BUCKET,
+      Key: s3Key,
+    }), { expiresIn: PRESIGN_EXPIRY });
+    return url;
+  } catch (err) {
+    console.error(`Failed to generate presigned URL for ${s3Key}:`, (err as Error).message);
+    return zoomDownloadUrl;
+  }
 }
 
 // ── Handler ──
@@ -449,6 +453,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         receivedAt: vm.date_time,
         durationSeconds: vm.duration,
         audioUrl: vm.download_url,
+        transcriptStatus: 'Pending',
         createdAt: now,
         GSI1PK: `PROVIDER#${providerId}`,
         GSI1SK: `VOICEMAIL#${vm.date_time}`,
