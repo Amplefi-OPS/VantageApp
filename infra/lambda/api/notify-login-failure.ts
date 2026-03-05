@@ -36,7 +36,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     // Determine severity
     const isLockout = reason.toLowerCase().includes('too many') || reason.toLowerCase().includes('locked');
-    const level = isLockout ? 'critical' as const : 'critical' as const;
+    const level = isLockout ? 'critical' as const : 'warning' as const;
     const title = isLockout ? 'Account Lockout' : 'Failed Login Attempt';
 
     await sendSlackAlert(title, level, [

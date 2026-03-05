@@ -109,12 +109,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   } catch (err) {
     const message = (err as Error).message;
     console.error('Stripe confirm setup error:', message);
-    await sendSlackAlert({
-      level: 'error',
-      title: 'Confirm Setup Failed',
-      details: { Error: message },
-      source: 'stripe-confirm-setup',
-    });
+    await sendSlackAlert('Card Setup Failed', 'critical', [
+      { label: 'Error', value: message },
+      { label: 'Source', value: 'stripe-confirm-setup' },
+    ]);
     return serverError('Failed to confirm card setup');
   }
 };

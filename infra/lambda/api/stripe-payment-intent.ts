@@ -133,12 +133,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   } catch (err) {
     const message = (err as Error).message;
     console.error('Stripe payment intent error:', message);
-    await sendSlackAlert({
-      level: 'error',
-      title: 'Payment Intent Failed',
-      details: { Customer: customerId || 'unknown', Error: message },
-      source: 'stripe-payment-intent',
-    });
+    await sendSlackAlert('Payment Intent Failed', 'critical', [
+      { label: 'Error', value: message },
+      { label: 'Source', value: 'stripe-payment-intent' },
+    ]);
     return serverError('Failed to process payment');
   }
 };

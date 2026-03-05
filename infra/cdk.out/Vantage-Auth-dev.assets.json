@@ -31,16 +31,31 @@
         }
       }
     },
-    "2098073eb6bb003594a3a5b1e9ab6fd3bffa7a6aef516be8ec8318339a0ecd42": {
+    "07deb1cafa6c29e68ea58b4b9bfa5759e9480f69513d554857a88e6b563256c6": {
+      "displayName": "PostAuthFn/Code",
+      "source": {
+        "path": "asset.07deb1cafa6c29e68ea58b4b9bfa5759e9480f69513d554857a88e6b563256c6",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "841722554807-us-east-1-5feb8323": {
+          "bucketName": "cdk-hnb659fds-assets-841722554807-us-east-1",
+          "objectKey": "07deb1cafa6c29e68ea58b4b9bfa5759e9480f69513d554857a88e6b563256c6.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-file-publishing-role-841722554807-us-east-1"
+        }
+      }
+    },
+    "6c5cc11e448a3d39b67d4f5e82c8e777ae6ce5ecc133555ed0053b25208bb1b0": {
       "displayName": "Vantage-Auth-dev Template",
       "source": {
         "path": "Vantage-Auth-dev.template.json",
         "packaging": "file"
       },
       "destinations": {
-        "841722554807-us-east-1-4c727e54": {
+        "841722554807-us-east-1-f74341d2": {
           "bucketName": "cdk-hnb659fds-assets-841722554807-us-east-1",
-          "objectKey": "2098073eb6bb003594a3a5b1e9ab6fd3bffa7a6aef516be8ec8318339a0ecd42.json",
+          "objectKey": "6c5cc11e448a3d39b67d4f5e82c8e777ae6ce5ecc133555ed0053b25208bb1b0.json",
           "region": "us-east-1",
           "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-file-publishing-role-841722554807-us-east-1"
         }

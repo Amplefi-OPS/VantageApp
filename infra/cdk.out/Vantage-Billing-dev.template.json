@@ -165,7 +165,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "dbc405206bde7df0429d26f92e0546b64a743db420cb5cf3ab4440738e6224f6.zip"
+     "S3Key": "4719f908743e10b92c0a3db363dc006be60623fb41e80106dc411982e4331207.zip"
     },
     "DeadLetterConfig": {
      "TargetArn": {
@@ -202,7 +202,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Billing-dev/StripeProcessorFn/Resource",
-    "aws:asset:path": "asset.dbc405206bde7df0429d26f92e0546b64a743db420cb5cf3ab4440738e6224f6",
+    "aws:asset:path": "asset.4719f908743e10b92c0a3db363dc006be60623fb41e80106dc411982e4331207",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -478,7 +478,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "7705fbc419913f424c0ff9ac0848f1517e2326d59b0ff416a30170ed1bd315e6.zip"
+     "S3Key": "15f61b77fa6cf983fa12cc558af2b26f258f5fcd02a49ad1c34156bed2165af0.zip"
     },
     "DeadLetterConfig": {
      "TargetArn": {
@@ -515,7 +515,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Billing-dev/QuickBooksProcessorFn/Resource",
-    "aws:asset:path": "asset.7705fbc419913f424c0ff9ac0848f1517e2326d59b0ff416a30170ed1bd315e6",
+    "aws:asset:path": "asset.15f61b77fa6cf983fa12cc558af2b26f258f5fcd02a49ad1c34156bed2165af0",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -679,10 +679,181 @@
     "aws:cdk:path": "Vantage-Billing-dev/QuickBooksRecordRule/AllowEventRuleVantageBillingdevQuickBooksProcessorFn877DFEAA"
    }
   },
+  "DlqAlertFnServiceRole6606603A": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/DlqAlertFn/ServiceRole/Resource"
+   }
+  },
+  "DlqAlertFnServiceRoleDefaultPolicyA722A8B4": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:ChangeMessageVisibility",
+        "sqs:GetQueueUrl",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "BillingDLQCFC915B2",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "DlqAlertFnServiceRoleDefaultPolicyA722A8B4",
+    "Roles": [
+     {
+      "Ref": "DlqAlertFnServiceRole6606603A"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/DlqAlertFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "DlqAlertFnE18FC669": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "eaef650ec7351fd2b7e1f76717bc26fd90635ddd6bdd15badac78314ca83741f.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "SECRET_NAME": "vantage/credentials/dev",
+      "STAGE": "dev"
+     }
+    },
+    "FunctionName": "vantage-dlq-alert-dev",
+    "Handler": "index.handler",
+    "MemorySize": 128,
+    "Role": {
+     "Fn::GetAtt": [
+      "DlqAlertFnServiceRole6606603A",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 15
+   },
+   "DependsOn": [
+    "DlqAlertFnServiceRoleDefaultPolicyA722A8B4",
+    "DlqAlertFnServiceRole6606603A"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/DlqAlertFn/Resource",
+    "aws:asset:path": "asset.eaef650ec7351fd2b7e1f76717bc26fd90635ddd6bdd15badac78314ca83741f",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "DlqAlertFnLogRetentionB00D2899": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "DlqAlertFnE18FC669"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/DlqAlertFn/LogRetention/Resource"
+   }
+  },
+  "DlqAlertFnSqsEventSourceVantageBillingdevBillingDLQBE0360E53763FCEB": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 1,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "BillingDLQCFC915B2",
+      "Arn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "DlqAlertFnE18FC669"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Billing-dev/DlqAlertFn/SqsEventSource:VantageBillingdevBillingDLQBE0360E5/Resource"
+   }
+  },
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/11QW07EMAw8y/6nZilwALoCCQnBUg5QZVNvlT4SqOMiFPXuONlVP/ia8WQ8tlNCeb+H/U7/UGHaoRjtCeJn0GZQIjWRvgniByOjOpxdJqvCBV0Q/SlhxZSeNl7zmL0JVzXq6dTqxvkWe4K3DM/sTLDeKasniLW/+hMe/WjNbyovbFV012gilHGPCaSGis2AodKE13iI0rCl5k1e3OIHPHh3tt223n/xiPNkiaRJFvUdwavvagzizFIeKH/RWZftNZLn2aDaiIjvHL44rCpdCD3dLOUDlHC768naYmaJmhDqC/4BegYm020BAAA="
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/11Q7U7DMAx8lv1PzejgAejEJCQGo3uAKku9Kv1ISp0UoarvjpNVRfDrzmffxXEK6cMWthv5RYkqm6TVF5jOTqpGsFRM9EkwfXj0KPZXE8kscETjWH8OmHkKrZXnvo2zAWfRyu5SysLYEmuCtwgHb5TT1ggtO5hyu8wHPNlWq+9Q3tgsaFdIIuTnngJwDZlXDbpMEi7xMLFhTY2bvJjRNri35qqrdb3/4gmHThOtprP1g8Kj7Httfl1/VP6RrQhebZWj4yZ7ZxE346NViy1Hih6xEhbfveu9m0U4BdR0N6aPkML9piatk8FzVIeQ3/AHZ3ZFGpYBAAA="
    },
    "Metadata": {
     "aws:cdk:path": "Vantage-Billing-dev/CDKMetadata/Default"

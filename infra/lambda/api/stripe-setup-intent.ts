@@ -96,12 +96,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   } catch (err) {
     const message = (err as Error).message;
     console.error('Stripe setup intent error:', message);
-    await sendSlackAlert({
-      level: 'error',
-      title: 'SetupIntent Failed',
-      details: { Error: message },
-      source: 'stripe-setup-intent',
-    });
+    await sendSlackAlert('Setup Intent Failed', 'critical', [
+      { label: 'Error', value: message },
+      { label: 'Source', value: 'stripe-setup-intent' },
+    ]);
     return serverError('Failed to create setup intent');
   }
 };

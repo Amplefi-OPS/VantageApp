@@ -106,7 +106,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "1bd5a5992f16c11f875efcb88df2c81a506dfefbc928c8217793d8a0b9f73fb7.zip"
+     "S3Key": "b822a1bd24f799097f531f0e74e7b2236a9c45e7509dd739f67ca92237859db4.zip"
     },
     "Environment": {
      "Variables": {
@@ -123,6 +123,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -145,7 +146,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/PresignUploadFn/Resource",
-    "aws:asset:path": "asset.1bd5a5992f16c11f875efcb88df2c81a506dfefbc928c8217793d8a0b9f73fb7",
+    "aws:asset:path": "asset.b822a1bd24f799097f531f0e74e7b2236a9c45e7509dd739f67ca92237859db4",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -386,7 +387,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "9b82cae5c57ca4776d806bfd2d9a5178eb52e442b2f5c615f18d6e78433d0697.zip"
+     "S3Key": "5c6f8a283773c416ed56aeb2c3471454103a62992dc7b742bde8d56d38633a85.zip"
     },
     "Environment": {
      "Variables": {
@@ -403,6 +404,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -425,7 +427,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/GetTasksFn/Resource",
-    "aws:asset:path": "asset.9b82cae5c57ca4776d806bfd2d9a5178eb52e442b2f5c615f18d6e78433d0697",
+    "aws:asset:path": "asset.5c6f8a283773c416ed56aeb2c3471454103a62992dc7b742bde8d56d38633a85",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -584,7 +586,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "9fdc1ce9d6b32d20795248ca8e19522ca073238599bbc76df6fe76c88c2df822.zip"
+     "S3Key": "b81376629d71a97b4f4a5052c87b85661793636709322eb46059b2e5a76f6b21.zip"
     },
     "Environment": {
      "Variables": {
@@ -601,6 +603,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -623,7 +626,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/UpdateTaskFn/Resource",
-    "aws:asset:path": "asset.9fdc1ce9d6b32d20795248ca8e19522ca073238599bbc76df6fe76c88c2df822",
+    "aws:asset:path": "asset.b81376629d71a97b4f4a5052c87b85661793636709322eb46059b2e5a76f6b21",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -782,7 +785,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "10771e3487ec6379e18029fc541f47af881bc7d693444632e6027fbf5cbc5c6a.zip"
+     "S3Key": "39eec3726e0513ffec63d1a57cf3a32d69e27e6f78d22eb30825a2fd5a39bb15.zip"
     },
     "Environment": {
      "Variables": {
@@ -799,6 +802,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -821,7 +825,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/CreateTaskFn/Resource",
-    "aws:asset:path": "asset.10771e3487ec6379e18029fc541f47af881bc7d693444632e6027fbf5cbc5c6a",
+    "aws:asset:path": "asset.39eec3726e0513ffec63d1a57cf3a32d69e27e6f78d22eb30825a2fd5a39bb15",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -950,6 +954,25 @@
          ]
         }
        ]
+      },
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
       }
      ],
      "Version": "2012-10-17"
@@ -973,7 +996,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "be9b38741d925d9c13f57f922178baacc7b920b57ec3c00b807f91a9d8c78a3e.zip"
+     "S3Key": "d9c3530308d44020dbf07bd0af5089e89df4de586406f6dd004a5bd434e2a894.zip"
     },
     "Environment": {
      "Variables": {
@@ -990,10 +1013,9 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
-      "MAX_UPLOAD_SIZE_MB": "100",
-      "ACUITY_USER_ID": "",
-      "ACUITY_API_KEY": ""
+      "MAX_UPLOAD_SIZE_MB": "100"
      }
     },
     "FunctionName": "vantage-list-acuity-appointments-dev",
@@ -1014,7 +1036,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ListAcuityAppointmentsFn/Resource",
-    "aws:asset:path": "asset.be9b38741d925d9c13f57f922178baacc7b920b57ec3c00b807f91a9d8c78a3e",
+    "aws:asset:path": "asset.d9c3530308d44020dbf07bd0af5089e89df4de586406f6dd004a5bd434e2a894",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1079,6 +1101,111 @@
     "aws:cdk:path": "Vantage-Api-dev/CancelAcuityAppointmentFn/ServiceRole/Resource"
    }
   },
+  "CancelAcuityAppointmentFnServiceRoleDefaultPolicy2CD9462B": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CancelAcuityAppointmentFnServiceRoleDefaultPolicy2CD9462B",
+    "Roles": [
+     {
+      "Ref": "CancelAcuityAppointmentFnServiceRoleD25383D3"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/CancelAcuityAppointmentFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
   "CancelAcuityAppointmentFn61F8E861": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
@@ -1087,7 +1214,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "cf365842b4360f798857a6c1fde66af9ffc597f9f1d3b89cb83f933654968078.zip"
+     "S3Key": "e8ba533ade7e052d1aa8204a1e336cdeee722b9596e2f60952c39e0cef5910d9.zip"
     },
     "Environment": {
      "Variables": {
@@ -1104,10 +1231,9 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
-      "MAX_UPLOAD_SIZE_MB": "100",
-      "ACUITY_USER_ID": "",
-      "ACUITY_API_KEY": ""
+      "MAX_UPLOAD_SIZE_MB": "100"
      }
     },
     "FunctionName": "vantage-cancel-acuity-appointment-dev",
@@ -1123,11 +1249,12 @@
     "Timeout": 30
    },
    "DependsOn": [
+    "CancelAcuityAppointmentFnServiceRoleDefaultPolicy2CD9462B",
     "CancelAcuityAppointmentFnServiceRoleD25383D3"
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/CancelAcuityAppointmentFn/Resource",
-    "aws:asset:path": "asset.cf365842b4360f798857a6c1fde66af9ffc597f9f1d3b89cb83f933654968078",
+    "aws:asset:path": "asset.e8ba533ade7e052d1aa8204a1e336cdeee722b9596e2f60952c39e0cef5910d9",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1192,6 +1319,111 @@
     "aws:cdk:path": "Vantage-Api-dev/NoshowAcuityAppointmentFn/ServiceRole/Resource"
    }
   },
+  "NoshowAcuityAppointmentFnServiceRoleDefaultPolicyA9DDA9E7": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "NoshowAcuityAppointmentFnServiceRoleDefaultPolicyA9DDA9E7",
+    "Roles": [
+     {
+      "Ref": "NoshowAcuityAppointmentFnServiceRoleBEA1DAAE"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/NoshowAcuityAppointmentFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
   "NoshowAcuityAppointmentFn336E5541": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
@@ -1200,7 +1432,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "62d03e1605480cf2b2ac502dd240104c46e25d6503620585ddbe4ea6930110ba.zip"
+     "S3Key": "345fcf422718924d52af095d54603c2a1d355dfaef0d17f73f1f7fadf0d0ea15.zip"
     },
     "Environment": {
      "Variables": {
@@ -1217,10 +1449,9 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
-      "MAX_UPLOAD_SIZE_MB": "100",
-      "ACUITY_USER_ID": "",
-      "ACUITY_API_KEY": ""
+      "MAX_UPLOAD_SIZE_MB": "100"
      }
     },
     "FunctionName": "vantage-noshow-acuity-appointment-dev",
@@ -1236,11 +1467,12 @@
     "Timeout": 30
    },
    "DependsOn": [
+    "NoshowAcuityAppointmentFnServiceRoleDefaultPolicyA9DDA9E7",
     "NoshowAcuityAppointmentFnServiceRoleBEA1DAAE"
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/NoshowAcuityAppointmentFn/Resource",
-    "aws:asset:path": "asset.62d03e1605480cf2b2ac502dd240104c46e25d6503620585ddbe4ea6930110ba",
+    "aws:asset:path": "asset.345fcf422718924d52af095d54603c2a1d355dfaef0d17f73f1f7fadf0d0ea15",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1399,7 +1631,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "c937a5e25277e3dabec70c27349dd49bd4541b20664c5886c3a51c36fe178a59.zip"
+     "S3Key": "2494b0478f5af2e282afff4e518d1559f343fce9be79e066a0260249cb5d61ea.zip"
     },
     "Environment": {
      "Variables": {
@@ -1416,6 +1648,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -1438,7 +1671,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/CompleteAppointmentFn/Resource",
-    "aws:asset:path": "asset.c937a5e25277e3dabec70c27349dd49bd4541b20664c5886c3a51c36fe178a59",
+    "aws:asset:path": "asset.2494b0478f5af2e282afff4e518d1559f343fce9be79e066a0260249cb5d61ea",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1621,7 +1854,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "2841c18b44a8611feee255d9152706a1f4c4273968cf10274043157ce2169bb6.zip"
+     "S3Key": "c7c2961e3196febb87980d2ca6f38835e1a514635151ec4cb16f1b99b0f85751.zip"
     },
     "Environment": {
      "Variables": {
@@ -1638,6 +1871,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -1660,7 +1894,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/GetDictationFn/Resource",
-    "aws:asset:path": "asset.2841c18b44a8611feee255d9152706a1f4c4273968cf10274043157ce2169bb6",
+    "aws:asset:path": "asset.c7c2961e3196febb87980d2ca6f38835e1a514635151ec4cb16f1b99b0f85751",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1819,7 +2053,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "2d3347e3b6561a7f8377e2a14d83808646b757c891459c54c272d3de490ed31a.zip"
+     "S3Key": "260cd42c314f86de1b7c55cdcbf3324f3d7cf3910f86a0313b291c2fa2c951bf.zip"
     },
     "Environment": {
      "Variables": {
@@ -1836,6 +2070,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -1858,7 +2093,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/CreatePatientFn/Resource",
-    "aws:asset:path": "asset.2d3347e3b6561a7f8377e2a14d83808646b757c891459c54c272d3de490ed31a",
+    "aws:asset:path": "asset.260cd42c314f86de1b7c55cdcbf3324f3d7cf3910f86a0313b291c2fa2c951bf",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2010,7 +2245,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "af04da9a1ed7562122ef69897441ca584b609fc20cc8e7ad2b6c0286dca0d65d.zip"
+     "S3Key": "4d5547b8aa43a59e0a1a9e6e3a31d8d40b6ac6b72160c9da9c0f8ef97d398e0f.zip"
     },
     "Environment": {
      "Variables": {
@@ -2027,6 +2262,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -2049,7 +2285,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ListPatientsFn/Resource",
-    "aws:asset:path": "asset.af04da9a1ed7562122ef69897441ca584b609fc20cc8e7ad2b6c0286dca0d65d",
+    "aws:asset:path": "asset.4d5547b8aa43a59e0a1a9e6e3a31d8d40b6ac6b72160c9da9c0f8ef97d398e0f",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2201,7 +2437,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "ff1760a63a033875c04daa1e837525d482eeabc4287d8c68f755b5bbd66c0045.zip"
+     "S3Key": "eb22c371ca3621a0356f449302d88686ca83991e3cb1004981c73bc121bcd1be.zip"
     },
     "Environment": {
      "Variables": {
@@ -2218,6 +2454,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -2240,7 +2477,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/GetPatientFn/Resource",
-    "aws:asset:path": "asset.ff1760a63a033875c04daa1e837525d482eeabc4287d8c68f755b5bbd66c0045",
+    "aws:asset:path": "asset.eb22c371ca3621a0356f449302d88686ca83991e3cb1004981c73bc121bcd1be",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2399,7 +2636,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "0112e64468de412f36bf7899ea259304a83c68be57873fc61444c87ac747d2c5.zip"
+     "S3Key": "a9df2bc56d8d28f56432c935d785a0a4302d1a5c41cf9dbe4a0e00b61ee4bbcd.zip"
     },
     "Environment": {
      "Variables": {
@@ -2416,6 +2653,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -2438,7 +2676,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/CreateNoteFn/Resource",
-    "aws:asset:path": "asset.0112e64468de412f36bf7899ea259304a83c68be57873fc61444c87ac747d2c5",
+    "aws:asset:path": "asset.a9df2bc56d8d28f56432c935d785a0a4302d1a5c41cf9dbe4a0e00b61ee4bbcd",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2590,7 +2828,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "173c20f77a11de2315b7378fcc4f03e1d8d36756ff87178c528ad788b1d8bc90.zip"
+     "S3Key": "b8b8aaa71d549ff0259ebdec9e3476fd26b0d3dbd81076954c171e923136cbe8.zip"
     },
     "Environment": {
      "Variables": {
@@ -2607,6 +2845,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -2629,7 +2868,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ListNotesFn/Resource",
-    "aws:asset:path": "asset.173c20f77a11de2315b7378fcc4f03e1d8d36756ff87178c528ad788b1d8bc90",
+    "aws:asset:path": "asset.b8b8aaa71d549ff0259ebdec9e3476fd26b0d3dbd81076954c171e923136cbe8",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2781,7 +3020,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "0d704a925191a7cce69abb5fadb139e03da0e71a51f547b3654fcf6453db0efb.zip"
+     "S3Key": "31e6c54991f0925660429ae32ae443eda241405f1776e7ee1c04c1ad7bca939a.zip"
     },
     "Environment": {
      "Variables": {
@@ -2798,6 +3037,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -2820,7 +3060,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/DashboardCountsFn/Resource",
-    "aws:asset:path": "asset.0d704a925191a7cce69abb5fadb139e03da0e71a51f547b3654fcf6453db0efb",
+    "aws:asset:path": "asset.31e6c54991f0925660429ae32ae443eda241405f1776e7ee1c04c1ad7bca939a",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2999,6 +3239,25 @@
        "Resource": {
         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
        }
+      },
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
       }
      ],
      "Version": "2012-10-17"
@@ -3022,7 +3281,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "16f0b8663debec226fed183407ecd543f5a582129c7e9f4180aa73ed4b5d7d3f.zip"
+     "S3Key": "0795c799266af6a08fbe374e0993927863df337bba3d8174f02bddc6ba05279d.zip"
     },
     "Environment": {
      "Variables": {
@@ -3039,14 +3298,9 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
-      "MAX_UPLOAD_SIZE_MB": "100",
-      "ZOOM_ACCOUNT_ID": "",
-      "ZOOM_CLIENT_ID": "",
-      "ZOOM_CLIENT_SECRET": "",
-      "ZOOM_USER_EMAIL": "",
-      "ZOOM_AUTO_RECEPTIONIST_IDS": "",
-      "ZOOM_FAX_EXTENSION_ID": ""
+      "MAX_UPLOAD_SIZE_MB": "100"
      }
     },
     "FunctionName": "vantage-list-zoom-voicemails-dev",
@@ -3067,7 +3321,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ListZoomVoicemailsFn/Resource",
-    "aws:asset:path": "asset.16f0b8663debec226fed183407ecd543f5a582129c7e9f4180aa73ed4b5d7d3f",
+    "aws:asset:path": "asset.0795c799266af6a08fbe374e0993927863df337bba3d8174f02bddc6ba05279d",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -3132,6 +3386,111 @@
     "aws:cdk:path": "Vantage-Api-dev/ListZoomCallLogsFn/ServiceRole/Resource"
    }
   },
+  "ListZoomCallLogsFnServiceRoleDefaultPolicy6378C6F9": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "ListZoomCallLogsFnServiceRoleDefaultPolicy6378C6F9",
+    "Roles": [
+     {
+      "Ref": "ListZoomCallLogsFnServiceRoleF21D1A86"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/ListZoomCallLogsFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
   "ListZoomCallLogsFn11D0D81E": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
@@ -3140,7 +3499,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "1dbc804f0eb1615fb50d66acd71937855b30954b71205d38ad7cf967b8fd7c79.zip"
+     "S3Key": "91c77c1944949d41a27198a756ea0ca23eb78361762fd0f234e85ce2fc053164.zip"
     },
     "Environment": {
      "Variables": {
@@ -3157,14 +3516,9 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
-      "MAX_UPLOAD_SIZE_MB": "100",
-      "ZOOM_ACCOUNT_ID": "",
-      "ZOOM_CLIENT_ID": "",
-      "ZOOM_CLIENT_SECRET": "",
-      "ZOOM_USER_EMAIL": "",
-      "ZOOM_AUTO_RECEPTIONIST_IDS": "",
-      "ZOOM_FAX_EXTENSION_ID": ""
+      "MAX_UPLOAD_SIZE_MB": "100"
      }
     },
     "FunctionName": "vantage-list-zoom-call-logs-dev",
@@ -3180,11 +3534,12 @@
     "Timeout": 30
    },
    "DependsOn": [
+    "ListZoomCallLogsFnServiceRoleDefaultPolicy6378C6F9",
     "ListZoomCallLogsFnServiceRoleF21D1A86"
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ListZoomCallLogsFn/Resource",
-    "aws:asset:path": "asset.1dbc804f0eb1615fb50d66acd71937855b30954b71205d38ad7cf967b8fd7c79",
+    "aws:asset:path": "asset.91c77c1944949d41a27198a756ea0ca23eb78361762fd0f234e85ce2fc053164",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -3320,6 +3675,25 @@
          ]
         }
        ]
+      },
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
       }
      ],
      "Version": "2012-10-17"
@@ -3343,7 +3717,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "011da1bd9349e418de6ca4f30acd8704334f53671b2aca3098929dcd6ce6079b.zip"
+     "S3Key": "c656439945c63ab791d86454fc3a566e5765d970c364398da6ff6175c7fd023b.zip"
     },
     "Environment": {
      "Variables": {
@@ -3360,6 +3734,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -3382,7 +3757,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/AttachVoicemailFn/Resource",
-    "aws:asset:path": "asset.011da1bd9349e418de6ca4f30acd8704334f53671b2aca3098929dcd6ce6079b",
+    "aws:asset:path": "asset.c656439945c63ab791d86454fc3a566e5765d970c364398da6ff6175c7fd023b",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -3518,6 +3893,25 @@
          ]
         }
        ]
+      },
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
       }
      ],
      "Version": "2012-10-17"
@@ -3541,7 +3935,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "c884560855abbc13e1c6409c54c1f9eb54be293c425dce2c85d919512dd17c53.zip"
+     "S3Key": "1fb3a743f160e705175ed44bc375ba57e5d80263efe17730e60386a32d5df591.zip"
     },
     "Environment": {
      "Variables": {
@@ -3558,6 +3952,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100"
      }
@@ -3580,7 +3975,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ArchiveVoicemailFn/Resource",
-    "aws:asset:path": "asset.c884560855abbc13e1c6409c54c1f9eb54be293c425dce2c85d919512dd17c53",
+    "aws:asset:path": "asset.1fb3a743f160e705175ed44bc375ba57e5d80263efe17730e60386a32d5df591",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -3709,6 +4104,25 @@
          ]
         }
        ]
+      },
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
       }
      ],
      "Version": "2012-10-17"
@@ -3732,7 +4146,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "96297d45ea143585261380c6cdd8a6b2c5db227c177f21380e08d5c911146d0c.zip"
+     "S3Key": "35443b9089acbd36acdc7d6674e92e9520565ead32edee6ec2ac4b9c37f9f805.zip"
     },
     "Environment": {
      "Variables": {
@@ -3749,14 +4163,9 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
-      "MAX_UPLOAD_SIZE_MB": "100",
-      "ZOOM_ACCOUNT_ID": "",
-      "ZOOM_CLIENT_ID": "",
-      "ZOOM_CLIENT_SECRET": "",
-      "ZOOM_USER_EMAIL": "",
-      "ZOOM_AUTO_RECEPTIONIST_IDS": "",
-      "ZOOM_FAX_EXTENSION_ID": ""
+      "MAX_UPLOAD_SIZE_MB": "100"
      }
     },
     "FunctionName": "vantage-list-faxes-dev",
@@ -3777,7 +4186,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ListFaxesFn/Resource",
-    "aws:asset:path": "asset.96297d45ea143585261380c6cdd8a6b2c5db227c177f21380e08d5c911146d0c",
+    "aws:asset:path": "asset.35443b9089acbd36acdc7d6674e92e9520565ead32edee6ec2ac4b9c37f9f805",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -3913,6 +4322,25 @@
          ]
         }
        ]
+      },
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
       }
      ],
      "Version": "2012-10-17"
@@ -3936,7 +4364,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "4f03119e26474169b7db331252ce2bb3d02ca4177c131ae79b508941fa09b681.zip"
+     "S3Key": "009248f2b8b70f513b386676ce6909201a9b3e22727e850ce7eb7d76a85d41ff.zip"
     },
     "Environment": {
      "Variables": {
@@ -3953,14 +4381,9 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
-      "MAX_UPLOAD_SIZE_MB": "100",
-      "ZOOM_ACCOUNT_ID": "",
-      "ZOOM_CLIENT_ID": "",
-      "ZOOM_CLIENT_SECRET": "",
-      "ZOOM_USER_EMAIL": "",
-      "ZOOM_AUTO_RECEPTIONIST_IDS": "",
-      "ZOOM_FAX_EXTENSION_ID": ""
+      "MAX_UPLOAD_SIZE_MB": "100"
      }
     },
     "FunctionName": "vantage-send-fax-dev",
@@ -3981,7 +4404,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/SendFaxFn/Resource",
-    "aws:asset:path": "asset.4f03119e26474169b7db331252ce2bb3d02ca4177c131ae79b508941fa09b681",
+    "aws:asset:path": "asset.009248f2b8b70f513b386676ce6909201a9b3e22727e850ce7eb7d76a85d41ff",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -4046,6 +4469,44 @@
     "aws:cdk:path": "Vantage-Api-dev/StripeCustomerSearchFn/ServiceRole/Resource"
    }
   },
+  "StripeCustomerSearchFnServiceRoleDefaultPolicy5DA9A440": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "StripeCustomerSearchFnServiceRoleDefaultPolicy5DA9A440",
+    "Roles": [
+     {
+      "Ref": "StripeCustomerSearchFnServiceRole23D84E21"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeCustomerSearchFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
   "StripeCustomerSearchFn2CD812E6": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
@@ -4054,7 +4515,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "80eb2b42ebdc30ae4302656697a21b50164a5639ef8642ee8d8af439de071877.zip"
+     "S3Key": "2782247d3424878ab027b6cd6c59bf77189b857b73bbdf14908b0f2a4b4e48a7.zip"
     },
     "Environment": {
      "Variables": {
@@ -4071,9 +4532,9 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
-      "MAX_UPLOAD_SIZE_MB": "100",
-      "STRIPE_SECRET_KEY": "sk_test_51SP9M2AfwHErZSTyGP0vZQCPnsDjiva7H245NL2QgLgoEyBtcQaaRDxSXs87FSfp0JFolrIEUq4qogEaJr1wDfI500S3NngkCc"
+      "MAX_UPLOAD_SIZE_MB": "100"
      }
     },
     "FunctionName": "vantage-stripe-customer-search-dev",
@@ -4089,11 +4550,12 @@
     "Timeout": 30
    },
    "DependsOn": [
+    "StripeCustomerSearchFnServiceRoleDefaultPolicy5DA9A440",
     "StripeCustomerSearchFnServiceRole23D84E21"
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/StripeCustomerSearchFn/Resource",
-    "aws:asset:path": "asset.80eb2b42ebdc30ae4302656697a21b50164a5639ef8642ee8d8af439de071877",
+    "aws:asset:path": "asset.2782247d3424878ab027b6cd6c59bf77189b857b73bbdf14908b0f2a4b4e48a7",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -4158,6 +4620,44 @@
     "aws:cdk:path": "Vantage-Api-dev/StripePaymentIntentFn/ServiceRole/Resource"
    }
   },
+  "StripePaymentIntentFnServiceRoleDefaultPolicy9FA7B45A": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "StripePaymentIntentFnServiceRoleDefaultPolicy9FA7B45A",
+    "Roles": [
+     {
+      "Ref": "StripePaymentIntentFnServiceRole80AA3A30"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripePaymentIntentFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
   "StripePaymentIntentFnDBE032B0": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
@@ -4166,7 +4666,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "6322bb1fe87519daaf99121d690baf08c93e1c2f17dd5c65ca28b1fda43f1e10.zip"
+     "S3Key": "07ac8094408bed962640eb827ece4b73daf9661a0cab9354ecedfd1510677293.zip"
     },
     "Environment": {
      "Variables": {
@@ -4183,9 +4683,9 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
-      "MAX_UPLOAD_SIZE_MB": "100",
-      "STRIPE_SECRET_KEY": "sk_test_51SP9M2AfwHErZSTyGP0vZQCPnsDjiva7H245NL2QgLgoEyBtcQaaRDxSXs87FSfp0JFolrIEUq4qogEaJr1wDfI500S3NngkCc"
+      "MAX_UPLOAD_SIZE_MB": "100"
      }
     },
     "FunctionName": "vantage-stripe-payment-intent-dev",
@@ -4201,11 +4701,12 @@
     "Timeout": 30
    },
    "DependsOn": [
+    "StripePaymentIntentFnServiceRoleDefaultPolicy9FA7B45A",
     "StripePaymentIntentFnServiceRole80AA3A30"
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/StripePaymentIntentFn/Resource",
-    "aws:asset:path": "asset.6322bb1fe87519daaf99121d690baf08c93e1c2f17dd5c65ca28b1fda43f1e10",
+    "aws:asset:path": "asset.07ac8094408bed962640eb827ece4b73daf9661a0cab9354ecedfd1510677293",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -4270,6 +4771,44 @@
     "aws:cdk:path": "Vantage-Api-dev/StripeChargeNoshowFn/ServiceRole/Resource"
    }
   },
+  "StripeChargeNoshowFnServiceRoleDefaultPolicy4F453011": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "StripeChargeNoshowFnServiceRoleDefaultPolicy4F453011",
+    "Roles": [
+     {
+      "Ref": "StripeChargeNoshowFnServiceRole1C6BBE41"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeChargeNoshowFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
   "StripeChargeNoshowFn5181DA24": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
@@ -4278,7 +4817,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "2df8b1d5a5f6a4ba8e71be96841a9407b0cb76f1aa223033bf2d0e10f866c966.zip"
+     "S3Key": "b32af0886189ded76f7a630578b3f7f7ca9e3efaa0608eb9f1e1b5f8a0859c02.zip"
     },
     "Environment": {
      "Variables": {
@@ -4295,9 +4834,9 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
-      "MAX_UPLOAD_SIZE_MB": "100",
-      "STRIPE_SECRET_KEY": "sk_test_51SP9M2AfwHErZSTyGP0vZQCPnsDjiva7H245NL2QgLgoEyBtcQaaRDxSXs87FSfp0JFolrIEUq4qogEaJr1wDfI500S3NngkCc"
+      "MAX_UPLOAD_SIZE_MB": "100"
      }
     },
     "FunctionName": "vantage-stripe-charge-noshow-dev",
@@ -4313,11 +4852,12 @@
     "Timeout": 30
    },
    "DependsOn": [
+    "StripeChargeNoshowFnServiceRoleDefaultPolicy4F453011",
     "StripeChargeNoshowFnServiceRole1C6BBE41"
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/StripeChargeNoshowFn/Resource",
-    "aws:asset:path": "asset.2df8b1d5a5f6a4ba8e71be96841a9407b0cb76f1aa223033bf2d0e10f866c966",
+    "aws:asset:path": "asset.b32af0886189ded76f7a630578b3f7f7ca9e3efaa0608eb9f1e1b5f8a0859c02",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -4346,6 +4886,308 @@
    },
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/StripeChargeNoshowFn/LogRetention/Resource"
+   }
+  },
+  "StripeSetupIntentFnServiceRole5B4CD15D": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeSetupIntentFn/ServiceRole/Resource"
+   }
+  },
+  "StripeSetupIntentFnServiceRoleDefaultPolicy911A9B7B": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "StripeSetupIntentFnServiceRoleDefaultPolicy911A9B7B",
+    "Roles": [
+     {
+      "Ref": "StripeSetupIntentFnServiceRole5B4CD15D"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeSetupIntentFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "StripeSetupIntentFnFD9DE608": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "709df5f9e5fb90aacc5d7dddf6a5baa5a01c43948fb14a2645592c25ea387d74.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_NAME": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefVantageTableA92A5E33483C0F3E"
+      },
+      "AUDIO_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefAudioBucket96BEECBAEFFB6375"
+      },
+      "TRANSCRIPT_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefTranscriptBucketB04D660A43F395AF"
+      },
+      "KMS_KEY_ARN": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+      },
+      "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
+      "PRESIGN_EXPIRY_SECONDS": "900",
+      "MAX_UPLOAD_SIZE_MB": "100"
+     }
+    },
+    "FunctionName": "vantage-stripe-setup-intent-dev",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "StripeSetupIntentFnServiceRole5B4CD15D",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "StripeSetupIntentFnServiceRoleDefaultPolicy911A9B7B",
+    "StripeSetupIntentFnServiceRole5B4CD15D"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeSetupIntentFn/Resource",
+    "aws:asset:path": "asset.709df5f9e5fb90aacc5d7dddf6a5baa5a01c43948fb14a2645592c25ea387d74",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StripeSetupIntentFnLogRetention15F8F5D5": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "StripeSetupIntentFnFD9DE608"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeSetupIntentFn/LogRetention/Resource"
+   }
+  },
+  "StripeConfirmSetupFnServiceRole646355B3": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeConfirmSetupFn/ServiceRole/Resource"
+   }
+  },
+  "StripeConfirmSetupFnServiceRoleDefaultPolicy6545351A": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "StripeConfirmSetupFnServiceRoleDefaultPolicy6545351A",
+    "Roles": [
+     {
+      "Ref": "StripeConfirmSetupFnServiceRole646355B3"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeConfirmSetupFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "StripeConfirmSetupFnDE9A575F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "2bf1d1972f40da103c4c58bff388069793540223306b43979424111b00acde3f.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_NAME": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefVantageTableA92A5E33483C0F3E"
+      },
+      "AUDIO_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefAudioBucket96BEECBAEFFB6375"
+      },
+      "TRANSCRIPT_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefTranscriptBucketB04D660A43F395AF"
+      },
+      "KMS_KEY_ARN": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+      },
+      "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
+      "PRESIGN_EXPIRY_SECONDS": "900",
+      "MAX_UPLOAD_SIZE_MB": "100"
+     }
+    },
+    "FunctionName": "vantage-stripe-confirm-setup-dev",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "StripeConfirmSetupFnServiceRole646355B3",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "StripeConfirmSetupFnServiceRoleDefaultPolicy6545351A",
+    "StripeConfirmSetupFnServiceRole646355B3"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeConfirmSetupFn/Resource",
+    "aws:asset:path": "asset.2bf1d1972f40da103c4c58bff388069793540223306b43979424111b00acde3f",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StripeConfirmSetupFnLogRetentionB73EEFCE": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "StripeConfirmSetupFnDE9A575F"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeConfirmSetupFn/LogRetention/Resource"
    }
   },
   "StripeTransactionsFnServiceRole8D8BF51D": {
@@ -4382,6 +5224,44 @@
     "aws:cdk:path": "Vantage-Api-dev/StripeTransactionsFn/ServiceRole/Resource"
    }
   },
+  "StripeTransactionsFnServiceRoleDefaultPolicy9CB5CF4B": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "StripeTransactionsFnServiceRoleDefaultPolicy9CB5CF4B",
+    "Roles": [
+     {
+      "Ref": "StripeTransactionsFnServiceRole8D8BF51D"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/StripeTransactionsFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
   "StripeTransactionsFn0D1644A5": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
@@ -4390,7 +5270,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "10464a19dc17ec0ce4da8c3447635da5abc82130aa9020ee6e40daf8b24b85d7.zip"
+     "S3Key": "ef4c504390d78d0d816afe49aa681d2c540186bbd5dde7f66d3ad273db813cec.zip"
     },
     "Environment": {
      "Variables": {
@@ -4407,9 +5287,9 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
-      "MAX_UPLOAD_SIZE_MB": "100",
-      "STRIPE_SECRET_KEY": "sk_test_51SP9M2AfwHErZSTyGP0vZQCPnsDjiva7H245NL2QgLgoEyBtcQaaRDxSXs87FSfp0JFolrIEUq4qogEaJr1wDfI500S3NngkCc"
+      "MAX_UPLOAD_SIZE_MB": "100"
      }
     },
     "FunctionName": "vantage-stripe-transactions-dev",
@@ -4425,11 +5305,12 @@
     "Timeout": 30
    },
    "DependsOn": [
+    "StripeTransactionsFnServiceRoleDefaultPolicy9CB5CF4B",
     "StripeTransactionsFnServiceRole8D8BF51D"
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/StripeTransactionsFn/Resource",
-    "aws:asset:path": "asset.10464a19dc17ec0ce4da8c3447635da5abc82130aa9020ee6e40daf8b24b85d7",
+    "aws:asset:path": "asset.ef4c504390d78d0d816afe49aa681d2c540186bbd5dde7f66d3ad273db813cec",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -4570,6 +5451,25 @@
        "Action": "events:PutEvents",
        "Effect": "Allow",
        "Resource": "arn:aws:events:us-east-1:841722554807:event-bus/vantage-billing-dev"
+      },
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
       }
      ],
      "Version": "2012-10-17"
@@ -4593,7 +5493,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "5f86e3549fabc20b06dcf13aa9b8cb7331a4bea49dc34efaa747af1332ffcadc.zip"
+     "S3Key": "6b2cb323be31e122443700ef574070cce1599c118b14d9a058154fd79048a31f.zip"
     },
     "Environment": {
      "Variables": {
@@ -4610,6 +5510,7 @@
        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
       },
       "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
       "PRESIGN_EXPIRY_SECONDS": "900",
       "MAX_UPLOAD_SIZE_MB": "100",
       "BILLING_EVENT_BUS": "vantage-billing-dev"
@@ -4633,7 +5534,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/BillingChargeFn/Resource",
-    "aws:asset:path": "asset.5f86e3549fabc20b06dcf13aa9b8cb7331a4bea49dc34efaa747af1332ffcadc",
+    "aws:asset:path": "asset.6b2cb323be31e122443700ef574070cce1599c118b14d9a058154fd79048a31f",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -4662,6 +5563,157 @@
    },
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/BillingChargeFn/LogRetention/Resource"
+   }
+  },
+  "NotifyLoginFailureFnServiceRoleB35C27A6": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/NotifyLoginFailureFn/ServiceRole/Resource"
+   }
+  },
+  "NotifyLoginFailureFnServiceRoleDefaultPolicy04CA1170": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "NotifyLoginFailureFnServiceRoleDefaultPolicy04CA1170",
+    "Roles": [
+     {
+      "Ref": "NotifyLoginFailureFnServiceRoleB35C27A6"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/NotifyLoginFailureFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "NotifyLoginFailureFnC23544B0": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "2c49b9e3a0b24974dedc964f81bade34177fba1450f4b04113445162d9852d9f.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_NAME": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefVantageTableA92A5E33483C0F3E"
+      },
+      "AUDIO_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefAudioBucket96BEECBAEFFB6375"
+      },
+      "TRANSCRIPT_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefTranscriptBucketB04D660A43F395AF"
+      },
+      "KMS_KEY_ARN": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+      },
+      "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
+      "PRESIGN_EXPIRY_SECONDS": "900",
+      "MAX_UPLOAD_SIZE_MB": "100"
+     }
+    },
+    "FunctionName": "vantage-notify-login-failure-dev",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "NotifyLoginFailureFnServiceRoleB35C27A6",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "NotifyLoginFailureFnServiceRoleDefaultPolicy04CA1170",
+    "NotifyLoginFailureFnServiceRoleB35C27A6"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/NotifyLoginFailureFn/Resource",
+    "aws:asset:path": "asset.2c49b9e3a0b24974dedc964f81bade34177fba1450f4b04113445162d9852d9f",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "NotifyLoginFailureFnLogRetentionDDB9A47B": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "NotifyLoginFailureFnC23544B0"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/NotifyLoginFailureFn/LogRetention/Resource"
    }
   },
   "VantageApi795310AC": {
@@ -4729,7 +5781,7 @@
     "aws:cdk:path": "Vantage-Api-dev/VantageApi/Account"
    }
   },
-  "VantageApiDeployment89164B338afc67fd060ea767d8e7e46d51b1ecd1": {
+  "VantageApiDeployment89164B33746218881fce24fa559257fb7677601f": {
    "Type": "AWS::ApiGateway::Deployment",
    "Properties": {
     "Description": "Vantage physician portal API",
@@ -4771,6 +5823,11 @@
     "VantageApifaxesOPTIONS1EDFF644",
     "VantageApifaxesPOST4F2191CE",
     "VantageApifaxes2A3F4C9C",
+    "VantageApinotificationsloginfailureOPTIONS430F3A2F",
+    "VantageApinotificationsloginfailurePOST655414F3",
+    "VantageApinotificationsloginfailure512D724D",
+    "VantageApinotificationsOPTIONSEEC8619C",
+    "VantageApinotifications62CABC68",
     "VantageApiOPTIONSEE8EC6E0",
     "VantageApipatientsidGET22AEFD92",
     "VantageApipatientsidnotesGETC226F955",
@@ -4786,6 +5843,9 @@
     "VantageApistripechargenoshowOPTIONS3B2F2E5E",
     "VantageApistripechargenoshowPOST69F80A3C",
     "VantageApistripechargenoshow77AF5587",
+    "VantageApistripeconfirmsetupOPTIONSDD2F1F7B",
+    "VantageApistripeconfirmsetupPOST553A2740",
+    "VantageApistripeconfirmsetup34A6A829",
     "VantageApistripecustomersGET70A123A8",
     "VantageApistripecustomersOPTIONS70B45A4D",
     "VantageApistripecustomers39025D42",
@@ -4794,6 +5854,9 @@
     "VantageApistripepaymentintentPOSTF3433F78",
     "VantageApistripepaymentintent10CC6978",
     "VantageApistripeA49056A8",
+    "VantageApistripesetupintentOPTIONS67B067A5",
+    "VantageApistripesetupintentPOSTA55393CC",
+    "VantageApistripesetupintentAB72D9E3",
     "VantageApistripetransactionsGET3F6BFB0D",
     "VantageApistripetransactionsOPTIONSE407EAC1",
     "VantageApistripetransactions46D96A30",
@@ -4837,7 +5900,7 @@
    "Type": "AWS::ApiGateway::Stage",
    "Properties": {
     "DeploymentId": {
-     "Ref": "VantageApiDeployment89164B338afc67fd060ea767d8e7e46d51b1ecd1"
+     "Ref": "VantageApiDeployment89164B33746218881fce24fa559257fb7677601f"
     },
     "MethodSettings": [
      {
@@ -4873,9 +5936,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -4890,6 +5957,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -4939,9 +6007,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -4956,6 +6028,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -4999,9 +6072,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -5016,6 +6093,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -5172,9 +6250,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -5189,6 +6271,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -5452,9 +6535,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -5469,6 +6556,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -5625,9 +6713,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -5642,6 +6734,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -5795,9 +6888,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -5812,6 +6909,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -5855,9 +6953,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -5872,6 +6974,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -6025,9 +7128,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -6042,6 +7149,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -6195,9 +7303,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -6212,6 +7324,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -6368,9 +7481,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -6385,6 +7502,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -6428,9 +7546,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -6445,6 +7567,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -6601,9 +7724,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -6618,6 +7745,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -6881,9 +8009,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -6898,6 +8030,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -7051,9 +8184,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -7068,6 +8205,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -7334,9 +8472,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -7351,6 +8493,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -7394,9 +8537,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -7411,6 +8558,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -7567,9 +8715,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -7584,6 +8736,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -7627,9 +8780,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -7644,6 +8801,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -7797,9 +8955,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -7814,6 +8976,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -7857,9 +9020,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -7874,6 +9041,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -8030,9 +9198,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -8047,6 +9219,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -8313,9 +9486,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -8330,6 +9507,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -8373,9 +9551,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -8390,6 +9572,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -8543,9 +9726,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -8560,6 +9747,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -8716,9 +9904,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -8733,6 +9925,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -8776,9 +9969,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -8793,6 +9990,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -8946,9 +10144,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -8963,6 +10165,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -9116,9 +10319,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -9133,6 +10340,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -9260,6 +10468,356 @@
     "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/charge-no-show/POST/Resource"
    }
   },
+  "VantageApistripesetupintentAB72D9E3": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "VantageApistripeA49056A8"
+    },
+    "PathPart": "setup-intent",
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/setup-intent/Resource"
+   }
+  },
+  "VantageApistripesetupintentOPTIONS67B067A5": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "VantageApistripesetupintentAB72D9E3"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/setup-intent/OPTIONS/Resource"
+   }
+  },
+  "VantageApistripesetupintentPOSTApiPermissionVantageApidevVantageApi61D49C06POSTstripesetupintent8834E6E1": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripeSetupIntentFnFD9DE608",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/",
+       {
+        "Ref": "VantageApiDeploymentStagedevFF353021"
+       },
+       "/POST/stripe/setup-intent"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/setup-intent/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..stripe.setup-intent"
+   }
+  },
+  "VantageApistripesetupintentPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTstripesetupintentF7BDE483": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripeSetupIntentFnFD9DE608",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/test-invoke-stage/POST/stripe/setup-intent"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/setup-intent/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..stripe.setup-intent"
+   }
+  },
+  "VantageApistripesetupintentPOSTA55393CC": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth8E818E2A"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "StripeSetupIntentFnFD9DE608",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "VantageApistripesetupintentAB72D9E3"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/setup-intent/POST/Resource"
+   }
+  },
+  "VantageApistripeconfirmsetup34A6A829": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "VantageApistripeA49056A8"
+    },
+    "PathPart": "confirm-setup",
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/confirm-setup/Resource"
+   }
+  },
+  "VantageApistripeconfirmsetupOPTIONSDD2F1F7B": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "VantageApistripeconfirmsetup34A6A829"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/confirm-setup/OPTIONS/Resource"
+   }
+  },
+  "VantageApistripeconfirmsetupPOSTApiPermissionVantageApidevVantageApi61D49C06POSTstripeconfirmsetupD63C6675": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripeConfirmSetupFnDE9A575F",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/",
+       {
+        "Ref": "VantageApiDeploymentStagedevFF353021"
+       },
+       "/POST/stripe/confirm-setup"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/confirm-setup/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..stripe.confirm-setup"
+   }
+  },
+  "VantageApistripeconfirmsetupPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTstripeconfirmsetup7785F29C": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StripeConfirmSetupFnDE9A575F",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/test-invoke-stage/POST/stripe/confirm-setup"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/confirm-setup/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..stripe.confirm-setup"
+   }
+  },
+  "VantageApistripeconfirmsetupPOST553A2740": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth8E818E2A"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "StripeConfirmSetupFnDE9A575F",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "VantageApistripeconfirmsetup34A6A829"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/stripe/confirm-setup/POST/Resource"
+   }
+  },
   "VantageApistripetransactions46D96A30": {
    "Type": "AWS::ApiGateway::Resource",
    "Properties": {
@@ -9286,9 +10844,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -9303,6 +10865,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -9459,9 +11022,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -9476,6 +11043,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -9519,9 +11087,13 @@
       {
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
-        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
         "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
         "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
        },
        "StatusCode": "204"
       }
@@ -9536,6 +11108,7 @@
       "ResponseParameters": {
        "method.response.header.Access-Control-Allow-Headers": true,
        "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
        "method.response.header.Access-Control-Allow-Methods": true,
        "method.response.header.Access-Control-Max-Age": true
       },
@@ -9663,6 +11236,246 @@
     "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/billing/charge/POST/Resource"
    }
   },
+  "VantageApinotifications62CABC68": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "VantageApi795310AC",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "notifications",
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/notifications/Resource"
+   }
+  },
+  "VantageApinotificationsOPTIONSEEC8619C": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "VantageApinotifications62CABC68"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/notifications/OPTIONS/Resource"
+   }
+  },
+  "VantageApinotificationsloginfailure512D724D": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "VantageApinotifications62CABC68"
+    },
+    "PathPart": "login-failure",
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/notifications/login-failure/Resource"
+   }
+  },
+  "VantageApinotificationsloginfailureOPTIONS430F3A2F": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Idempotency-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'https://main.dvufomlgdfium.amplifyapp.com'",
+        "method.response.header.Vary": "'Origin'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+        "method.response.header.Access-Control-Max-Age": "'3600'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"https://providerdev.vantagerefinery.com\" || $origin == \"http://localhost:5173\" || $origin == \"http://localhost:4173\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Max-Age": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "VantageApinotificationsloginfailure512D724D"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/notifications/login-failure/OPTIONS/Resource"
+   }
+  },
+  "VantageApinotificationsloginfailurePOSTApiPermissionVantageApidevVantageApi61D49C06POSTnotificationsloginfailureE25FD070": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "NotifyLoginFailureFnC23544B0",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/",
+       {
+        "Ref": "VantageApiDeploymentStagedevFF353021"
+       },
+       "/POST/notifications/login-failure"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/notifications/login-failure/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..notifications.login-failure"
+   }
+  },
+  "VantageApinotificationsloginfailurePOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTnotificationsloginfailureD7E9A91D": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "NotifyLoginFailureFnC23544B0",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/test-invoke-stage/POST/notifications/login-failure"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/notifications/login-failure/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..notifications.login-failure"
+   }
+  },
+  "VantageApinotificationsloginfailurePOST655414F3": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "NotifyLoginFailureFnC23544B0",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "VantageApinotificationsloginfailure512D724D"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/notifications/login-failure/POST/Resource"
+   }
+  },
   "CognitoAuth8E818E2A": {
    "Type": "AWS::ApiGateway::Authorizer",
    "Properties": {
@@ -9685,7 +11498,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1VQy1LDMAz8lt5dUQJ8QArDiUcnDOeO64ig1rEykU0nZPLv2E4p5bS7krVauYDidgWrhT7K0tSHpaUdjG9em4OKpe1odbur9dZxjXuBlwyPwRlP7BTpFsaKLar7D5dxw5bMkOTMJiU3Wy2CXqBMEDWsgzmgX2tBNdvDGAfOrmkY+5ZEopqU5UbgiZsKPbr8QHfUaI9HPcTtKL7sKAf4o6UxHJxXD9hZHto4l6oXKl7Y5NQziaMceoM50zP6T65T88R+u6clJ86NI8/vgv2G2UoZ4tuevrHPAc5qmlQ+PC0i1/zzuDR+Db4LflLpp2EvV1/FHRRwvdgL0bKPx1CLUM34Awt6L5m1AQAA"
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1VQy1LDMAz8lt5dUQJ8QArDiUcnDOeO66hBqWNlIptOyeTfsZ1S4LS7liXtqoDidgWrhT7K0tSHpaUdjG9em4OqUDgMBlWsbUeru12tt45rbAVeMjwGZzyxU6Q7GCu2qO73LuOGLZlTkjOblNxstQh6gTJB1LAO5oB+rQXVPB7G2HCZmppx6EgkqklZbgSeuKnQo8sfdE+N9njUp7gdxZc9ZQO/tDSGg/PqAXvLpy72pdc/KkZtsuuZ/GTOnp7Rf3Cdimd2uci85My5ceT5XXDYMFspQ/w70BcO2cBFTZPKwdMics3/GXv3Gnwf/KTSgaGVq8/iDgq4XrRCtBxiBuoQqhm/AeKkR5O1AQAA"
    },
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/CDKMetadata/Default"

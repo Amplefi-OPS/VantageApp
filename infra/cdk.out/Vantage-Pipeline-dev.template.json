@@ -210,7 +210,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "dd7b33b7252005919c91b42c8ce95a3b271f0df2d9a9938cc23943fa19d33450.zip"
+     "S3Key": "21ec076700368dd9fcae0fbf6b9524fa92d4ce1ccec9d64e866c0734a33eb5da.zip"
     },
     "Environment": {
      "Variables": {
@@ -247,7 +247,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Pipeline-dev/StartTranscriptionFn/Resource",
-    "aws:asset:path": "asset.dd7b33b7252005919c91b42c8ce95a3b271f0df2d9a9938cc23943fa19d33450",
+    "aws:asset:path": "asset.21ec076700368dd9fcae0fbf6b9524fa92d4ce1ccec9d64e866c0734a33eb5da",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -672,7 +672,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "68bd57cc8935a9fa65e83a49f39fa76a35fbc039b0f1d672b33cebd1111ddccd.zip"
+     "S3Key": "fef9dcb02f2eaa2cb9cd58b34fa2c992cbbcb66255d0952775a70230698ce6e4.zip"
     },
     "Environment": {
      "Variables": {
@@ -709,7 +709,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Pipeline-dev/CompleteTranscriptionFn/Resource",
-    "aws:asset:path": "asset.68bd57cc8935a9fa65e83a49f39fa76a35fbc039b0f1d672b33cebd1111ddccd",
+    "aws:asset:path": "asset.fef9dcb02f2eaa2cb9cd58b34fa2c992cbbcb66255d0952775a70230698ce6e4",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
