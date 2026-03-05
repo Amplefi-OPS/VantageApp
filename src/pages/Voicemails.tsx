@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Phone, Search, User, UserPlus, Play, Pause, Archive } from 'lucide-react'
-import { listVoicemails, listPatients, attachVoicemail, archiveVoicemail, createPatient } from '../api/endpoints'
+import { Phone, Search, User, UserPlus, Play, Pause, Archive, ClipboardList, FileText, Loader2 } from 'lucide-react'
+import { listVoicemails, listPatients, attachVoicemail, archiveVoicemail, createPatient, createTodo } from '../api/endpoints'
 import type { Voicemail, Patient } from '../api/types'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -22,12 +22,19 @@ const categoryBadge: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'
   'Everything Else': 'gray',
 }
 
+const CATEGORY_TO_TODO_TYPE: Record<string, string> = {
+  Scheduling: 'Schedule',
+  Refills: 'Refill',
+  Billing: 'General',
+  'New Patient': 'CallBack',
+  'Everything Else': 'CallBack',
+}
+
 function AudioPlayer({ url }: { url: string }) {
   const [playing, setPlaying] = useState(false)
   const [error, setError] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  // Create/update audio element when URL changes
   useEffect(() => {
     setPlaying(false)
     setError(false)
@@ -91,10 +98,56 @@ function AudioPlayer({ url }: { url: string }) {
   )
 }
 
+function TranscriptDisplay({ vm }: { vm: Voicemail }) {
+  const [expanded, setExpanded] = useState(false)
+
+  if (vm.transcriptStatus === 'Transcribing') {
+    return (
+      <div className="mt-2 flex items-center gap-2 text-sm text-warm-gray dark:text-gray-400">
+        <Loader2 size={14} className="animate-spin" />
+        <span>Transcribing...</span>
+      </div>
+    )
+  }
+
+  if (vm.transcriptStatus === 'Failed') {
+    return (
+      <div className="mt-2 text-sm text-red-500">
+        Transcription failed
+      </div>
+    )
+  }
+
+  if (!vm.transcript) return null
+
+  const truncated = vm.transcript.length > 200
+  const displayText = expanded ? vm.transcript : vm.transcript.slice(0, 200)
+
+  return (
+    <div className="mt-2">
+      <div className="flex items-start gap-1.5">
+        <FileText size={14} className="text-warm-gray dark:text-gray-400 mt-0.5 shrink-0" />
+        <p className="text-sm text-charcoal dark:text-gray-200">
+          {displayText}
+          {truncated && !expanded && '...'}
+        </p>
+      </div>
+      {truncated && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-xs text-slate-blue hover:underline mt-1 ml-5"
+        >
+          {expanded ? 'Show less' : 'Show more'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function Voicemails() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  const [tab, setTab] = useState('all')
+  const [tab, setTab] = useState('unattached')
   const [attachModal, setAttachModal] = useState<Voicemail | null>(null)
   const [attachMode, setAttachMode] = useState<'existing' | 'new'>('existing')
   const [searchQuery, setSearchQuery] = useState('')
@@ -148,17 +201,24 @@ export default function Voicemails() {
     onError: () => toast('error', 'Failed to archive voicemail. Please try again.'),
   })
 
+  const createTaskMutation = useMutation({
+    mutationFn: createTodo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
+      toast('success', 'Task created!')
+    },
+    onError: () => toast('error', 'Failed to create task. Please try again.'),
+  })
+
   const filtered = voicemails?.filter((vm) => {
     if (tab === 'unattached') return vm.attachedTo.type === 'none' && vm.status !== 'Archived'
-    if (tab === 'attached') return vm.attachedTo.type !== 'none' && vm.status !== 'Archived'
     if (tab === 'archived') return vm.status === 'Archived'
     return vm.status !== 'Archived'
   })
 
   const unattachedCount = voicemails?.filter((v) => v.attachedTo.type === 'none' && v.status !== 'Archived').length ?? 0
-  const attachedCount = voicemails?.filter((v) => v.attachedTo.type !== 'none' && v.status !== 'Archived').length ?? 0
   const archivedCount = voicemails?.filter((v) => v.status === 'Archived').length ?? 0
-  const activeCount = (voicemails?.length ?? 0) - archivedCount
 
   const filteredPatients = patients?.filter((p) => {
     const q = searchQuery.toLowerCase()
@@ -182,20 +242,36 @@ export default function Voicemails() {
     }
   }
 
-  const openAttachModal = (vm: Voicemail) => {
+  const openAttachModal = (vm: Voicemail, preselectedPatientId?: string) => {
     setAttachModal(vm)
     setAttachMode('existing')
     setSearchQuery('')
-    setSelectedPatientId('')
+    setSelectedPatientId(preselectedPatientId || '')
     setNewPatient({ firstName: '', lastName: '', phone: '' })
   }
 
-  const getPatientName = (vm: Voicemail) => {
-    if (vm.attachedTo.patientId && patients) {
-      const p = patients.find((p) => p.id === vm.attachedTo.patientId)
-      if (p) return `${p.firstName} ${p.lastName}`
-    }
+  const getPatientName = (patientId?: string) => {
+    if (!patientId || !patients) return null
+    const p = patients.find((p) => p.id === patientId)
+    if (p) return `${p.firstName} ${p.lastName}`
     return null
+  }
+
+  const handleCreateTask = (vm: Voicemail) => {
+    const patientId = vm.attachedTo.patientId
+    const callerLabel = vm.callerName || vm.callerNumber
+    const todoType = CATEGORY_TO_TODO_TYPE[vm.category] || 'CallBack'
+    const title = `Voicemail from ${callerLabel} — ${vm.category}`
+
+    createTaskMutation.mutate({
+      type: todoType as 'Schedule' | 'Refill' | 'CallBack' | 'SendDocs' | 'General',
+      title,
+      status: 'Open',
+      priority: 'Med',
+      patientId: patientId || undefined,
+      voicemailId: vm.id,
+      notes: vm.transcript ? `Transcript: ${vm.transcript.slice(0, 500)}` : undefined,
+    })
   }
 
   if (isLoading) return <LoadingSpinner />
@@ -207,9 +283,7 @@ export default function Voicemails() {
 
       <Tabs
         tabs={[
-          { key: 'all', label: 'All', count: activeCount },
           { key: 'unattached', label: 'Unattached', count: unattachedCount },
-          { key: 'attached', label: 'Attached', count: attachedCount },
           { key: 'archived', label: 'Archived', count: archivedCount },
         ]}
         active={tab}
@@ -224,7 +298,7 @@ export default function Voicemails() {
             description={
               tab === 'unattached'
                 ? "All voicemails have been attached to patients. Nice work!"
-                : "No voicemails yet. They'll appear here when patients call."
+                : "No archived voicemails yet."
             }
           />
         )}
@@ -248,10 +322,35 @@ export default function Voicemails() {
                   <span>{formatDuration(vm.durationSeconds)}</span>
                 </div>
 
+                {/* Transcript */}
+                <TranscriptDisplay vm={vm} />
+
+                {/* Suggested patient matches */}
+                {vm.suggestedPatientIds && vm.suggestedPatientIds.length > 0 && vm.attachedTo.type === 'none' && (
+                  <div className="mt-2">
+                    <span className="text-xs text-warm-gray dark:text-gray-400">Suggested matches: </span>
+                    <div className="inline-flex gap-1.5 flex-wrap">
+                      {vm.suggestedPatientIds.map((pid) => {
+                        const name = getPatientName(pid)
+                        if (!name) return null
+                        return (
+                          <button
+                            key={pid}
+                            onClick={() => openAttachModal(vm, pid)}
+                            className="text-xs px-2 py-0.5 rounded-full bg-slate-blue/10 text-slate-blue hover:bg-slate-blue/20 transition-colors"
+                          >
+                            {name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {vm.attachedTo.type !== 'none' && (
                   <p className="text-sm text-green-700 mt-2 flex items-center gap-1">
                     <User size={14} />
-                    Attached to {getPatientName(vm) || 'patient'}
+                    Attached to {getPatientName(vm.attachedTo.patientId) || 'patient'}
                   </p>
                 )}
               </div>
@@ -264,6 +363,17 @@ export default function Voicemails() {
                     icon={<UserPlus size={16} />}
                   >
                     Attach
+                  </Button>
+                )}
+                {vm.status !== 'Archived' && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleCreateTask(vm)}
+                    loading={createTaskMutation.isPending}
+                    icon={<ClipboardList size={16} />}
+                  >
+                    Task
                   </Button>
                 )}
                 {vm.status !== 'Archived' && (

@@ -386,13 +386,16 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       },
     });
 
-    const attachMap = new Map<string, { type: string; patientId?: string; category?: string; status?: string }>();
+    const attachMap = new Map<string, { type: string; patientId?: string; category?: string; status?: string; transcript?: string; transcriptStatus?: string; suggestedPatientIds?: string[] }>();
     for (const item of attachments) {
       attachMap.set(item.voicemailId as string, {
         type: item.attachmentType as string,
         patientId: item.patientId as string | undefined,
         category: item.category as string | undefined,
         status: item.status as string | undefined,
+        transcript: item.transcript as string | undefined,
+        transcriptStatus: item.transcriptStatus as string | undefined,
+        suggestedPatientIds: item.suggestedPatientIds as string[] | undefined,
       });
     }
 
@@ -567,6 +570,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
           : { type: 'none' },
         status: attachment?.status === 'Archived' ? 'Archived'
           : attachment && attachment.type !== 'none' ? 'Attached' : 'Unattached',
+        transcript: attachment?.transcript || undefined,
+        transcriptStatus: attachment?.transcriptStatus || undefined,
+        suggestedPatientIds: attachment?.suggestedPatientIds || undefined,
       };
     });
 
