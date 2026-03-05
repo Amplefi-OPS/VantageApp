@@ -39,9 +39,16 @@ export class StorageStack extends cdk.Stack {
       serverAccessLogsPrefix: 'access-logs/',
       lifecycleRules: [
         {
-          id: 'expire-raw-audio',
+          id: 'expire-dictation-audio',
+          prefix: 'dictations/',
           expiration: cdk.Duration.days(props.retentionAudioDays),
           noncurrentVersionExpiration: cdk.Duration.days(30),
+        },
+        {
+          id: 'expire-voicemail-audio',
+          prefix: 'voicemails/',
+          expiration: cdk.Duration.days(2555), // ~7 years (HIPAA retention)
+          noncurrentVersionExpiration: cdk.Duration.days(90),
         },
       ],
       cors: [

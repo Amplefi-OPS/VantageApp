@@ -56,6 +56,7 @@ export default function Todos() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState('all')
+  const [staffFilter, setStaffFilter] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmDoneId, setConfirmDoneId] = useState<string | null>(null)
   const settings = getSettings()
@@ -101,6 +102,9 @@ export default function Todos() {
   const today = new Date().toISOString().slice(0, 10)
 
   const filtered = todos?.filter((t) => {
+    // Staff filter
+    if (staffFilter && t.assignedTo !== staffFilter) return false
+
     switch (tab) {
       case 'today':
         return t.status === 'Open' && isToday(t.dueDate)
@@ -137,7 +141,22 @@ export default function Todos() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-charcoal dark:text-white mb-6">To-Do List</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-charcoal dark:text-white">To-Do List</h1>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-warm-gray dark:text-gray-400">My To-Do:</span>
+          <select
+            value={staffFilter}
+            onChange={(e) => setStaffFilter(e.target.value)}
+            className="text-sm px-3 py-1.5 rounded-lg border border-light-gray dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-blue"
+          >
+            <option value="">All</option>
+            {settings.staffList.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <Tabs
         tabs={[

@@ -6,6 +6,7 @@ import { AuthStack } from '../lib/auth-stack';
 import { ApiStack } from '../lib/api-stack';
 import { TranscriptionPipelineStack } from '../lib/pipeline-stack';
 import { BillingStack } from '../lib/billing-stack';
+import { VoicemailPipelineStack } from '../lib/voicemail-pipeline-stack';
 
 const app = new cdk.App();
 
@@ -44,6 +45,16 @@ const api = new ApiStack(app, `Vantage-Api-${stageName}`, {
 
 // ── Transcription Pipeline: Step Functions + EventBridge ──
 const pipeline = new TranscriptionPipelineStack(app, `Vantage-Pipeline-${stageName}`, {
+  env,
+  stageName,
+  table: storage.table,
+  audioBucket: storage.audioBucket,
+  transcriptBucket: storage.transcriptBucket,
+  kmsKey: storage.kmsKey,
+});
+
+// ── Voicemail Pipeline: Step Functions + EventBridge ──
+const vmPipeline = new VoicemailPipelineStack(app, `Vantage-VmPipeline-${stageName}`, {
   env,
   stageName,
   table: storage.table,
