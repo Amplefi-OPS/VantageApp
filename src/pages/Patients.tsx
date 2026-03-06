@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Users, Search, ChevronRight, UserPlus } from 'lucide-react'
 import { listPatients } from '../api/endpoints'
 import { Card } from '../components/ui/Card'
@@ -12,8 +12,17 @@ import { formatDate } from '../lib/utils'
 
 export default function Patients() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [showNewPatient, setShowNewPatient] = useState(false)
+
+  // Auto-open new patient modal from ?new=1 query param
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setShowNewPatient(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const { data: patients, isLoading, isError } = useQuery({
     queryKey: ['patients'],

@@ -10,8 +10,8 @@ import {
   ChevronDown,
   ChevronUp,
   DollarSign,
-  CreditCard,
   User,
+  UserPlus,
   ExternalLink,
 } from 'lucide-react'
 import { listTodos, updateTodo, listPatients } from '../api/endpoints'
@@ -259,34 +259,24 @@ export default function Todos() {
                           Charge $30 Fee
                         </Button>
                       )}
-                      {todo.title.toLowerCase().includes("doctor's notes") && todo.patientId && (
+                      {todo.patientId && (
                         <Button
                           size="sm"
                           variant="primary"
-                          icon={<User size={14} />}
-                          onClick={() => navigate(`/patients/${todo.patientId}`)}
-                        >
-                          Open Patient
-                        </Button>
-                      )}
-                      {!todo.title.toLowerCase().includes('no-show fee') && !todo.title.toLowerCase().includes("doctor's notes") && todo.patientId && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
                           icon={<ExternalLink size={14} />}
                           onClick={() => navigate(`/patients/${todo.patientId}`)}
                         >
-                          View Patient
+                          Go to Patient Record
                         </Button>
                       )}
-                      {!todo.title.toLowerCase().includes('no-show fee') && !todo.title.toLowerCase().includes("doctor's notes") && !todo.patientId && (
+                      {!todo.patientId && (
                         <Button
                           size="sm"
                           variant="secondary"
-                          icon={<CreditCard size={14} />}
-                          onClick={() => navigate('/billing/charge')}
+                          icon={<UserPlus size={14} />}
+                          onClick={() => navigate('/patients?new=1')}
                         >
-                          Payment Center
+                          New Patient
                         </Button>
                       )}
                     </div>
