@@ -527,26 +527,46 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     );
     const audioUrls = await Promise.all(audioUrlPromises);
 
-    // ── Re-resolve categories for existing voicemails using fresh Zoom data ──
+    // ── Re-resolve categories and re-match unattached voicemails to patients ──
     const updatePromises: Promise<void>[] = [];
     for (const vm of uniqueVoicemails) {
       const attachment = attachMap.get(vm.id);
       if (!attachment) continue;
+
+      const updates: Record<string, unknown> = {};
+
+      // Re-resolve category from fresh Zoom data
       const freshCategory = resolveCategory(vm.callee_name || '', vm.callee_number || '');
       if (freshCategory !== attachment.category) {
-        console.log(`Re-categorizing VM ${vm.id}: "${attachment.category}" → "${freshCategory}" (callee_name="${vm.callee_name}", callee_number="${vm.callee_number}")`);
+        console.log(`Re-categorizing VM ${vm.id}: "${attachment.category}" → "${freshCategory}"`);
+        updates.category = freshCategory;
+        updates.calleeName = vm.callee_name || null;
+        updates.calleeNumber = vm.callee_number || null;
         attachment.category = freshCategory;
-        const expr = buildUpdateExpression({
-          category: freshCategory,
-          calleeName: vm.callee_name || null,
-          calleeNumber: vm.callee_number || null,
-        });
+      }
+
+      // Re-match unattached voicemails to patients by phone
+      if (attachment.type === 'none' && !attachment.patientId) {
+        const callerPhone = normalizePhone(vm.caller_number || '');
+        const matched = callerPhone ? phoneToPatient.get(callerPhone) : undefined;
+        if (matched) {
+          console.log(`Late-matching VM ${vm.id} → patient ${matched.id} (${matched.firstName} ${matched.lastName})`);
+          updates.patientId = matched.id;
+          updates.attachmentType = 'patient';
+          updates.status = 'Attached';
+          attachment.type = 'patient';
+          attachment.patientId = matched.id;
+        }
+      }
+
+      if (Object.keys(updates).length > 0) {
+        const expr = buildUpdateExpression(updates);
         if (expr) {
           updatePromises.push(
             updateItem({
               Key: { PK: `PROVIDER#${providerId}`, SK: `VOICEMAIL#${vm.id}` },
               ...expr,
-            }).then(() => undefined).catch((err) => console.warn(`Failed to update category for ${vm.id}:`, (err as Error).message))
+            }).then(() => undefined).catch((err) => console.warn(`Failed to update VM ${vm.id}:`, (err as Error).message))
           );
         }
       }
