@@ -28,6 +28,7 @@ import {
   Clock,
   AlertCircle,
   RefreshCw,
+  Loader2,
 } from 'lucide-react'
 import {
   getPatient,
@@ -56,6 +57,62 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useToast } from '../components/ui/Toast'
 import { formatDate, formatDateTime, formatDuration, timeAgo, isOverdue } from '../lib/utils'
 import DictationMode from './DictationMode'
+import type { Voicemail } from '../api/types'
+
+function VoicemailTranscript({ vm }: { vm: Voicemail }) {
+  const [expanded, setExpanded] = useState(false)
+
+  if (vm.transcriptStatus === 'Pending') {
+    return (
+      <div className="mt-2 flex items-center gap-2 text-sm text-warm-gray dark:text-gray-400">
+        <Loader2 size={14} className="animate-spin" />
+        <span>Queued for transcription...</span>
+      </div>
+    )
+  }
+
+  if (vm.transcriptStatus === 'Transcribing') {
+    return (
+      <div className="mt-2 flex items-center gap-2 text-sm text-warm-gray dark:text-gray-400">
+        <Loader2 size={14} className="animate-spin" />
+        <span>Transcribing...</span>
+      </div>
+    )
+  }
+
+  if (vm.transcriptStatus === 'Failed') {
+    return (
+      <div className="mt-2 text-sm text-red-500">
+        Transcription failed
+      </div>
+    )
+  }
+
+  if (!vm.transcript) return null
+
+  const truncated = vm.transcript.length > 200
+  const displayText = expanded ? vm.transcript : vm.transcript.slice(0, 200)
+
+  return (
+    <div className="mt-2">
+      <div className="flex items-start gap-1.5">
+        <FileText size={14} className="text-warm-gray dark:text-gray-400 mt-0.5 shrink-0" />
+        <p className="text-sm text-charcoal dark:text-gray-200">
+          {displayText}
+          {truncated && !expanded && '...'}
+        </p>
+      </div>
+      {truncated && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-xs text-slate-blue hover:underline mt-1 ml-5"
+        >
+          {expanded ? 'Show less' : 'Show more'}
+        </button>
+      )}
+    </div>
+  )
+}
 
 export default function PatientProfile() {
   const { id } = useParams<{ id: string }>()
@@ -169,9 +226,12 @@ export default function PatientProfile() {
     enabled: tab === 'voicemails',
   })
 
-  // Filter voicemails by matching patient phone number (normalize to digits for comparison)
+  // Filter voicemails: match by patientId attachment OR phone number
   const normalizeDigits = (phone: string) => phone.replace(/\D/g, '').replace(/^1(\d{10})$/, '$1')
   const voicemails = allVoicemails?.filter((vm) => {
+    // Match by patientId (attached via Lambda auto-match or manual attach)
+    if (vm.attachedTo?.patientId === id) return true
+    // Match by phone number
     if (!patient?.phone) return false
     const patientDigits = normalizeDigits(patient.phone)
     const callerDigits = normalizeDigits(vm.callerNumber)
@@ -728,6 +788,7 @@ export default function PatientProfile() {
                       className="mt-2 w-full h-10"
                       preload="none"
                     />
+                    <VoicemailTranscript vm={vm} />
                   </Card>
                 ))}
               </div>

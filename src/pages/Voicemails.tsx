@@ -158,7 +158,7 @@ function TranscriptDisplay({ vm }: { vm: Voicemail }) {
 export default function Voicemails() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  const [tab, setTab] = useState('unattached')
+  const [tab, setTab] = useState('all')
   const [attachModal, setAttachModal] = useState<Voicemail | null>(null)
   const [attachMode, setAttachMode] = useState<'existing' | 'new'>('existing')
   const [searchQuery, setSearchQuery] = useState('')
@@ -228,6 +228,7 @@ export default function Voicemails() {
     return vm.status !== 'Archived'
   })
 
+  const allCount = voicemails?.filter((v) => v.status !== 'Archived').length ?? 0
   const unattachedCount = voicemails?.filter((v) => v.attachedTo.type === 'none' && v.status !== 'Archived').length ?? 0
   const archivedCount = voicemails?.filter((v) => v.status === 'Archived').length ?? 0
 
@@ -294,6 +295,7 @@ export default function Voicemails() {
 
       <Tabs
         tabs={[
+          { key: 'all', label: 'All', count: allCount },
           { key: 'unattached', label: 'Unattached', count: unattachedCount },
           { key: 'archived', label: 'Archived', count: archivedCount },
         ]}
@@ -309,7 +311,9 @@ export default function Voicemails() {
             description={
               tab === 'unattached'
                 ? "All voicemails have been attached to patients. Nice work!"
-                : "No archived voicemails yet."
+                : tab === 'archived'
+                  ? "No archived voicemails yet."
+                  : "No voicemails found."
             }
           />
         )}
