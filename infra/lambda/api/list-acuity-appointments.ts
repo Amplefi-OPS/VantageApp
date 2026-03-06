@@ -251,21 +251,23 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       if (!normPhone || phoneToPatient.has(normPhone)) continue;
       if (!firstName?.trim() || !lastName?.trim()) continue;
 
-      const patientId = `patient-${randomUUID().slice(0, 12)}`;
+      const patientId = `pt-${randomUUID().slice(0, 12)}`;
       try {
         await putItem({
-          PK: `PROVIDER#${providerId}`,
-          SK: `PATIENT#${patientId}`,
+          PK: `PATIENT#${patientId}`,
+          SK: 'PROFILE',
           patientId,
           providerId,
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           phone: phone || '',
           email: email || '',
+          dob: null,
+          gender: null,
           createdAt: now,
           updatedAt: now,
           GSI1PK: `PROVIDER#${providerId}`,
-          GSI1SK: `PATIENT#${patientId}`,
+          GSI1SK: `PATIENT#${now}`,
           GSI2PK: 'PATIENT',
           GSI2SK: `${now}#${patientId}`,
           entityType: 'Patient',

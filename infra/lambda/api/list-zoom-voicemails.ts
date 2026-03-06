@@ -474,51 +474,50 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         category,
       });
 
-      // Auto-create todo task if matched to a patient
-      if (matchedPatient) {
-        const taskId = `task-${randomUUID().slice(0, 12)}`;
-        const todoType = CATEGORY_TO_TODO_TYPE[category] || 'CallBack';
-        const callerLabel = vm.caller_name || vm.caller_number || 'Unknown';
-        const patientLabel = `${matchedPatient.firstName} ${matchedPatient.lastName}`;
-        const title = `Voicemail from ${callerLabel} — ${category}`;
+      // Auto-create todo task for every voicemail
+      const taskId = `task-${randomUUID().slice(0, 12)}`;
+      const todoType = CATEGORY_TO_TODO_TYPE[category] || 'CallBack';
+      const patientLabel = matchedPatient
+        ? `${matchedPatient.firstName} ${matchedPatient.lastName}`
+        : 'New Patient';
+      const title = `${patientLabel} — ${category}`;
 
-        const taskRecord = {
-          PK: `PROVIDER#${providerId}`,
-          SK: `TASK#${taskId}`,
-          taskId,
+      const taskRecord = {
+        PK: `PROVIDER#${providerId}`,
+        SK: `TASK#${taskId}`,
+        taskId,
+        providerId,
+        patientId: matchedPatient?.id || null,
+        voicemailId: vm.id,
+        type: todoType,
+        title,
+        status: 'Open',
+        priority: 'Med',
+        dueDate: null,
+        assignedTo: null,
+        notes: `Auto-created from voicemail. Caller: ${vm.caller_name || vm.caller_number || 'Unknown'}. Duration: ${vm.duration}s.`,
+        dictationId: null,
+        createdAt: now,
+        updatedAt: now,
+        GSI1PK: `PROVIDER#${providerId}`,
+        GSI1SK: `TASKSTATUS#Open#${now}`,
+        GSI2PK: 'TASK',
+        GSI2SK: `${now}#${taskId}`,
+        entityType: 'Task',
+      };
+
+      try {
+        await putItem(taskRecord);
+        await writeAuditLog({
           providerId,
-          patientId: matchedPatient.id,
-          voicemailId: vm.id,
-          type: todoType,
-          title,
-          status: 'Open',
-          priority: 'Med',
-          dueDate: null,
-          assignedTo: null,
-          notes: `Auto-created from voicemail. Patient: ${patientLabel}. Duration: ${vm.duration}s.`,
-          dictationId: null,
-          createdAt: now,
-          updatedAt: now,
-          GSI1PK: `PROVIDER#${providerId}`,
-          GSI1SK: `TASKSTATUS#Open#${now}`,
-          GSI2PK: 'TASK',
-          GSI2SK: `${now}#${taskId}`,
+          action: 'AUTO_CREATE_TASK',
           entityType: 'Task',
-        };
-
-        try {
-          await putItem(taskRecord);
-          await writeAuditLog({
-            providerId,
-            action: 'AUTO_CREATE_TASK',
-            entityType: 'Task',
-            entityId: taskId,
-            details: { voicemailId: vm.id, category, todoType },
-          });
-          console.log(`Auto-created task ${taskId} for voicemail ${vm.id} → patient ${matchedPatient.id}`);
-        } catch (err) {
-          console.warn(`Failed to create task for voicemail ${vm.id}:`, (err as Error).message);
-        }
+          entityId: taskId,
+          details: { voicemailId: vm.id, category, todoType, patientId: matchedPatient?.id || null },
+        });
+        console.log(`Auto-created task ${taskId} for voicemail ${vm.id} → ${patientLabel}`);
+      } catch (err) {
+        console.warn(`Failed to create task for voicemail ${vm.id}:`, (err as Error).message);
       }
     }
 
