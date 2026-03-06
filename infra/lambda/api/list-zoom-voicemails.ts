@@ -137,7 +137,8 @@ function resolveCategory(calleeName: string, calleeNumber: string): string {
 
 function normalizePhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
-  return digits.length >= 10 ? digits.slice(-10) : digits;
+  if (digits.length < 10) return ''; // require full 10-digit number
+  return digits.slice(-10);
 }
 
 // ── S3 audio caching ──
@@ -413,11 +414,11 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       },
     });
 
-    // Build phone → patient lookup (normalized)
+    // Build phone → patient lookup (normalized, 10-digit match only)
     const phoneToPatient = new Map<string, { id: string; firstName: string; lastName: string }>();
     for (const p of patientItems) {
       const phone = normalizePhone((p.phone as string) || '');
-      if (phone) {
+      if (phone && phone.length === 10) {
         phoneToPatient.set(phone, {
           id: p.patientId as string,
           firstName: p.firstName as string,
