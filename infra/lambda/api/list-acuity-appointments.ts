@@ -47,7 +47,19 @@ function shortTypeName(raw: string): string {
 }
 
 function parseEventSummary(summary: string): { firstName: string; lastName: string; type: string } {
-  if (!summary) return { firstName: '', lastName: '', type: 'Returning Patient' };
+  if (!summary) return { firstName: '', lastName: '', type: '' };
+
+  // "Appointment Type (Patient Name)" — e.g. "New Patient Consultation (Jane Doe)"
+  const parenMatch = summary.match(/^(.+?)\s*\((.+?)\)\s*$/);
+  if (parenMatch) {
+    const type = shortTypeName(parenMatch[1].trim());
+    const nameParts = parenMatch[2].trim().split(/\s+/);
+    return {
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
+      type,
+    };
+  }
 
   // "FirstName LastName - Appointment Type"
   const dashMatch = summary.match(/^(.+?)\s*[-–—]\s*(.+)$/);
@@ -65,28 +77,30 @@ function parseEventSummary(summary: string): { firstName: string; lastName: stri
   return {
     firstName: parts[0] || '',
     lastName: parts.slice(1).join(' ') || '',
-    type: 'Returning Patient',
+    type: '',
   };
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
 }
 
 function parseDescription(desc: string): { phone: string; email: string; notes: string } {
   if (!desc) return { phone: '', email: '', notes: '' };
 
-  const phoneMatch = desc.match(/(?:phone|tel|cell|mobile)\s*[:=]\s*([\d\s()+-]+)/i);
-  const emailMatch = desc.match(/(?:email)\s*[:=]\s*([^\s,]+@[^\s,]+)/i);
-  // Fallback: bare phone or email anywhere in the description
-  const barePhone = !phoneMatch ? desc.match(/(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/) : null;
-  const bareEmail = !emailMatch ? desc.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/) : null;
+  // Strip HTML tags first
+  const clean = stripHtml(desc);
 
-  let notes = desc;
-  if (phoneMatch) notes = notes.replace(phoneMatch[0], '');
-  if (emailMatch) notes = notes.replace(emailMatch[0], '');
-  notes = notes.replace(/\n{2,}/g, '\n').trim();
+  const phoneMatch = clean.match(/(?:phone|tel|cell|mobile)\s*[:=]\s*([\d\s()+-]+)/i);
+  const emailMatch = clean.match(/(?:email)\s*[:=]\s*([^\s,]+@[^\s,]+)/i);
+  // Fallback: bare phone or email anywhere in the description
+  const barePhone = !phoneMatch ? clean.match(/(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/) : null;
+  const bareEmail = !emailMatch ? clean.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/) : null;
 
   return {
     phone: phoneMatch?.[1]?.trim() || barePhone?.[1]?.trim() || '',
     email: emailMatch?.[1]?.trim() || bareEmail?.[1]?.trim() || '',
-    notes,
+    notes: '',
   };
 }
 

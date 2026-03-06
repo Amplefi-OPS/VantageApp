@@ -28,7 +28,7 @@ const statusLabels: Record<string, string> = {
   no_show: 'No Show',
 }
 
-const typeIcons: Record<string, typeof UserPlus> = {
+const typeIcons: Record<string, typeof Calendar> = {
   'New Patient': UserPlus,
   'Returning Patient': UserCheck,
 }
@@ -319,10 +319,9 @@ export default function Appointments() {
                         {statusLabels[appt.status] || appt.status}
                       </Badge>
                     </div>
-                    <p className="text-sm text-charcoal dark:text-gray-100">{appt.type}</p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-warm-gray">
+                    <div className="flex items-center gap-4 mt-2 text-xs text-warm-gray dark:text-gray-300">
                       {(filter === 'upcoming' || filter === 'past') && (
-                        <span className="font-medium text-charcoal">
+                        <span className="font-medium text-charcoal dark:text-white">
                           {formatDateShort(appt.startTime)}
                         </span>
                       )}
@@ -332,12 +331,6 @@ export default function Appointments() {
                       </span>
                       <span>{appt.duration} min</span>
                     </div>
-                    {appt.patientPhone && (
-                      <p className="text-xs text-warm-gray mt-1">{appt.patientPhone}</p>
-                    )}
-                    {appt.notes && (
-                      <p className="text-xs text-warm-gray mt-1 italic">{appt.notes}</p>
-                    )}
                     <div className="mt-3 flex gap-2 flex-wrap">
                       {/* No-show: charge fee + change status */}
                       {appt.status === 'no_show' && (
