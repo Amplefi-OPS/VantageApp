@@ -787,24 +787,11 @@ export default function PatientProfile() {
         {/* Notes Tab */}
         {tab === 'notes' && (
           <>
-            <div className="mb-4">
-              <Button
-                onClick={() => setDictating(true)}
-                icon={<Mic size={18} />}
-              >
-                Dictate New Note
-              </Button>
-            </div>
             {!notes || notes.length === 0 ? (
               <EmptyState
                 icon={<FileText size={48} />}
                 title="No notes yet"
-                description="Use the Dictate button to create appointment notes."
-                action={
-                  <Button onClick={() => setDictating(true)} icon={<Mic size={18} />}>
-                    Dictate Note
-                  </Button>
-                }
+                description="Use the Dictate Note button in the top right to create appointment notes."
               />
             ) : (
               <div className="space-y-3">
