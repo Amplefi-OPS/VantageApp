@@ -41,7 +41,7 @@ export async function createPatient(req: CreatePatientRequest): Promise<Patient>
   return apiPost<Patient>('/patients', req)
 }
 
-// ── Appointments (Acuity Scheduling) ─────────────────
+// ── Appointments (Google Calendar) ───────────────────
 
 export async function listAppointments(date: string, rangeEnd?: string): Promise<Appointment[]> {
   const params = new URLSearchParams({ date })

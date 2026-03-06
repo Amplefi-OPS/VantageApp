@@ -100,10 +100,10 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadWriteData(createTaskFn);
 
-    // Acuity + Zoom + Stripe credentials are fetched at runtime via Secrets Manager.
+    // Google Calendar + Zoom + Stripe credentials are fetched at runtime via Secrets Manager.
     // No secrets in Lambda environment variables.
 
-    // ── Lambda: List Acuity Appointments ──
+    // ── Lambda: List Appointments (Google Calendar) ──
     const listAcuityAppointmentsFn = new lambdaNode.NodejsFunction(this, 'ListAcuityAppointmentsFn', {
       ...lambdaDefaults,
       functionName: `vantage-list-acuity-appointments-${props.stageName}`,
@@ -113,7 +113,7 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadWriteData(listAcuityAppointmentsFn);
 
-    // ── Lambda: Cancel Acuity Appointment ──
+    // ── Lambda: Cancel Appointment (Google Calendar) ──
     const cancelAcuityAppointmentFn = new lambdaNode.NodejsFunction(this, 'CancelAcuityAppointmentFn', {
       ...lambdaDefaults,
       functionName: `vantage-cancel-acuity-appointment-${props.stageName}`,
@@ -123,7 +123,7 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadWriteData(cancelAcuityAppointmentFn);
 
-    // ── Lambda: No-Show Acuity Appointment ──
+    // ── Lambda: No-Show Appointment (DynamoDB-only) ──
     const noshowAcuityAppointmentFn = new lambdaNode.NodejsFunction(this, 'NoshowAcuityAppointmentFn', {
       ...lambdaDefaults,
       functionName: `vantage-noshow-acuity-appointment-${props.stageName}`,
@@ -435,7 +435,7 @@ export class ApiStack extends cdk.Stack {
     const taskById = tasks.addResource('{task_id}');
     taskById.addMethod('PATCH', new apigateway.LambdaIntegration(updateTaskFn), authMethodOptions);
 
-    // GET /appointments (Acuity Scheduling proxy)
+    // GET /appointments (Google Calendar)
     const appointments = this.api.root.addResource('appointments');
     appointments.addMethod('GET', new apigateway.LambdaIntegration(listAcuityAppointmentsFn), authMethodOptions);
 

@@ -1,12 +1,14 @@
 /**
  * GET /appointments?date=YYYY-MM-DD&range_end=YYYY-MM-DD&phone=+1234567890
  *
- * Fetches appointments from Acuity Scheduling API,
- * filtered to the medical calendar (New Patient + Returning Patient types only).
+ * Fetches appointments from Google Calendar API.
+ * Parses event summary/description for patient info (name, phone, email, type).
  * Matches patient phone numbers against DynamoDB to attach patientId.
+ * Auto-creates patient records for unmatched appointments.
  *
- * If `phone` is provided, filters Acuity results to that phone number
- * and skips the date range (returns all upcoming for that patient).
+ * Expected Google Calendar event format:
+ *   Summary: "FirstName LastName - New Patient" or "FirstName LastName"
+ *   Description: "Phone: (727) 365-6747\nEmail: jane@example.com\nAny other notes"
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
@@ -14,70 +16,111 @@ import { randomUUID } from 'crypto';
 import { getCallerIdentity } from '../shared/auth';
 import { putItem, queryItems, writeAuditLog } from '../shared/dynamo';
 import { success, serverError } from '../shared/response';
-import { getSecrets } from '../shared/secrets';
+import { getGoogleAccessToken, getCalendarId } from '../shared/google';
 
-const ACUITY_BASE = 'https://acuityscheduling.com/api/v1';
+const GCAL_BASE = 'https://www.googleapis.com/calendar/v3';
 
-// Only show appointments from the medical calendar
-const CALENDAR_ID = '13227530'; // Vantage Refinery Appointments
-
-interface AcuityAppointment {
-  id: number;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  email: string;
-  datetime: string;
-  date: string;
-  time: string;
-  endTime: string;
-  duration: string;
-  type: string;
-  appointmentTypeID: number;
-  calendar: string;
-  calendarID: number;
-  canceled: boolean;
-  noShow: boolean;
-  notes: string;
-  timezone: string;
-  forms: unknown[];
-  formsText: string;
-  location: string;
-  dateCreated: string;
-  datetimeCreated: string;
+interface GoogleEvent {
+  id: string;
+  status: string;
+  summary?: string;
+  description?: string;
+  start?: { dateTime?: string; date?: string; timeZone?: string };
+  end?: { dateTime?: string; date?: string; timeZone?: string };
+  created?: string;
+  attendees?: Array<{ email?: string; displayName?: string }>;
+  extendedProperties?: { private?: Record<string, string>; shared?: Record<string, string> };
 }
 
-async function acuityGet<T>(path: string): Promise<T> {
-  const secrets = await getSecrets();
-  const auth = Buffer.from(`${secrets.ACUITY_USER_ID}:${secrets.ACUITY_API_KEY}`).toString('base64');
-  const res = await fetch(`${ACUITY_BASE}${path}`, {
-    headers: { Authorization: `Basic ${auth}` },
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Acuity API error (${res.status}): ${text}`);
+interface EventsListResponse {
+  items?: GoogleEvent[];
+  nextPageToken?: string;
+}
+
+// ── Parsing helpers ──
+
+function shortTypeName(raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower.includes('new patient') || lower.includes('new pt')) return 'New Patient';
+  if (lower.includes('returning') || lower.includes('follow')) return 'Returning Patient';
+  return raw;
+}
+
+function parseEventSummary(summary: string): { firstName: string; lastName: string; type: string } {
+  if (!summary) return { firstName: '', lastName: '', type: 'Returning Patient' };
+
+  // "FirstName LastName - Appointment Type"
+  const dashMatch = summary.match(/^(.+?)\s*[-–—]\s*(.+)$/);
+  if (dashMatch) {
+    const parts = dashMatch[1].trim().split(/\s+/);
+    return {
+      firstName: parts[0] || '',
+      lastName: parts.slice(1).join(' ') || '',
+      type: shortTypeName(dashMatch[2].trim()),
+    };
   }
-  return res.json() as Promise<T>;
+
+  // Just a name
+  const parts = summary.trim().split(/\s+/);
+  return {
+    firstName: parts[0] || '',
+    lastName: parts.slice(1).join(' ') || '',
+    type: 'Returning Patient',
+  };
 }
 
-// Map Acuity type names to short display labels
-function shortTypeName(acuityType: string): string {
-  if (acuityType.toLowerCase().includes('new patient')) return 'New Patient';
-  if (acuityType.toLowerCase().includes('returning') || acuityType.toLowerCase().includes('follow')) return 'Returning Patient';
-  return acuityType;
+function parseDescription(desc: string): { phone: string; email: string; notes: string } {
+  if (!desc) return { phone: '', email: '', notes: '' };
+
+  const phoneMatch = desc.match(/(?:phone|tel|cell|mobile)\s*[:=]\s*([\d\s()+-]+)/i);
+  const emailMatch = desc.match(/(?:email)\s*[:=]\s*([^\s,]+@[^\s,]+)/i);
+  // Fallback: bare phone or email anywhere in the description
+  const barePhone = !phoneMatch ? desc.match(/(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/) : null;
+  const bareEmail = !emailMatch ? desc.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/) : null;
+
+  let notes = desc;
+  if (phoneMatch) notes = notes.replace(phoneMatch[0], '');
+  if (emailMatch) notes = notes.replace(emailMatch[0], '');
+  notes = notes.replace(/\n{2,}/g, '\n').trim();
+
+  return {
+    phone: phoneMatch?.[1]?.trim() || barePhone?.[1]?.trim() || '',
+    email: emailMatch?.[1]?.trim() || bareEmail?.[1]?.trim() || '',
+    notes,
+  };
 }
 
-// Compute ISO end time from start datetime + duration minutes
-function computeEndTime(datetime: string, durationMin: number): string {
-  const d = new Date(datetime);
-  d.setMinutes(d.getMinutes() + durationMin);
-  return d.toISOString();
-}
-
-// Normalize phone to digits only for matching
 function normalizePhone(phone: string): string {
   return phone.replace(/\D/g, '').replace(/^1(\d{10})$/, '$1');
 }
+
+// ── Google Calendar API ──
+
+async function fetchEvents(calendarId: string, token: string, params: URLSearchParams): Promise<GoogleEvent[]> {
+  const all: GoogleEvent[] = [];
+  let pageToken: string | undefined;
+
+  do {
+    const p = new URLSearchParams(params);
+    if (pageToken) p.set('pageToken', pageToken);
+
+    const res = await fetch(
+      `${GCAL_BASE}/calendars/${encodeURIComponent(calendarId)}/events?${p}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Google Calendar API error (${res.status}): ${text}`);
+    }
+    const data = (await res.json()) as EventsListResponse;
+    if (data.items) all.push(...data.items);
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+
+  return all;
+}
+
+// ── Handler ──
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
@@ -86,81 +129,61 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const params = event.queryStringParameters || {};
     const rawPhone = params.phone;
 
-    // Normalize phone to E.164 (+1XXXXXXXXXX) for Acuity API matching
+    const token = await getGoogleAccessToken();
+    const calendarId = await getCalendarId();
+
     let phoneFilter: string | undefined;
     if (rawPhone) {
       const digits = rawPhone.replace(/\D/g, '');
-      if (digits.length === 10) {
-        phoneFilter = `+1${digits}`;
-      } else if (digits.length === 11 && digits.startsWith('1')) {
-        phoneFilter = `+${digits}`;
-      } else {
-        phoneFilter = rawPhone; // pass through as-is
-      }
+      phoneFilter = digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits;
     }
 
-    let allAcuity: AcuityAppointment[];
+    let events: GoogleEvent[];
 
     if (phoneFilter) {
-      // Patient-specific: fetch all appointments for this phone (past 6 months + upcoming)
+      // Patient-specific: fetch wide range, filter by phone match in description
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
       const sixMonthsAhead = new Date();
       sixMonthsAhead.setMonth(sixMonthsAhead.getMonth() + 6);
 
-      const query = new URLSearchParams({
-        minDate: sixMonthsAgo.toISOString().slice(0, 10),
-        maxDate: sixMonthsAhead.toISOString().slice(0, 10),
-        calendarID: CALENDAR_ID,
-        phone: phoneFilter,
-        max: '100',
-        direction: 'DESC',
+      const qp = new URLSearchParams({
+        timeMin: sixMonthsAgo.toISOString(),
+        timeMax: sixMonthsAhead.toISOString(),
+        singleEvents: 'true',
+        orderBy: 'startTime',
+        maxResults: '250',
+        showDeleted: 'true',
       });
-      const appts = await acuityGet<AcuityAppointment[]>(`/appointments?${query}`);
+      const allEvents = await fetchEvents(calendarId, token, qp);
 
-      // Also fetch canceled for this phone
-      query.set('canceled', 'true');
-      const canceled = await acuityGet<AcuityAppointment[]>(`/appointments?${query}`);
-
-      const dedup = new Map<number, AcuityAppointment>();
-      for (const a of appts) dedup.set(a.id, a);
-      for (const a of canceled) dedup.set(a.id, a);
-      allAcuity = Array.from(dedup.values()).sort(
-        (a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime()
-      );
+      events = allEvents.filter((e) => {
+        const { phone } = parseDescription(e.description || '');
+        return phone ? normalizePhone(phone) === phoneFilter : false;
+      });
+      // Sort descending for patient history view
+      events.sort((a, b) => {
+        const aT = a.start?.dateTime || a.start?.date || '';
+        const bT = b.start?.dateTime || b.start?.date || '';
+        return new Date(bT).getTime() - new Date(aT).getTime();
+      });
     } else {
-      // Date-based: fetch appointments for the date range
+      // Date-based: fetch events for the date range
       const date = params.date || new Date().toISOString().slice(0, 10);
       const rangeEnd = params.range_end || date;
 
-      const query = new URLSearchParams({
-        minDate: date,
-        maxDate: rangeEnd,
-        calendarID: CALENDAR_ID,
-        max: '100',
-        direction: 'ASC',
+      const qp = new URLSearchParams({
+        timeMin: `${date}T00:00:00Z`,
+        timeMax: `${rangeEnd}T23:59:59Z`,
+        singleEvents: 'true',
+        orderBy: 'startTime',
+        maxResults: '250',
+        showDeleted: 'true',
       });
-      const appts = await acuityGet<AcuityAppointment[]>(`/appointments?${query}`);
-
-      const canceledQuery = new URLSearchParams({
-        minDate: date,
-        maxDate: rangeEnd,
-        calendarID: CALENDAR_ID,
-        max: '100',
-        direction: 'ASC',
-        canceled: 'true',
-      });
-      const canceled = await acuityGet<AcuityAppointment[]>(`/appointments?${canceledQuery}`);
-
-      const dedup = new Map<number, AcuityAppointment>();
-      for (const a of appts) dedup.set(a.id, a);
-      for (const a of canceled) dedup.set(a.id, a);
-      allAcuity = Array.from(dedup.values()).sort(
-        (a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
-      );
+      events = await fetchEvents(calendarId, token, qp);
     }
 
-    // Load patients from DynamoDB to match phone numbers → patientId
+    // Load patients from DynamoDB
     const patientItems = await queryItems({
       IndexName: 'GSI1',
       KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
@@ -170,7 +193,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       },
     });
 
-    // Load completed appointments from DynamoDB
+    // Load completed appointments
     const completedItems = await queryItems({
       IndexName: 'GSI1',
       KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
@@ -181,7 +204,18 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     });
     const completedIds = new Set(completedItems.map((c) => c.appointmentId as string));
 
-    // Build phone → patientId lookup (normalized)
+    // Load no-show records
+    const noshowItems = await queryItems({
+      IndexName: 'GSI1',
+      KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+      ExpressionAttributeValues: {
+        ':pk': `PROVIDER#${providerId}`,
+        ':sk': 'APPT_NOSHOW#',
+      },
+    });
+    const noshowIds = new Set(noshowItems.map((n) => n.appointmentId as string));
+
+    // Phone → patient lookup
     const phoneToPatient = new Map<string, { id: string; name: string }>();
     for (const p of patientItems) {
       if (p.phone) {
@@ -195,71 +229,94 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     // ── Auto-create patient records for new appointments ──
     const now = new Date().toISOString();
-    for (const a of allAcuity) {
-      if (a.canceled || a.noShow) continue;
-      const normPhone = a.phone ? normalizePhone(a.phone) : '';
+    for (const e of events) {
+      if (e.status === 'cancelled') continue;
+      const { firstName, lastName } = parseEventSummary(e.summary || '');
+      const { phone, email } = parseDescription(e.description || '');
+      const normPhone = phone ? normalizePhone(phone) : '';
       if (!normPhone || phoneToPatient.has(normPhone)) continue;
-      if (!a.firstName?.trim() || !a.lastName?.trim()) continue;
+      if (!firstName?.trim() || !lastName?.trim()) continue;
 
       const patientId = `patient-${randomUUID().slice(0, 12)}`;
-      const patientRecord = {
-        PK: `PROVIDER#${providerId}`,
-        SK: `PATIENT#${patientId}`,
-        patientId,
-        providerId,
-        firstName: a.firstName.trim(),
-        lastName: a.lastName.trim(),
-        phone: a.phone || '',
-        email: a.email || '',
-        createdAt: now,
-        updatedAt: now,
-        GSI1PK: `PROVIDER#${providerId}`,
-        GSI1SK: `PATIENT#${patientId}`,
-        GSI2PK: 'PATIENT',
-        GSI2SK: `${now}#${patientId}`,
-        entityType: 'Patient',
-        source: 'acuity-auto',
-      };
-
       try {
-        await putItem(patientRecord);
-        phoneToPatient.set(normPhone, { id: patientId, name: `${a.firstName} ${a.lastName}` });
+        await putItem({
+          PK: `PROVIDER#${providerId}`,
+          SK: `PATIENT#${patientId}`,
+          patientId,
+          providerId,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          phone: phone || '',
+          email: email || '',
+          createdAt: now,
+          updatedAt: now,
+          GSI1PK: `PROVIDER#${providerId}`,
+          GSI1SK: `PATIENT#${patientId}`,
+          GSI2PK: 'PATIENT',
+          GSI2SK: `${now}#${patientId}`,
+          entityType: 'Patient',
+          source: 'google-auto',
+        });
+        phoneToPatient.set(normPhone, { id: patientId, name: `${firstName} ${lastName}` });
         await writeAuditLog({
           providerId,
           action: 'AUTO_CREATE_PATIENT',
           entityType: 'Patient',
           entityId: patientId,
-          details: { source: 'acuity', appointmentId: String(a.id) },
+          details: { source: 'google-calendar', eventId: e.id },
         });
-        console.log(`Auto-created patient ${patientId} from Acuity appointment ${a.id}: ${a.firstName} ${a.lastName}`);
+        console.log(`Auto-created patient ${patientId} from Google Calendar event ${e.id}: ${firstName} ${lastName}`);
       } catch (err) {
-        console.warn(`Failed to auto-create patient for Acuity appt ${a.id}:`, (err as Error).message);
+        console.warn(`Failed to auto-create patient for event ${e.id}:`, (err as Error).message);
       }
     }
 
-    const mapped = allAcuity.map((a) => {
-      const durationMin = parseInt(a.duration, 10) || 30;
-      const isCompleted = completedIds.has(String(a.id));
-      const status = a.canceled ? 'cancelled' : a.noShow ? 'no_show' : isCompleted ? 'completed' : 'scheduled';
-      const normPhone = a.phone ? normalizePhone(a.phone) : '';
+    // ── Map events to appointment response ──
+    const mapped = events.map((e) => {
+      const { firstName, lastName, type } = parseEventSummary(e.summary || '');
+      const { phone, email, notes } = parseDescription(e.description || '');
+      const startTime = e.start?.dateTime || e.start?.date || '';
+      const endTime = e.end?.dateTime || e.end?.date || '';
+      const durationMs = startTime && endTime
+        ? new Date(endTime).getTime() - new Date(startTime).getTime()
+        : 0;
+      const durationMin = Math.round(durationMs / 60000) || 30;
+
+      const isCancelled = e.status === 'cancelled';
+      const isNoShow = noshowIds.has(e.id);
+      const isCompleted = completedIds.has(e.id);
+      const status = isCancelled
+        ? 'cancelled'
+        : isNoShow
+          ? 'no_show'
+          : isCompleted
+            ? 'completed'
+            : 'scheduled';
+
+      const normPhone = phone ? normalizePhone(phone) : '';
       const matchedPatient = normPhone ? phoneToPatient.get(normPhone) : undefined;
 
+      // Fallback to attendee data if summary parsing was sparse
+      const attendee = e.attendees?.[0];
+      const patientName = [firstName, lastName].filter(Boolean).join(' ')
+        || attendee?.displayName
+        || 'Unknown';
+
       return {
-        id: String(a.id),
-        patientName: `${a.firstName} ${a.lastName}`,
-        patientPhone: a.phone || '',
-        patientEmail: a.email || '',
+        id: e.id,
+        patientName,
+        patientPhone: phone || '',
+        patientEmail: email || attendee?.email || '',
         patientId: matchedPatient?.id || null,
-        type: shortTypeName(a.type),
-        startTime: a.datetime,
-        endTime: computeEndTime(a.datetime, durationMin),
+        type,
+        startTime,
+        endTime,
         duration: durationMin,
         status,
-        notes: a.notes || '',
-        calendar: a.calendar,
-        location: a.location || '',
-        acuityTypeId: a.appointmentTypeID,
-        createdAt: a.datetimeCreated,
+        notes: notes || '',
+        calendar: 'Google Calendar',
+        location: '',
+        createdAt: e.created || '',
       };
     });
 
@@ -268,7 +325,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       count: mapped.length,
     });
   } catch (err) {
-    console.error('List Acuity appointments error:', (err as Error).message);
+    console.error('List appointments error:', (err as Error).message);
     return serverError('Failed to retrieve appointments');
   }
 };

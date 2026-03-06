@@ -2,7 +2,7 @@
  * PUT /appointments/{id}/complete
  *
  * Marks an appointment as completed by storing a record in DynamoDB.
- * Acuity doesn't have a "completed" status, so we track it locally.
+ * Google Calendar doesn't have a "completed" status, so we track it locally.
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
@@ -15,7 +15,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const caller = getCallerIdentity(event);
     const appointmentId = event.pathParameters?.id;
     if (!appointmentId) return badRequest('Missing appointment ID');
-    if (!/^\d+$/.test(appointmentId)) return badRequest('Invalid appointment ID');
+    if (!/^[\w-]+$/.test(appointmentId)) return badRequest('Invalid appointment ID');
 
     const now = new Date();
 

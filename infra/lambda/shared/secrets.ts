@@ -22,8 +22,10 @@ export interface AppSecrets {
   ZOOM_USER_EMAIL: string;
   ZOOM_AUTO_RECEPTIONIST_IDS: string;
   ZOOM_FAX_EXTENSION_ID: string;
-  ACUITY_USER_ID: string;
-  ACUITY_API_KEY: string;
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
+  GOOGLE_REFRESH_TOKEN?: string;
+  GOOGLE_CALENDAR_ID?: string;
   SLACK_WEBHOOK_URL?: string;
 }
 
@@ -53,7 +55,7 @@ export async function getSecrets(): Promise<AppSecrets> {
   const required: (keyof AppSecrets)[] = [
     'STRIPE_SECRET_KEY', 'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID',
     'ZOOM_CLIENT_SECRET', 'ZOOM_USER_EMAIL', 'ZOOM_AUTO_RECEPTIONIST_IDS',
-    'ZOOM_FAX_EXTENSION_ID', 'ACUITY_USER_ID', 'ACUITY_API_KEY',
+    'ZOOM_FAX_EXTENSION_ID',
   ];
   const missing = required.filter((k) => !parsed[k]);
   if (missing.length > 0) {

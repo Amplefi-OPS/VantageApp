@@ -210,7 +210,6 @@ export interface Appointment {
   notes: string
   calendar: string
   location: string
-  acuityTypeId: number
   createdAt: string
 }
 

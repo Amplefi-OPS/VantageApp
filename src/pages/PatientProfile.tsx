@@ -478,7 +478,7 @@ export default function PatientProfile() {
               <EmptyState
                 icon={<Calendar size={48} />}
                 title="No appointments"
-                description="No appointments found for this patient in Acuity Scheduling."
+                description="No appointments found for this patient."
               />
             ) : (
               <div className="space-y-3">
@@ -1003,7 +1003,7 @@ export default function PatientProfile() {
         onClose={() => setCancellingApptId(null)}
         onConfirm={() => cancellingApptId && cancelMutation.mutate(cancellingApptId)}
         title="Cancel Appointment?"
-        message="This will cancel the appointment in Acuity Scheduling. This action cannot be undone."
+        message="This will cancel the appointment in Google Calendar. This action cannot be undone."
         confirmLabel="Cancel Appointment"
         danger
         loading={cancelMutation.isPending}
@@ -1014,7 +1014,7 @@ export default function PatientProfile() {
         onClose={() => setNoShowAppt(null)}
         onConfirm={() => noShowAppt && noShowMutation.mutate(noShowAppt)}
         title="Mark as No-Show?"
-        message="This will mark the appointment as a no-show in Acuity and create a to-do to charge the $30 no-show fee."
+        message="This will mark the appointment as a no-show and create a to-do to charge the $30 no-show fee."
         confirmLabel="Mark No-Show"
         danger
         loading={noShowMutation.isPending}

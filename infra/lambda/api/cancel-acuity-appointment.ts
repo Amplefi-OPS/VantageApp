@@ -1,41 +1,45 @@
 /**
  * PUT /appointments/{id}/cancel
  *
- * Cancels an appointment in Acuity Scheduling.
+ * Cancels an appointment in Google Calendar by setting status to 'cancelled'.
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { getCallerIdentity } from '../shared/auth';
 import { success, badRequest, serverError } from '../shared/response';
-import { getSecrets } from '../shared/secrets';
+import { getGoogleAccessToken, getCalendarId } from '../shared/google';
 
-const ACUITY_BASE = 'https://acuityscheduling.com/api/v1';
-
-async function acuityPut(path: string): Promise<unknown> {
-  const secrets = await getSecrets();
-  const auth = Buffer.from(`${secrets.ACUITY_USER_ID}:${secrets.ACUITY_API_KEY}`).toString('base64');
-  const res = await fetch(`${ACUITY_BASE}${path}`, {
-    method: 'PUT',
-    headers: { Authorization: `Basic ${auth}` },
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Acuity API error (${res.status}): ${text}`);
-  }
-  return res.json();
-}
+const GCAL_BASE = 'https://www.googleapis.com/calendar/v3';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     getCallerIdentity(event);
     const appointmentId = event.pathParameters?.id;
     if (!appointmentId) return badRequest('Missing appointment ID');
-    if (!/^\d+$/.test(appointmentId)) return badRequest('Invalid appointment ID');
 
-    await acuityPut(`/appointments/${appointmentId}/cancel`);
+    const token = await getGoogleAccessToken();
+    const calendarId = await getCalendarId();
+
+    const res = await fetch(
+      `${GCAL_BASE}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(appointmentId)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'cancelled' }),
+      },
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Google Calendar API error (${res.status}): ${text}`);
+    }
+
     return success({ cancelled: true, appointmentId });
   } catch (err) {
-    console.error('Cancel Acuity appointment error:', (err as Error).message);
+    console.error('Cancel appointment error:', (err as Error).message);
     return serverError('Failed to cancel appointment');
   }
 };
