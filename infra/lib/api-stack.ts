@@ -152,6 +152,7 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadData(getDictationFn);
     props.transcriptBucket.grantRead(getDictationFn);
+    props.audioBucket.grantRead(getDictationFn);
     props.kmsKey.grantDecrypt(getDictationFn);
 
     // ── Lambda: Create Patient ──

@@ -926,10 +926,10 @@ export default function PatientProfile() {
               </div>
             )}
 
-            {/* Regular notes */}
-            {notes && notes.length > 0 && (
+            {/* Regular notes (exclude auto-created dictation notes — those are shown in dictation cards above) */}
+            {notes && notes.filter((n) => !n.title.startsWith('Dictation —')).length > 0 && (
               <div className="space-y-3">
-                {notes.map((note) => (
+                {notes.filter((n) => !n.title.startsWith('Dictation —')).map((note) => (
                   <Card key={note.id}>
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-charcoal dark:text-white">{note.title}</h3>
@@ -944,7 +944,7 @@ export default function PatientProfile() {
             )}
 
             {/* Empty state */}
-            {(!notes || notes.length === 0) && (!dictations || dictations.length === 0) && (
+            {(!notes || notes.filter((n) => !n.title.startsWith('Dictation —')).length === 0) && (!dictations || dictations.length === 0) && (
               <EmptyState
                 icon={<Mic size={48} />}
                 title="No dictations yet"
