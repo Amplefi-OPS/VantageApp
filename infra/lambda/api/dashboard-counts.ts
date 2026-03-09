@@ -9,40 +9,35 @@
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
-import { getCallerIdentity } from '../shared/auth';
 import { queryItems } from '../shared/dynamo';
-import { success, serverError } from '../shared/response';
+import { success, serverError, setRequestOrigin } from '../shared/response';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    const caller = getCallerIdentity(event);
-    const providerId = caller.providerId;
+    setRequestOrigin(event.headers?.origin || event.headers?.Origin);
 
-    // Run all three queries in parallel for faster response
+    // Run all three queries in parallel — shared across all providers via GSI2
     const [patients, tasks, voicemails] = await Promise.all([
       queryItems({
-        IndexName: 'GSI1',
-        KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+        IndexName: 'GSI2',
+        KeyConditionExpression: 'GSI2PK = :pk',
         ExpressionAttributeValues: {
-          ':pk': `PROVIDER#${providerId}`,
-          ':sk': 'PATIENT#',
+          ':pk': 'PATIENT',
         },
         ProjectionExpression: 'PK',
       }),
       queryItems({
-        IndexName: 'GSI1',
-        KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+        IndexName: 'GSI2',
+        KeyConditionExpression: 'GSI2PK = :pk',
         ExpressionAttributeValues: {
-          ':pk': `PROVIDER#${providerId}`,
-          ':sk': 'TASKSTATUS#',
+          ':pk': 'TASK',
         },
       }),
       queryItems({
-        IndexName: 'GSI1',
-        KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+        IndexName: 'GSI2',
+        KeyConditionExpression: 'GSI2PK = :pk',
         ExpressionAttributeValues: {
-          ':pk': `PROVIDER#${providerId}`,
-          ':sk': 'VOICEMAIL#',
+          ':pk': 'VOICEMAIL',
         },
       }),
     ]);
