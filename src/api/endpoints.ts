@@ -118,6 +118,10 @@ function mapTaskToTodo(t: TaskApiItem): Todo {
 
 export async function listTodos(): Promise<Todo[]> {
   const res = await apiGet<{ tasks: TaskApiItem[]; count: number }>('/tasks')
+  if (!res?.tasks || !Array.isArray(res.tasks)) {
+    console.error('listTodos: unexpected response shape', res)
+    return []
+  }
   return res.tasks.map(mapTaskToTodo)
 }
 

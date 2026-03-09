@@ -522,6 +522,65 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       }
     }
 
+    // ── Backfill: create tasks for voicemails that have records but no tasks ──
+    const existingTasks = await queryItems({
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+      ExpressionAttributeValues: {
+        ':pk': `PROVIDER#${providerId}`,
+        ':sk': 'TASK#',
+      },
+      ProjectionExpression: 'voicemailId',
+    });
+    const taskVmIds = new Set(existingTasks.map((t) => t.voicemailId as string).filter(Boolean));
+
+    for (const vm of uniqueVoicemails) {
+      if (taskVmIds.has(vm.id)) continue; // task already exists
+      const attachment = attachMap.get(vm.id);
+      if (!attachment) continue; // no voicemail record yet (shouldn't happen after loop above)
+
+      const category = attachment.category || resolveCategory(vm.callee_name || '', vm.callee_number || '');
+      const todoType = CATEGORY_TO_TODO_TYPE[category] || 'CallBack';
+      const callerPhone = normalizePhone(vm.caller_number || '');
+      const matchedPatient = attachment.patientId
+        ? patientItems.find((p) => p.patientId === attachment.patientId)
+        : callerPhone ? phoneToPatient.get(callerPhone) : undefined;
+
+      const patientLabel = matchedPatient
+        ? `${matchedPatient.firstName || ''} ${matchedPatient.lastName || ''}`.trim() || vm.caller_name || vm.caller_number
+        : 'New Patient';
+      const title = `${patientLabel} — ${category}`;
+      const taskId = `task-${randomUUID().slice(0, 12)}`;
+
+      try {
+        await putItem({
+          PK: `PROVIDER#${providerId}`,
+          SK: `TASK#${taskId}`,
+          taskId,
+          providerId,
+          patientId: (matchedPatient as Record<string, unknown>)?.patientId || attachment.patientId || null,
+          voicemailId: vm.id,
+          type: todoType,
+          title,
+          status: 'Open',
+          priority: 'Med',
+          dueDate: null,
+          assignedTo: null,
+          notes: `Auto-created from voicemail. Caller: ${vm.caller_name || vm.caller_number || 'Unknown'}. Duration: ${vm.duration}s.`,
+          dictationId: null,
+          createdAt: now,
+          updatedAt: now,
+          GSI1PK: `PROVIDER#${providerId}`,
+          GSI1SK: `TASKSTATUS#Open#${now}`,
+          GSI2PK: 'TASK',
+          GSI2SK: `${now}#${taskId}`,
+          entityType: 'Task',
+        });
+        console.log(`Backfill: created task ${taskId} for existing voicemail ${vm.id}`);
+      } catch (err) {
+        console.warn(`Backfill: failed to create task for ${vm.id}:`, (err as Error).message);
+      }
+    }
+
     // ── Cache audio in S3 and generate presigned URLs ──
     const audioUrlPromises = uniqueVoicemails.map((vm) =>
       getAudioUrl(vm.id, vm.download_url, providerId),

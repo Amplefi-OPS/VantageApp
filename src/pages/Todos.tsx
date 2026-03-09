@@ -61,10 +61,15 @@ export default function Todos() {
   const [confirmDoneId, setConfirmDoneId] = useState<string | null>(null)
   const settings = getSettings()
 
-  const { data: todos, isLoading, isError } = useQuery({
+  const { data: todos, isLoading, isError, error } = useQuery({
     queryKey: ['todos'],
     queryFn: listTodos,
+    staleTime: 0,
   })
+
+  // Debug: log to console if query fails or returns unexpected data
+  if (isError) console.error('[Todos] Query error:', error)
+  if (todos) console.log('[Todos] Loaded', todos.length, 'todos')
 
   const { data: patients } = useQuery({
     queryKey: ['patients'],
