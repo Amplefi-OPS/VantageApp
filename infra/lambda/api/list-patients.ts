@@ -6,7 +6,6 @@
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
-import { getCallerIdentity } from '../shared/auth';
 import { queryItems } from '../shared/dynamo';
 import { success, serverError } from '../shared/response';
 
@@ -40,15 +39,12 @@ function mapPatient(item: Record<string, unknown>) {
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    const caller = getCallerIdentity(event);
-
-    // Query patients created by this provider via GSI1
+    // Query all patients across all providers via GSI2
     const items = await queryItems({
-      IndexName: 'GSI1',
-      KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+      IndexName: 'GSI2',
+      KeyConditionExpression: 'GSI2PK = :pk',
       ExpressionAttributeValues: {
-        ':pk': `PROVIDER#${caller.providerId}`,
-        ':sk': 'PATIENT#',
+        ':pk': 'PATIENT',
       },
     });
 

@@ -56,8 +56,8 @@ export default function LoginPage() {
       setError('Passwords do not match')
       return
     }
-    if (newPwd.length < 12) {
-      setError('Password must be at least 12 characters')
+    if (newPwd.length < 8) {
+      setError('Password must be at least 8 characters')
       return
     }
     const result = await setNewPassword(newPwd)
@@ -82,8 +82,8 @@ export default function LoginPage() {
       setError('Passwords do not match')
       return
     }
-    if (suPassword.length < 12) {
-      setError('Password must be at least 12 characters')
+    if (suPassword.length < 8) {
+      setError('Password must be at least 8 characters')
       return
     }
     const result = await signUp(suEmail, suPassword, suFirstName, suLastName)
@@ -156,7 +156,7 @@ export default function LoginPage() {
                   type="password"
                   value={newPwd}
                   onChange={(e) => setNewPwd(e.target.value)}
-                  placeholder="At least 12 characters"
+                  placeholder="At least 8 characters"
                   required
                   autoComplete="new-password"
                 />
@@ -175,7 +175,7 @@ export default function LoginPage() {
                 />
               </div>
               <p className="text-xs text-warm-gray">
-                Must include: 12+ characters, uppercase, lowercase, number, and symbol.
+                Must include: 8+ characters, uppercase, lowercase, number, and symbol.
               </p>
               {error && (
                 <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
@@ -308,7 +308,7 @@ export default function LoginPage() {
                   type="password"
                   value={suPassword}
                   onChange={(e) => setSuPassword(e.target.value)}
-                  placeholder="At least 12 characters"
+                  placeholder="At least 8 characters"
                   required
                   autoComplete="new-password"
                 />
@@ -329,7 +329,7 @@ export default function LoginPage() {
               <p className="text-xs text-warm-gray">
                 Only @vantagerefinery.com and @amplefi.com emails.
                 <br />
-                Password: 12+ characters, uppercase, lowercase, number, and symbol.
+                Password: 8+ characters, uppercase, lowercase, number, and symbol.
               </p>
               {error && (
                 <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>

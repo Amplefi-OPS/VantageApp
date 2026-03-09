@@ -78,7 +78,7 @@ export class AuthStack extends cdk.Stack {
         otp: true, // CDK requires at least one; we override to EMAIL_OTP below
       },
       passwordPolicy: {
-        minLength: 12,
+        minLength: 8,
         requireLowercase: true,
         requireUppercase: true,
         requireDigits: true,

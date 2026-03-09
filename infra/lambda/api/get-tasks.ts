@@ -35,54 +35,36 @@
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
-import { getCallerIdentity, canAccessProvider } from '../shared/auth';
 import { queryItems } from '../shared/dynamo';
-import { success, badRequest, forbidden, serverError } from '../shared/response';
+import { success, serverError } from '../shared/response';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    const caller = getCallerIdentity(event);
     const params = event.queryStringParameters || {};
-
-    const providerId = params.provider_id || caller.providerId;
-
-    if (!canAccessProvider(caller, providerId)) {
-      return forbidden('Cannot access tasks for another provider');
-    }
 
     const status = params.status;
     const type = params.type;
     const dueBefore = params.due_before;
-    const limit = Math.min(parseInt(params.limit || '50', 10), 200);
+    const limit = Math.min(parseInt(params.limit || '200', 10), 500);
 
-    // Query using GSI1 if filtering by status, otherwise use main table
-    let items;
+    // Query all tasks across all providers via GSI2
+    const items = await queryItems({
+      IndexName: 'GSI2',
+      KeyConditionExpression: 'GSI2PK = :pk',
+      ExpressionAttributeValues: {
+        ':pk': 'TASK',
+      },
+      Limit: limit,
+    });
 
+    // Apply status filter client-side
+    let filteredItems = items;
     if (status) {
-      // GSI1PK = PROVIDER#{id}, GSI1SK begins_with TASKSTATUS#{status}
-      items = await queryItems({
-        IndexName: 'GSI1',
-        KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
-        ExpressionAttributeValues: {
-          ':pk': `PROVIDER#${providerId}`,
-          ':sk': `TASKSTATUS#${status}#`,
-        },
-        Limit: limit,
-      });
-    } else {
-      // All tasks for provider: PK = PROVIDER#{id}, SK begins_with TASK#
-      items = await queryItems({
-        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
-        ExpressionAttributeValues: {
-          ':pk': `PROVIDER#${providerId}`,
-          ':sk': 'TASK#',
-        },
-        Limit: limit,
-      });
+      filteredItems = items.filter((i) => i.status === status);
     }
 
     // Apply client-side filters for type and due_before
-    let tasks = items.map((item) => ({
+    let tasks = filteredItems.map((item) => ({
       task_id: item.taskId,
       provider_id: item.providerId,
       patient_id: item.patientId,

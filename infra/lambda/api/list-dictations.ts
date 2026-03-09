@@ -9,7 +9,6 @@
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { getCallerIdentity } from '../shared/auth';
 import { queryItems } from '../shared/dynamo';
 import { success, serverError } from '../shared/response';
 
@@ -19,17 +18,15 @@ const PRESIGN_EXPIRY = 900; // 15 minutes
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    const caller = getCallerIdentity(event);
-    const providerId = caller.providerId;
     const params = event.queryStringParameters || {};
     const patientId = params.patient_id;
 
-    // Query all dictations for provider
+    // Query all dictations across all providers via GSI2
     const items = await queryItems({
-      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+      IndexName: 'GSI2',
+      KeyConditionExpression: 'GSI2PK = :pk',
       ExpressionAttributeValues: {
-        ':pk': `PROVIDER#${providerId}`,
-        ':sk': 'DICT#',
+        ':pk': 'DICTATION',
       },
     });
 

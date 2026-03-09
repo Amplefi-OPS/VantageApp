@@ -33,11 +33,8 @@ export function getCallerIdentity(event: APIGatewayProxyEvent): CallerIdentity {
 
 /**
  * Check if caller can access a given provider's data.
- * Admins can see all; providers can only see their own.
+ * All authenticated staff can access all data (shared clinic).
  */
-export function canAccessProvider(caller: CallerIdentity, targetProviderId: string): boolean {
-  if (caller.groups.includes('admins') || caller.role === 'admin') {
-    return true;
-  }
-  return caller.providerId === targetProviderId;
+export function canAccessProvider(_caller: CallerIdentity, _targetProviderId: string): boolean {
+  return true;
 }
