@@ -72,6 +72,7 @@ export class ApiStack extends cdk.Stack {
     });
     props.audioBucket.grantPut(presignFn);
     props.kmsKey.grantEncrypt(presignFn);
+    props.table.grantReadWriteData(presignFn);
 
     // ── Lambda: Get Tasks ──
     const getTasksFn = new lambdaNode.NodejsFunction(this, 'GetTasksFn', {
