@@ -92,22 +92,13 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const objectKey = `dictations/${provider_id}/${date}/${dictationId}.${ext}`;
 
     // Generate pre-signed PUT URL
+    // NOTE: Only include ContentType — omit Metadata and SSE headers so the
+    // browser can PUT with just Content-Type. S3 bucket default encryption
+    // handles KMS. All metadata is stored in DynamoDB instead.
     const command = new PutObjectCommand({
       Bucket: AUDIO_BUCKET,
       Key: objectKey,
-      ContentType: content_type,
-      ServerSideEncryption: 'aws:kms',
-      SSEKMSKeyId: KMS_KEY_ARN,
-      Metadata: {
-        'provider-id': provider_id,
-        'patient-id': patient_id || '',
-        'task-id': task_id || '',
-        'note-type': note_type,
-        'appointment-id': appointment_id || '',
-        'dictation-id': dictationId,
-        'idempotency-key': idempotency_key || randomUUID(),
-        'original-filename': filename,
-      },
+      ContentType: content_type as string,
     });
 
     const uploadUrl = await getSignedUrl(s3, command, {
