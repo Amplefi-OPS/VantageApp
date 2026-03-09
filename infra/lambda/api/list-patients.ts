@@ -7,7 +7,7 @@
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { queryItems } from '../shared/dynamo';
-import { success, serverError } from '../shared/response';
+import { success, serverError, setRequestOrigin } from '../shared/response';
 
 function mapPatient(item: Record<string, unknown>) {
   return {
@@ -39,6 +39,7 @@ function mapPatient(item: Record<string, unknown>) {
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
+    setRequestOrigin(event.headers?.origin || event.headers?.Origin);
     // Query all patients across all providers via GSI2
     const items = await queryItems({
       IndexName: 'GSI2',

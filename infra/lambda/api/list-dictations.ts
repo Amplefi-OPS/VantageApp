@@ -10,7 +10,7 @@ import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { queryItems } from '../shared/dynamo';
-import { success, serverError } from '../shared/response';
+import { success, serverError, setRequestOrigin } from '../shared/response';
 
 const s3 = new S3Client({});
 const AUDIO_BUCKET = process.env.AUDIO_BUCKET!;
@@ -18,6 +18,7 @@ const PRESIGN_EXPIRY = 900; // 15 minutes
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
+    setRequestOrigin(event.headers?.origin || event.headers?.Origin);
     const params = event.queryStringParameters || {};
     const patientId = params.patient_id;
 

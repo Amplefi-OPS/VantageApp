@@ -36,10 +36,11 @@
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { queryItems } from '../shared/dynamo';
-import { success, serverError } from '../shared/response';
+import { success, serverError, setRequestOrigin } from '../shared/response';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
+    setRequestOrigin(event.headers?.origin || event.headers?.Origin);
     const params = event.queryStringParameters || {};
 
     const status = params.status;

@@ -6,10 +6,11 @@
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { getItem } from '../shared/dynamo';
-import { success, notFound, serverError } from '../shared/response';
+import { success, notFound, serverError, setRequestOrigin } from '../shared/response';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
+    setRequestOrigin(event.headers?.origin || event.headers?.Origin);
     const patientId = event.pathParameters?.id;
     if (!patientId) {
       return notFound('Patient not found');
