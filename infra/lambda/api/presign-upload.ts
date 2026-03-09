@@ -48,6 +48,8 @@ const ACCEPTED_TYPES = new Set([
   'audio/x-wav',
   'audio/flac',      // .flac
   'audio/x-flac',
+  'audio/webm',      // .webm (MediaRecorder default on Chrome)
+  'audio/ogg',       // .ogg (MediaRecorder fallback)
 ]);
 
 export const handler: APIGatewayProxyHandler = async (event) => {

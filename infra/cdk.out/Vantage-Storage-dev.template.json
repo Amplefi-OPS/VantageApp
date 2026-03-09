@@ -120,10 +120,20 @@
      "Rules": [
       {
        "ExpirationInDays": 90,
-       "Id": "expire-raw-audio",
+       "Id": "expire-dictation-audio",
        "NoncurrentVersionExpiration": {
         "NoncurrentDays": 30
        },
+       "Prefix": "dictations/",
+       "Status": "Enabled"
+      },
+      {
+       "ExpirationInDays": 2555,
+       "Id": "expire-voicemail-audio",
+       "NoncurrentVersionExpiration": {
+        "NoncurrentDays": 90
+       },
+       "Prefix": "voicemails/",
        "Status": "Enabled"
       }
      ]

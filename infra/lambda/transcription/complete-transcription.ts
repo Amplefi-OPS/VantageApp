@@ -202,6 +202,33 @@ export const handler: Handler<CompleteInput> = async (input) => {
     }
   }
 
+  // ── Auto-create Note for the patient if linked ──
+  const patientId = dictation?.patientId;
+  if (patientId && transcriptText && transcriptText !== '[Error reading transcript]') {
+    try {
+      const noteId = `note-${randomUUID().slice(0, 12)}`;
+      const dictDate = new Date(dictation?.createdAt || now);
+      const noteTitle = `Dictation — ${dictDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at ${dictDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+
+      await putItem({
+        PK: `PATIENT#${patientId}`,
+        SK: `NOTE#${now}#${noteId}`,
+        noteId,
+        patientId,
+        title: noteTitle,
+        body: transcriptText,
+        createdAt: now,
+        createdBy: 'aws-transcribe',
+        GSI1PK: `PROVIDER#${providerId}`,
+        GSI1SK: `NOTE#${now}#${noteId}`,
+        entityType: 'Note',
+      });
+      console.log(`Auto-created note ${noteId} for patient ${patientId} from dictation ${dictationId}`);
+    } catch (err) {
+      console.warn('Failed to auto-create note from dictation:', (err as Error).message);
+    }
+  }
+
   await writeAuditLog({
     providerId,
     action: 'TRANSCRIPTION_COMPLETED',

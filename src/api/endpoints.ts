@@ -243,6 +243,43 @@ export async function getPatientTodos(patientId: string): Promise<Todo[]> {
   return apiGet<Todo[]>(`/patients/${patientId}/todos`)
 }
 
+// ── Dictations ────────────────────────────────────────
+
+export interface DictationRecord {
+  dictation_id: string
+  provider_id: string
+  patient_id: string | null
+  status: 'Uploading' | 'Transcribing' | 'DraftReady' | 'TranscriptionFailed'
+  note_type: string
+  transcript_text: string | null
+  confidence: number | null
+  audio_url: string | null
+  created_at: string
+  updated_at: string
+}
+
+export async function listDictations(patientId?: string): Promise<DictationRecord[]> {
+  const params = patientId ? `?patient_id=${patientId}` : ''
+  const res = await apiGet<{ dictations: DictationRecord[]; count: number }>(`/dictations${params}`)
+  return res.dictations || []
+}
+
+export async function presignDictationUpload(req: {
+  providerId: string
+  patientId?: string
+  filename: string
+  contentType: string
+}): Promise<{ upload_url: string; dictation_id: string; object_key: string; expires_in: number }> {
+  return apiPost('/uploads/presign', {
+    provider_id: req.providerId,
+    patient_id: req.patientId || null,
+    filename: req.filename,
+    content_type: req.contentType,
+    note_type: 'progress_note',
+    idempotency_key: crypto.randomUUID(),
+  })
+}
+
 // ── Notifications ──────────────────────────────────────
 
 /** Fire-and-forget login failure report for Slack alerting. */

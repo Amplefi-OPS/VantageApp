@@ -43,7 +43,9 @@ import {
   markNoShow,
   completeAppointment,
   createTodo,
+  listDictations,
 } from '../api/endpoints'
+import type { DictationRecord } from '../api/endpoints'
 import type { Appointment, SendFaxRequest } from '../api/types'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -252,6 +254,17 @@ export default function PatientProfile() {
     enabled: !!id && (tab === 'notes' || dictating),
   })
 
+  const { data: dictations } = useQuery({
+    queryKey: ['patient-dictations', id],
+    queryFn: () => listDictations(id!),
+    enabled: !!id && (tab === 'notes' || dictating),
+    refetchInterval: (query) => {
+      const data = query.state.data
+      const hasPending = data?.some((d) => d.status === 'Uploading' || d.status === 'Transcribing')
+      return hasPending ? 10000 : false
+    },
+  })
+
   const { data: appointments } = useQuery({
     queryKey: ['patient-appointments', patient?.phone],
     queryFn: () => listPatientAppointments(patient!.phone),
@@ -314,6 +327,7 @@ export default function PatientProfile() {
         onClose={() => {
           setDictating(false)
           refetchNotes()
+          queryClient.invalidateQueries({ queryKey: ['patient-dictations'] })
         }}
       />
     )
@@ -848,26 +862,94 @@ export default function PatientProfile() {
         {/* Notes Tab */}
         {tab === 'notes' && (
           <>
-            {!notes || notes.length === 0 ? (
-              <EmptyState
-                icon={<FileText size={48} />}
-                title="No notes yet"
-                description="Use the Dictate Note button in the top right to create appointment notes."
-              />
-            ) : (
+            {/* Pending dictations */}
+            {dictations && dictations.filter((d) => d.status === 'Uploading' || d.status === 'Transcribing').length > 0 && (
+              <div className="space-y-2 mb-4">
+                {dictations
+                  .filter((d) => d.status === 'Uploading' || d.status === 'Transcribing')
+                  .map((d) => (
+                    <Card key={d.dictation_id} className="border-l-4 border-l-yellow-400">
+                      <div className="flex items-center gap-3">
+                        <Loader2 size={18} className="text-yellow-500 animate-spin shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-charcoal dark:text-white">
+                            {d.status === 'Uploading' ? 'Uploading dictation...' : 'Transcribing dictation...'}
+                          </p>
+                          <p className="text-xs text-warm-gray dark:text-gray-400">
+                            {new Date(d.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+              </div>
+            )}
+
+            {/* Completed dictations with audio + transcript */}
+            {dictations && dictations.filter((d) => d.status === 'DraftReady' || d.status === 'TranscriptionFailed').length > 0 && (
+              <div className="space-y-3 mb-4">
+                {dictations
+                  .filter((d) => d.status === 'DraftReady' || d.status === 'TranscriptionFailed')
+                  .map((d) => (
+                    <Card key={d.dictation_id}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Mic size={16} className="text-slate-blue shrink-0" />
+                          <h3 className="font-semibold text-charcoal dark:text-white text-sm">
+                            Dictation — {new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(d.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                          </h3>
+                        </div>
+                        {d.confidence !== null && (
+                          <Badge variant="green">{(d.confidence * 100).toFixed(0)}%</Badge>
+                        )}
+                        {d.status === 'TranscriptionFailed' && (
+                          <Badge variant="red">Failed</Badge>
+                        )}
+                      </div>
+                      {d.audio_url && (
+                        <audio
+                          controls
+                          preload="none"
+                          className="w-full h-10 mb-2"
+                          src={d.audio_url}
+                        />
+                      )}
+                      {d.transcript_text ? (
+                        <pre className="text-sm text-charcoal dark:text-gray-200 whitespace-pre-wrap font-sans leading-relaxed">
+                          {d.transcript_text}
+                        </pre>
+                      ) : d.status === 'TranscriptionFailed' ? (
+                        <p className="text-sm text-red-500">Transcription failed. Audio is still available for playback above.</p>
+                      ) : null}
+                    </Card>
+                  ))}
+              </div>
+            )}
+
+            {/* Regular notes */}
+            {notes && notes.length > 0 && (
               <div className="space-y-3">
                 {notes.map((note) => (
                   <Card key={note.id}>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-charcoal">{note.title}</h3>
+                      <h3 className="font-semibold text-charcoal dark:text-white">{note.title}</h3>
                       <span className="text-xs text-warm-gray dark:text-gray-300">{formatDate(note.createdAt)}</span>
                     </div>
-                    <pre className="text-sm text-charcoal whitespace-pre-wrap font-sans leading-relaxed">
+                    <pre className="text-sm text-charcoal dark:text-gray-200 whitespace-pre-wrap font-sans leading-relaxed">
                       {note.body}
                     </pre>
                   </Card>
                 ))}
               </div>
+            )}
+
+            {/* Empty state */}
+            {(!notes || notes.length === 0) && (!dictations || dictations.length === 0) && (
+              <EmptyState
+                icon={<Mic size={48} />}
+                title="No dictations yet"
+                description="Use the Dictate Note button to record and transcribe appointment notes."
+              />
             )}
           </>
         )}

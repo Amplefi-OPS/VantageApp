@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/698c7e13e47f5b8014ea4fe39b25470251f6eca304a7c8a4fada3ee7b82d9187.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/a57dd1f02788cde946a8cfe142adf5a4cf8e7cc5de2088d7868577c73898b7d7.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -230,7 +230,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/6c5cc11e448a3d39b67d4f5e82c8e777ae6ce5ecc133555ed0053b25208bb1b0.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/4564e2fdab8350530c71f4fc16686a0236f802e1282fa39bc28e34da892b8437.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -410,7 +410,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/8531db7027c11ce4b66675b5400a64923dbdd8e60dfb346c434e7902d73d4ac9.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/ee542cf0b46171d1ce3d67ba240d1a0a92559c881e32bf1830774106c5fe21ec.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -2370,6 +2370,217 @@
       },
       "displayName": "Vantage-Pipeline-dev"
     },
+    "Vantage-VmPipeline-dev.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "Vantage-VmPipeline-dev.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "Vantage-VmPipeline-dev": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://841722554807/us-east-1",
+      "properties": {
+        "templateFile": "Vantage-VmPipeline-dev.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/07948153eefd6c2d8ad2bd34a1ea3b11e2c87abdc0df86a50475710efe7f4c53.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "Vantage-VmPipeline-dev.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-lookup-role-841722554807-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "Vantage-Storage-dev",
+        "Vantage-VmPipeline-dev.assets"
+      ],
+      "metadata": {
+        "/Vantage-VmPipeline-dev/VmStartTranscriptionFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmStartTranscriptionFnServiceRole08BEF25C"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmStartTranscriptionFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmStartTranscriptionFnServiceRoleDefaultPolicy0FA24344"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmStartTranscriptionFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmStartTranscriptionFnA584FE0C"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmStartTranscriptionFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmStartTranscriptionFnLogRetention39C48D68"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmCheckTranscriptionFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmCheckTranscriptionFnServiceRoleBE94AD7E"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmCheckTranscriptionFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmCheckTranscriptionFnServiceRoleDefaultPolicy372492E9"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmCheckTranscriptionFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmCheckTranscriptionFn558A4473"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmCheckTranscriptionFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmCheckTranscriptionFnLogRetention40540684"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmCompleteTranscriptionFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmCompleteTranscriptionFnServiceRole5814F421"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmCompleteTranscriptionFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmCompleteTranscriptionFnServiceRoleDefaultPolicy4E63DE28"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmCompleteTranscriptionFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmCompleteTranscriptionFn6D3F1F03"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmCompleteTranscriptionFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmCompleteTranscriptionFnLogRetention067C48B4"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmStateMachineLogs/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmStateMachineLogs4791E5E4"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmTranscriptionStateMachine/Role/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmTranscriptionStateMachineRoleDEFD1992"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmTranscriptionStateMachine/Role/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmTranscriptionStateMachineRoleDefaultPolicy00432985"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmTranscriptionStateMachine/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmTranscriptionStateMachineDC0FDCE5"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmS3TriggerFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmS3TriggerFnServiceRoleE778ED37"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmS3TriggerFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmS3TriggerFnServiceRoleDefaultPolicyAE15061F"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmS3TriggerFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmS3TriggerFn557B868F"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmS3TriggerFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmS3TriggerFnLogRetention105157D9"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VoicemailUploadRule/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VoicemailUploadRule6EECBA05"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VoicemailUploadRule/AllowEventRuleVantageVmPipelinedevVmS3TriggerFn0B974D81": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VoicemailUploadRuleAllowEventRuleVantageVmPipelinedevVmS3TriggerFn0B974D815824007B"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/VmStateMachineArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VmStateMachineArn"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/Vantage-VmPipeline-dev/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "Vantage-VmPipeline-dev"
+    },
     "Vantage-Billing-dev.assets": {
       "type": "cdk:asset-manifest",
       "properties": {
@@ -2387,7 +2598,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/b4a9c0784fd56e6dd5f633270c3cd15cb988bd8e03fa50b8fae3c0a51564f3e7.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/112c00550687db012cfe6a8f2b13b15e56ed9fec8774accd2131fe913063b0e6.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [

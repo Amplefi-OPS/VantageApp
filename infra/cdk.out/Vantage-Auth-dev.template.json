@@ -247,7 +247,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "07deb1cafa6c29e68ea58b4b9bfa5759e9480f69513d554857a88e6b563256c6.zip"
+     "S3Key": "f3baf80bca044fc6144a13148c241b1aae6392fa91eed8371d524ef067912ede.zip"
     },
     "Environment": {
      "Variables": {
@@ -273,7 +273,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Auth-dev/PostAuthFn/Resource",
-    "aws:asset:path": "asset.07deb1cafa6c29e68ea58b4b9bfa5759e9480f69513d554857a88e6b563256c6",
+    "aws:asset:path": "asset.f3baf80bca044fc6144a13148c241b1aae6392fa91eed8371d524ef067912ede",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
