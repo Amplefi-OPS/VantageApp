@@ -14,9 +14,9 @@ import {
 } from './cognito'
 import { queryClient } from '../lib/queryClient'
 
-// HIPAA: Inactivity timeout (15 minutes)
-const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000
-const INACTIVITY_WARNING_MS = 13 * 60 * 1000
+// HIPAA: Inactivity timeout (5 minutes)
+const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000
+const INACTIVITY_WARNING_MS = 3 * 60 * 1000
 
 interface AuthContextValue {
   user: AuthUser | null
@@ -64,22 +64,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Inactivity tracking refs
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const warningVisibleRef = useRef(false)
 
   // ── Inactivity Timeout (HIPAA requirement) ──
   const resetInactivityTimer = useCallback(() => {
     if (!user) return
 
-    setShowInactivityWarning(false)
+    // Don't reset while warning is showing — user must click Stay/Sign Out
+    if (warningVisibleRef.current) return
 
     if (warningTimerRef.current) clearTimeout(warningTimerRef.current)
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current)
 
-    // Show warning at 13 minutes
+    // Show warning at 3 minutes
     warningTimerRef.current = setTimeout(() => {
+      warningVisibleRef.current = true
       setShowInactivityWarning(true)
     }, INACTIVITY_WARNING_MS)
 
-    // Auto-logout at 15 minutes
+    // Auto-logout at 5 minutes
     inactivityTimerRef.current = setTimeout(() => {
       performLogout()
     }, INACTIVITY_TIMEOUT_MS)
@@ -126,6 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const performLogout = useCallback(async () => {
+    warningVisibleRef.current = false
+    if (warningTimerRef.current) clearTimeout(warningTimerRef.current)
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current)
     await cognitoSignOut()
     queryClient.clear()
     setUser(null)
@@ -267,6 +273,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const extendSession = useCallback(() => {
+    warningVisibleRef.current = false
+    setShowInactivityWarning(false)
     resetInactivityTimer()
   }, [resetInactivityTimer])
 
