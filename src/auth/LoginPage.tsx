@@ -78,6 +78,11 @@ export default function LoginPage() {
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    const emailDomain = suEmail.split('@')[1]?.toLowerCase()
+    if (!emailDomain || !['vantagerefinery.com', 'amplefi.com'].includes(emailDomain)) {
+      setError('Only @vantagerefinery.com and @amplefi.com email addresses are allowed.')
+      return
+    }
     if (suPassword !== suConfirmPwd) {
       setError('Passwords do not match')
       return
@@ -190,10 +195,10 @@ export default function LoginPage() {
               <div className="text-center mb-2">
                 <Shield className="w-8 h-8 text-slate-blue mx-auto mb-2" />
                 <h2 className="text-lg font-semibold text-charcoal">
-                  Verification Required
+                  MFA Verification
                 </h2>
                 <p className="text-sm text-warm-gray">
-                  Enter the verification code sent to your email
+                  Enter the 6-digit code sent to your email from noreply@vantagerefinery.com
                 </p>
               </div>
               <div>
@@ -226,7 +231,7 @@ export default function LoginPage() {
                   Verify Your Email
                 </h2>
                 <p className="text-sm text-warm-gray">
-                  Enter the verification code sent to your email
+                  Enter the confirmation code sent to your email from noreply@vantagerefinery.com
                 </p>
               </div>
               <div>

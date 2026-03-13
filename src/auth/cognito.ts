@@ -90,20 +90,25 @@ async function cognitoFetch(target: string, body: Record<string, unknown>): Prom
 const COGNITO_ERROR_MAP: Record<string, string> = {
   NotAuthorizedException: 'Incorrect email or password.',
   UserNotFoundException: 'Incorrect email or password.',
-  UserNotConfirmedException: 'Please verify your email first.',
-  CodeMismatchException: 'Invalid verification code. Please try again.',
+  UserNotConfirmedException: 'Please verify your email before signing in.',
+  CodeMismatchException: 'Invalid verification code. Please check and try again.',
   ExpiredCodeException: 'Verification code has expired. Please request a new one.',
-  LimitExceededException: 'Too many attempts. Please wait a few minutes.',
-  InvalidPasswordException: 'Password does not meet requirements.',
-  UsernameExistsException: 'An account with this email already exists.',
-  InvalidParameterException: 'Invalid input. Please check your entries.',
-  TooManyRequestsException: 'Too many requests. Please wait a moment.',
+  LimitExceededException: 'Too many attempts. Please wait a few minutes before trying again.',
+  InvalidPasswordException: 'Password must be at least 8 characters and include uppercase, lowercase, a number, and a symbol.',
+  UsernameExistsException: 'An account with this email already exists. Please sign in instead.',
+  InvalidParameterException: 'Invalid input. Please check your entries and try again.',
+  TooManyRequestsException: 'Too many requests. Please wait a moment and try again.',
+  UserLambdaValidationException: 'Account creation is restricted to @vantagerefinery.com and @amplefi.com emails.',
+  PasswordResetRequiredException: 'Password reset required. Please contact your administrator.',
+  AliasExistsException: 'An account with this email already exists.',
+  EnableSoftwareTokenMFAException: 'MFA setup failed. Please contact your administrator.',
+  CodeDeliveryFailureException: 'Unable to send verification code. Please try again later.',
 };
 
 function sanitizeError(data: any, fallback: string): string {
   const code = data?.__type?.split('#').pop() || '';
   if (COGNITO_ERROR_MAP[code]) return COGNITO_ERROR_MAP[code];
-  // Never expose raw Cognito messages
+  // For unmapped errors, provide the fallback — never expose raw Cognito messages
   return fallback;
 }
 
@@ -264,9 +269,9 @@ export async function signIn(email: string, password: string): Promise<{
       return { success: true };
     }
 
-    return { success: false, error: sanitizeError(data, 'Authentication failed') };
+    return { success: false, error: sanitizeError(data, 'Sign-in failed. Please check your email and password.') };
   } catch {
-    return { success: false, error: 'Unable to connect. Please try again.' };
+    return { success: false, error: 'Unable to connect to the server. Please check your connection and try again.' };
   }
 }
 
@@ -312,9 +317,9 @@ export async function completeNewPasswordChallenge(
       return { success: true };
     }
 
-    return { success: false, error: sanitizeError(data, 'Failed to set new password') };
+    return { success: false, error: sanitizeError(data, 'Failed to set new password. Please ensure it meets the requirements.') };
   } catch {
-    return { success: false, error: 'Unable to connect. Please try again.' };
+    return { success: false, error: 'Unable to connect to the server. Please check your connection and try again.' };
   }
 }
 
@@ -362,9 +367,9 @@ export async function completeMfaChallenge(
       return { success: true };
     }
 
-    return { success: false, error: sanitizeError(data, 'Verification failed') };
+    return { success: false, error: sanitizeError(data, 'Invalid or expired verification code. Please try again.') };
   } catch {
-    return { success: false, error: 'Unable to connect. Please try again.' };
+    return { success: false, error: 'Unable to connect to the server. Please check your connection and try again.' };
   }
 }
 
@@ -396,9 +401,9 @@ export async function signUp(
       return { success: true };
     }
 
-    return { success: false, error: sanitizeError(data, 'Sign up failed') };
+    return { success: false, error: sanitizeError(data, 'Registration failed. Please check your details and try again.') };
   } catch {
-    return { success: false, error: 'Unable to connect. Please try again.' };
+    return { success: false, error: 'Unable to connect to the server. Please check your connection and try again.' };
   }
 }
 
@@ -433,9 +438,9 @@ export async function confirmSignUp(
       return { success: true };
     }
 
-    return { success: false, error: sanitizeError(data, 'Verification failed') };
+    return { success: false, error: sanitizeError(data, 'Email verification failed. Please check the code and try again.') };
   } catch {
-    return { success: false, error: 'Unable to connect. Please try again.' };
+    return { success: false, error: 'Unable to connect to the server. Please check your connection and try again.' };
   }
 }
 
@@ -471,9 +476,9 @@ export async function changePassword(
     }
 
     const data = await response.json();
-    return { success: false, error: sanitizeError(data, 'Failed to change password') };
+    return { success: false, error: sanitizeError(data, 'Failed to change password. Please check your current password and try again.') };
   } catch {
-    return { success: false, error: 'Unable to connect. Please try again.' };
+    return { success: false, error: 'Unable to connect to the server. Please check your connection and try again.' };
   }
 }
 
