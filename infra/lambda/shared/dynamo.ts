@@ -5,10 +5,12 @@ import {
   GetCommand,
   QueryCommand,
   UpdateCommand,
+  DeleteCommand,
   type PutCommandInput,
   type GetCommandInput,
   type QueryCommandInput,
   type UpdateCommandInput,
+  type DeleteCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 import { randomUUID } from 'crypto';
 
@@ -51,6 +53,14 @@ export async function updateItem(params: Omit<UpdateCommandInput, 'TableName'>) 
     new UpdateCommand({ TableName: TABLE_NAME, ...params }),
   );
   return result.Attributes;
+}
+
+export async function deleteItem(pk: string, sk: string) {
+  const params: DeleteCommandInput = {
+    TableName: TABLE_NAME,
+    Key: { PK: pk, SK: sk },
+  };
+  return ddb.send(new DeleteCommand(params));
 }
 
 /** Build an UpdateExpression from a partial object. Skips undefined values. */

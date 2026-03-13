@@ -9,9 +9,9 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { Tabs } from '../components/ui/Tabs'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useToast } from '../components/ui/Toast'
-import { Calendar, Clock, CreditCard, CheckCircle, DollarSign, UserPlus, UserCheck, UserX, XCircle, RefreshCw } from 'lucide-react'
+import { Calendar, Clock, CreditCard, CheckCircle, DollarSign, UserPlus, UserCheck, UserX, XCircle, RefreshCw, Plus, Edit3 } from 'lucide-react'
 import { Button } from '../components/ui/Button'
-import { listAppointments, cancelAppointment, markNoShow, completeAppointment, createTodo } from '../api/endpoints'
+import { listAppointments, cancelAppointment, markNoShow, completeAppointment, createTodo, rescheduleAppointment } from '../api/endpoints'
 import type { Appointment } from '../api/types'
 
 const statusVariants: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'> = {
@@ -60,6 +60,11 @@ export default function Appointments() {
   const [noShowAppt, setNoShowAppt] = useState<Appointment | null>(null)
   const [completingAppt, setCompletingAppt] = useState<Appointment | null>(null)
   const [changingStatusId, setChangingStatusId] = useState<string | null>(null)
+  const [rescheduleAppt, setRescheduleAppt] = useState<Appointment | null>(null)
+  const [rescheduleDate, setRescheduleDate] = useState('')
+  const [rescheduleTime, setRescheduleTime] = useState('')
+  const [rescheduleDuration, setRescheduleDuration] = useState(30)
+  const [rescheduling, setRescheduling] = useState(false)
 
   // Date ranges — defined before mutations so optimistic update closures work cleanly
   const rangeEnd = useMemo(() => daysFrom(today, 30), [today])
@@ -72,6 +77,35 @@ export default function Appointments() {
     queryClient.invalidateQueries({ queryKey: ['appointments-past'] })
     queryClient.invalidateQueries({ queryKey: ['todos'] })
     queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
+  }
+
+  const openReschedule = (appt: Appointment) => {
+    setRescheduleAppt(appt)
+    setRescheduleDate(appt.startTime.slice(0, 10))
+    const startDate = new Date(appt.startTime)
+    setRescheduleTime(`${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`)
+    setRescheduleDuration(appt.duration || 30)
+  }
+
+  const handleReschedule = async () => {
+    if (!rescheduleAppt || !rescheduleDate || !rescheduleTime) return
+    setRescheduling(true)
+    try {
+      const startTime = `${rescheduleDate}T${rescheduleTime}:00-05:00`
+      const endDate = new Date(`${rescheduleDate}T${rescheduleTime}:00`)
+      endDate.setMinutes(endDate.getMinutes() + rescheduleDuration)
+      const endHours = String(endDate.getHours()).padStart(2, '0')
+      const endMins = String(endDate.getMinutes()).padStart(2, '0')
+      const endTime = `${rescheduleDate}T${endHours}:${endMins}:00-05:00`
+      await rescheduleAppointment(rescheduleAppt.id, { startTime, endTime })
+      invalidateAll()
+      toast('success', 'Appointment rescheduled')
+      setRescheduleAppt(null)
+    } catch (err) {
+      toast('error', `Failed to reschedule: ${(err as Error).message}`)
+    } finally {
+      setRescheduling(false)
+    }
   }
 
   const cancelMutation = useMutation({
@@ -256,14 +290,22 @@ export default function Appointments() {
                   })}
           </p>
         </div>
-        {filter !== 'upcoming' && filter !== 'past' && (
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 border border-light-gray dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
-          />
-        )}
+        <div className="flex items-center gap-3">
+          {filter !== 'upcoming' && filter !== 'past' && (
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="px-3 py-2 border border-light-gray dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+            />
+          )}
+          <Button
+            icon={<Plus size={18} />}
+            onClick={() => navigate('/appointments/new')}
+          >
+            Schedule Appointment
+          </Button>
+        </div>
       </div>
 
       <div className="mb-4">
@@ -398,9 +440,17 @@ export default function Appointments() {
                           )}
                         </>
                       )}
-                      {/* Future (not today): Cancel + Change Status */}
+                      {/* Future (not today): Reschedule + Cancel + Change Status */}
                       {appt.status === 'scheduled' && !isPast && !isApptToday && (
                         <>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            icon={<Edit3 size={14} />}
+                            onClick={() => openReschedule(appt)}
+                          >
+                            Reschedule
+                          </Button>
                           <Button
                             size="sm"
                             variant="danger"
@@ -511,6 +561,68 @@ export default function Appointments() {
         confirmLabel="Complete"
         loading={completeMutation.isPending}
       />
+
+      {/* Reschedule Modal */}
+      {rescheduleAppt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h2 className="text-lg font-bold text-charcoal dark:text-white mb-1">Reschedule Appointment</h2>
+            <p className="text-sm text-warm-gray dark:text-gray-300 mb-4">
+              {rescheduleAppt.patientName} — {rescheduleAppt.type}
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-charcoal dark:text-gray-200 mb-1">New Date</label>
+                <input
+                  type="date"
+                  value={rescheduleDate}
+                  onChange={(e) => setRescheduleDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-light-gray dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal dark:text-gray-200 mb-1">New Time</label>
+                <input
+                  type="time"
+                  value={rescheduleTime}
+                  onChange={(e) => setRescheduleTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-light-gray dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal dark:text-gray-200 mb-1">Duration</label>
+                <div className="flex gap-2">
+                  {[15, 30, 45, 60].map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => setRescheduleDuration(d)}
+                      className={`flex-1 py-2 rounded-lg border text-sm transition-colors ${
+                        rescheduleDuration === d
+                          ? 'border-slate-blue bg-slate-blue/10 text-slate-blue font-medium'
+                          : 'border-light-gray dark:border-gray-600 text-warm-gray hover:bg-light-gray dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {d}m
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="ghost" onClick={() => setRescheduleAppt(null)} disabled={rescheduling}>
+                Cancel
+              </Button>
+              <Button
+                icon={<Calendar size={16} />}
+                loading={rescheduling}
+                onClick={handleReschedule}
+              >
+                Reschedule
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

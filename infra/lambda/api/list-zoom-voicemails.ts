@@ -15,7 +15,7 @@ import { randomUUID } from 'crypto';
 import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getCallerIdentity } from '../shared/auth';
-import { putItem, updateItem, buildUpdateExpression, queryItems, writeAuditLog } from '../shared/dynamo';
+import { putItem, updateItem, deleteItem, buildUpdateExpression, queryItems, writeAuditLog } from '../shared/dynamo';
 import { zoomGet, zoomDownload } from '../shared/zoom';
 import { success, serverError } from '../shared/response';
 import { getSecrets } from '../shared/secrets';
@@ -402,6 +402,67 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         transcriptStatus: item.transcriptStatus as string | undefined,
         suggestedPatientIds: item.suggestedPatientIds as string[] | undefined,
       });
+    }
+
+    // ── Clean up orphaned records: voicemails deleted from Zoom ──
+    // Compare DynamoDB voicemail records against current Zoom results.
+    // Only clean up records whose receivedAt falls within the query date range
+    // to avoid deleting records that are simply outside the query window.
+    const effectiveFrom = params.from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const effectiveTo = params.to || new Date().toISOString().slice(0, 10);
+
+    const orphanedVmIds: string[] = [];
+    for (const item of attachments) {
+      const vmId = item.voicemailId as string;
+      if (!vmId || seen.has(vmId)) continue;
+      const receivedDate = ((item.receivedAt as string) || '').slice(0, 10);
+      if (receivedDate >= effectiveFrom && receivedDate <= effectiveTo) {
+        orphanedVmIds.push(vmId);
+      }
+    }
+
+    if (orphanedVmIds.length > 0) {
+      console.log(`Cleaning up ${orphanedVmIds.length} orphaned voicemail records (deleted from Zoom)`);
+      const orphanedSet = new Set(orphanedVmIds);
+
+      // Find and delete associated tasks
+      const providerTasks = await queryItems({
+        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+        ExpressionAttributeValues: {
+          ':pk': `PROVIDER#${providerId}`,
+          ':sk': 'TASK#',
+        },
+        ProjectionExpression: 'taskId, voicemailId',
+      });
+
+      for (const task of providerTasks) {
+        if (task.voicemailId && orphanedSet.has(task.voicemailId as string)) {
+          try {
+            await deleteItem(`PROVIDER#${providerId}`, `TASK#${task.taskId as string}`);
+            await writeAuditLog({
+              providerId,
+              action: 'AUTO_DELETE_TASK',
+              entityType: 'Task',
+              entityId: task.taskId as string,
+              details: { voicemailId: task.voicemailId as string, reason: 'voicemail_deleted_from_zoom' },
+            });
+            console.log(`Deleted orphaned task ${task.taskId} (voicemail ${task.voicemailId} no longer in Zoom)`);
+          } catch (err) {
+            console.warn(`Failed to delete orphaned task ${task.taskId}:`, (err as Error).message);
+          }
+        }
+      }
+
+      // Delete orphaned voicemail records
+      for (const vmId of orphanedVmIds) {
+        try {
+          await deleteItem(`PROVIDER#${providerId}`, `VOICEMAIL#${vmId}`);
+          attachMap.delete(vmId);
+          console.log(`Deleted orphaned voicemail record ${vmId}`);
+        } catch (err) {
+          console.warn(`Failed to delete orphaned voicemail record ${vmId}:`, (err as Error).message);
+        }
+      }
     }
 
     // ── Load patients for phone number matching ──

@@ -259,14 +259,10 @@ export async function signIn(email: string, password: string): Promise<{
     }
 
     if (data.AuthenticationResult) {
-      const tokens: AuthTokens = {
-        idToken: data.AuthenticationResult.IdToken,
-        accessToken: data.AuthenticationResult.AccessToken,
-        refreshToken: data.AuthenticationResult.RefreshToken,
-        expiresAt: Math.floor(Date.now() / 1000) + data.AuthenticationResult.ExpiresIn,
-      };
-      storeTokens(tokens);
-      return { success: true };
+      // HIPAA: MFA is mandatory — reject direct authentication without MFA challenge.
+      // Only completeMfaChallenge() is allowed to store tokens and complete login.
+      console.error('MFA bypass detected: Cognito returned tokens without MFA challenge.');
+      return { success: false, error: 'MFA is required but was not enforced. Please contact your administrator.' };
     }
 
     return { success: false, error: sanitizeError(data, 'Sign-in failed. Please check your email and password.') };
@@ -307,14 +303,10 @@ export async function completeNewPasswordChallenge(
     }
 
     if (data.AuthenticationResult) {
-      const tokens: AuthTokens = {
-        idToken: data.AuthenticationResult.IdToken,
-        accessToken: data.AuthenticationResult.AccessToken,
-        refreshToken: data.AuthenticationResult.RefreshToken,
-        expiresAt: Math.floor(Date.now() / 1000) + data.AuthenticationResult.ExpiresIn,
-      };
-      storeTokens(tokens);
-      return { success: true };
+      // HIPAA: MFA is mandatory — after password change, MFA should still be required.
+      // Only completeMfaChallenge() is allowed to store tokens and complete login.
+      console.error('MFA bypass detected: Cognito returned tokens without MFA challenge after password change.');
+      return { success: false, error: 'MFA is required but was not enforced. Please contact your administrator.' };
     }
 
     return { success: false, error: sanitizeError(data, 'Failed to set new password. Please ensure it meets the requirements.') };

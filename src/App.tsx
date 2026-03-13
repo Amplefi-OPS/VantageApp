@@ -19,6 +19,7 @@ import PatientLookup from './pages/stripe/PatientLookup'
 import ChargePatient from './pages/stripe/ChargePatient'
 import NoShowFee from './pages/stripe/NoShowFee'
 import AddCard from './pages/stripe/AddCard'
+import ScheduleAppointment from './pages/ScheduleAppointment'
 import Settings from './pages/Settings'
 
 function InactivityWarning() {
@@ -60,6 +61,7 @@ function AppRoutes() {
           <Route path="/voicemails" element={<Voicemails />} />
           <Route path="/todos" element={<Todos />} />
           <Route path="/appointments" element={<Appointments />} />
+          <Route path="/appointments/new" element={<ScheduleAppointment />} />
           <Route path="/dictations" element={<Dictations />} />
           <Route path="/patients" element={<Patients />} />
           <Route path="/patients/:id" element={<PatientProfile />} />

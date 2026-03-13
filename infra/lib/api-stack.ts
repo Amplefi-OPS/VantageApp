@@ -134,6 +134,26 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadWriteData(noshowAcuityAppointmentFn);
 
+    // ── Lambda: Create Appointment (Google Calendar) ──
+    const createAppointmentFn = new lambdaNode.NodejsFunction(this, 'CreateAppointmentFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-create-appointment-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'create-appointment.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, },
+    });
+    props.table.grantReadWriteData(createAppointmentFn);
+
+    // ── Lambda: Update Appointment (Google Calendar) ──
+    const updateAppointmentFn = new lambdaNode.NodejsFunction(this, 'UpdateAppointmentFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-update-appointment-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'update-appointment.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, },
+    });
+    props.table.grantReadWriteData(updateAppointmentFn);
+
     // ── Lambda: Complete Appointment ──
     const completeAppointmentFn = new lambdaNode.NodejsFunction(this, 'CompleteAppointmentFn', {
       ...lambdaDefaults,
@@ -360,6 +380,8 @@ export class ApiStack extends cdk.Stack {
       listAcuityAppointmentsFn,
       cancelAcuityAppointmentFn,
       noshowAcuityAppointmentFn,
+      createAppointmentFn,
+      updateAppointmentFn,
       listZoomVoicemailsFn,
       listZoomCallLogsFn,
       attachVoicemailFn,
@@ -437,12 +459,14 @@ export class ApiStack extends cdk.Stack {
     const taskById = tasks.addResource('{task_id}');
     taskById.addMethod('PATCH', new apigateway.LambdaIntegration(updateTaskFn), authMethodOptions);
 
-    // GET /appointments (Google Calendar)
+    // GET /appointments (Google Calendar)  &  POST /appointments
     const appointments = this.api.root.addResource('appointments');
     appointments.addMethod('GET', new apigateway.LambdaIntegration(listAcuityAppointmentsFn), authMethodOptions);
+    appointments.addMethod('POST', new apigateway.LambdaIntegration(createAppointmentFn), authMethodOptions);
 
-    // PUT /appointments/{id}/cancel
+    // PATCH /appointments/{id}  &  PUT /appointments/{id}/cancel
     const appointmentById = appointments.addResource('{id}');
+    appointmentById.addMethod('PATCH', new apigateway.LambdaIntegration(updateAppointmentFn), authMethodOptions);
     const cancelAppointment = appointmentById.addResource('cancel');
     cancelAppointment.addMethod('PUT', new apigateway.LambdaIntegration(cancelAcuityAppointmentFn), authMethodOptions);
 

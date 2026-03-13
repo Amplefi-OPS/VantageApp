@@ -68,6 +68,25 @@ export async function completeAppointment(id: string): Promise<{ completed: bool
   return apiPut<{ completed: boolean; appointmentId: string }>(`/appointments/${id}/complete`, {})
 }
 
+export async function createAppointment(req: {
+  patientName: string
+  patientPhone: string
+  patientEmail?: string
+  type: string
+  startTime: string
+  endTime: string
+  notes?: string
+}): Promise<{ appointmentId: string; patientName: string; type: string; startTime: string; endTime: string; calendarLink: string | null }> {
+  return apiPost('/appointments', req)
+}
+
+export async function rescheduleAppointment(id: string, req: {
+  startTime: string
+  endTime: string
+}): Promise<{ rescheduled: boolean; appointmentId: string; startTime: string; endTime: string }> {
+  return apiPatch(`/appointments/${id}`, req)
+}
+
 // ── Voicemails (Zoom Phone) ─────────────────────────────
 
 export async function listVoicemails(): Promise<Voicemail[]> {
