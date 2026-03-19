@@ -46,16 +46,16 @@
         }
       }
     },
-    "4564e2fdab8350530c71f4fc16686a0236f802e1282fa39bc28e34da892b8437": {
+    "fd20e5bd344ef82ec0b881a5572f9a446e40ca182bf31ec9d0b17b0eaca34387": {
       "displayName": "Vantage-Auth-dev Template",
       "source": {
         "path": "Vantage-Auth-dev.template.json",
         "packaging": "file"
       },
       "destinations": {
-        "841722554807-us-east-1-ff0e3ddb": {
+        "841722554807-us-east-1-a4bb8e5d": {
           "bucketName": "cdk-hnb659fds-assets-841722554807-us-east-1",
-          "objectKey": "4564e2fdab8350530c71f4fc16686a0236f802e1282fa39bc28e34da892b8437.json",
+          "objectKey": "fd20e5bd344ef82ec0b881a5572f9a446e40ca182bf31ec9d0b17b0eaca34387.json",
           "region": "us-east-1",
           "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-file-publishing-role-841722554807-us-east-1"
         }

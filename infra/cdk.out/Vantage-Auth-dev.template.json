@@ -392,7 +392,7 @@
     "MfaConfiguration": "ON",
     "Policies": {
      "PasswordPolicy": {
-      "MinimumLength": 12,
+      "MinimumLength": 8,
       "RequireLowercase": true,
       "RequireNumbers": true,
       "RequireSymbols": true,

@@ -1101,7 +1101,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "44e3f87181e91679894bb728c084f3512790104b19831de31ab864d112472c70.zip"
+     "S3Key": "068f43eb87b3fa05e23208990da4f8d479808e094d2239e4e76a3bcdee259f5c.zip"
     },
     "Environment": {
      "Variables": {
@@ -1131,7 +1131,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Pipeline-dev/S3TriggerFn/Resource",
-    "aws:asset:path": "asset.44e3f87181e91679894bb728c084f3512790104b19831de31ab864d112472c70",
+    "aws:asset:path": "asset.068f43eb87b3fa05e23208990da4f8d479808e094d2239e4e76a3bcdee259f5c",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }

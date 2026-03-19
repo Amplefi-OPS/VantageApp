@@ -817,6 +817,17 @@
     "Name": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
    }
   },
+  "ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2": {
+   "Value": {
+    "Fn::GetAtt": [
+     "VantageTableA92A5E33",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+   }
+  },
   "ExportsOutputRefVantageTableA92A5E33483C0F3E": {
    "Value": {
     "Ref": "VantageTableA92A5E33"
@@ -839,17 +850,6 @@
    },
    "Export": {
     "Name": "Vantage-Storage-dev:ExportsOutputRefTranscriptBucketB04D660A43F395AF"
-   }
-  },
-  "ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2": {
-   "Value": {
-    "Fn::GetAtt": [
-     "VantageTableA92A5E33",
-     "Arn"
-    ]
-   },
-   "Export": {
-    "Name": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
    }
   },
   "ExportsOutputFnGetAttTranscriptBucketB04D660AArnB2171BF2": {

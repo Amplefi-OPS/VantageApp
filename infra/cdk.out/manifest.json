@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/a57dd1f02788cde946a8cfe142adf5a4cf8e7cc5de2088d7868577c73898b7d7.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/478acdb2655e7be7cc784516e315b522c20b8d8bf83b1784e57ed37b8fcfeb86.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -168,6 +168,12 @@
             "data": "ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
           }
         ],
+        "/Vantage-Storage-dev/Exports/Output{\"Fn::GetAtt\":[\"VantageTableA92A5E33\",\"Arn\"]}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+          }
+        ],
         "/Vantage-Storage-dev/Exports/Output{\"Ref\":\"VantageTableA92A5E33\"}": [
           {
             "type": "aws:cdk:logicalId",
@@ -184,12 +190,6 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "ExportsOutputRefTranscriptBucketB04D660A43F395AF"
-          }
-        ],
-        "/Vantage-Storage-dev/Exports/Output{\"Fn::GetAtt\":[\"VantageTableA92A5E33\",\"Arn\"]}": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
           }
         ],
         "/Vantage-Storage-dev/Exports/Output{\"Fn::GetAtt\":[\"TranscriptBucketB04D660A\",\"Arn\"]}": [
@@ -230,7 +230,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/4564e2fdab8350530c71f4fc16686a0236f802e1282fa39bc28e34da892b8437.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/fd20e5bd344ef82ec0b881a5572f9a446e40ca182bf31ec9d0b17b0eaca34387.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -410,7 +410,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/ee542cf0b46171d1ce3d67ba240d1a0a92559c881e32bf1830774106c5fe21ec.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/6699eaa04fd86c6a330fb19197e7b56200ec96476e7e6f79a727f8ea47028e0c.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -612,6 +612,54 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "NoshowAcuityAppointmentFnLogRetentionCE6C5DB6"
+          }
+        ],
+        "/Vantage-Api-dev/CreateAppointmentFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateAppointmentFnServiceRoleA3D44389"
+          }
+        ],
+        "/Vantage-Api-dev/CreateAppointmentFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateAppointmentFnServiceRoleDefaultPolicy030C93D1"
+          }
+        ],
+        "/Vantage-Api-dev/CreateAppointmentFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateAppointmentFn361EA632"
+          }
+        ],
+        "/Vantage-Api-dev/CreateAppointmentFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CreateAppointmentFnLogRetention787A798F"
+          }
+        ],
+        "/Vantage-Api-dev/UpdateAppointmentFn/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UpdateAppointmentFnServiceRoleF7673265"
+          }
+        ],
+        "/Vantage-Api-dev/UpdateAppointmentFn/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UpdateAppointmentFnServiceRoleDefaultPolicy5F6FF856"
+          }
+        ],
+        "/Vantage-Api-dev/UpdateAppointmentFn/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UpdateAppointmentFn9803F29D"
+          }
+        ],
+        "/Vantage-Api-dev/UpdateAppointmentFn/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UpdateAppointmentFnLogRetention6B7F752B"
           }
         ],
         "/Vantage-Api-dev/CompleteAppointmentFn/ServiceRole/Resource": [
@@ -1163,7 +1211,7 @@
         "/Vantage-Api-dev/VantageApi/Deployment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "VantageApiDeployment89164B33746218881fce24fa559257fb7677601f"
+            "data": "VantageApiDeployment89164B3364dd06ed5a9d42e7f1d70345d35b5aee"
           }
         ],
         "/Vantage-Api-dev/VantageApi/DeploymentStage.dev/Resource": [
@@ -1334,6 +1382,24 @@
             "data": "VantageApiappointmentsGETDF789897"
           }
         ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..appointments": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsPOSTApiPermissionVantageApidevVantageApi61D49C06POSTappointments15CA8504"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..appointments": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTappointments29C18B71"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsPOST4737CD92"
+          }
+        ],
         "/Vantage-Api-dev/VantageApi/Default/appointments/{id}/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -1344,6 +1410,24 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "VantageApiappointmentsidOPTIONS89A335C7"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/{id}/PATCH/ApiPermission.VantageApidevVantageApi61D49C06.PATCH..appointments.{id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsidPATCHApiPermissionVantageApidevVantageApi61D49C06PATCHappointmentsid60F0CCC5"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/{id}/PATCH/ApiPermission.Test.VantageApidevVantageApi61D49C06.PATCH..appointments.{id}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsidPATCHApiPermissionTestVantageApidevVantageApi61D49C06PATCHappointmentsidA3F2D32B"
+          }
+        ],
+        "/Vantage-Api-dev/VantageApi/Default/appointments/{id}/PATCH/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "VantageApiappointmentsidPATCH88F3A73C"
           }
         ],
         "/Vantage-Api-dev/VantageApi/Default/appointments/{id}/cancel/Resource": [
@@ -2176,7 +2260,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-deploy-role-841722554807-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::841722554807:role/cdk-hnb659fds-cfn-exec-role-841722554807-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/2709e8264724384abffbe01d96945a54f0aeed48cf29bb2b5db527b7b6f70a19.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-841722554807-us-east-1/9a427f3e5eead67527eba7178a324297d872e97fe139be396ef8583c6e334b4e.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [

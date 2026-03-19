@@ -83,6 +83,73 @@
        "Resource": {
         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
        }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
       }
      ],
      "Version": "2012-10-17"
@@ -106,7 +173,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "b822a1bd24f799097f531f0e74e7b2236a9c45e7509dd739f67ca92237859db4.zip"
+     "S3Key": "26705875ec6b21cc10f59d8e54560a13bd52305f8fd930631b98dba68c72a2aa.zip"
     },
     "Environment": {
      "Variables": {
@@ -146,7 +213,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/PresignUploadFn/Resource",
-    "aws:asset:path": "asset.b822a1bd24f799097f531f0e74e7b2236a9c45e7509dd739f67ca92237859db4",
+    "aws:asset:path": "asset.26705875ec6b21cc10f59d8e54560a13bd52305f8fd930631b98dba68c72a2aa",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -387,7 +454,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "5c6f8a283773c416ed56aeb2c3471454103a62992dc7b742bde8d56d38633a85.zip"
+     "S3Key": "45baf6512ca9f317acce47b5a7a1479b39c999fe77a4e7512c62c7b02f889c25.zip"
     },
     "Environment": {
      "Variables": {
@@ -427,7 +494,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/GetTasksFn/Resource",
-    "aws:asset:path": "asset.5c6f8a283773c416ed56aeb2c3471454103a62992dc7b742bde8d56d38633a85",
+    "aws:asset:path": "asset.45baf6512ca9f317acce47b5a7a1479b39c999fe77a4e7512c62c7b02f889c25",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -586,7 +653,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "b81376629d71a97b4f4a5052c87b85661793636709322eb46059b2e5a76f6b21.zip"
+     "S3Key": "039d5e71cdc17381c511a3bae7ffb3fffa4b3c6af14fc8bb7c5c155967270af3.zip"
     },
     "Environment": {
      "Variables": {
@@ -626,7 +693,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/UpdateTaskFn/Resource",
-    "aws:asset:path": "asset.b81376629d71a97b4f4a5052c87b85661793636709322eb46059b2e5a76f6b21",
+    "aws:asset:path": "asset.039d5e71cdc17381c511a3bae7ffb3fffa4b3c6af14fc8bb7c5c155967270af3",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -785,7 +852,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "39eec3726e0513ffec63d1a57cf3a32d69e27e6f78d22eb30825a2fd5a39bb15.zip"
+     "S3Key": "99af39795042df274987febaaa95f93d5ae0f87d62fb073c0397986d12f9ccad.zip"
     },
     "Environment": {
      "Variables": {
@@ -825,7 +892,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/CreateTaskFn/Resource",
-    "aws:asset:path": "asset.39eec3726e0513ffec63d1a57cf3a32d69e27e6f78d22eb30825a2fd5a39bb15",
+    "aws:asset:path": "asset.99af39795042df274987febaaa95f93d5ae0f87d62fb073c0397986d12f9ccad",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1003,7 +1070,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "a56b9d467e6cc49779aff312035af1aa6eb00232faae3bad4cdba4a170a391f2.zip"
+     "S3Key": "2a87c816d2c762419e57fa6e16fccb60b7cfd4651acc51840ec79f6ce8df7b7a.zip"
     },
     "Environment": {
      "Variables": {
@@ -1043,7 +1110,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ListAcuityAppointmentsFn/Resource",
-    "aws:asset:path": "asset.a56b9d467e6cc49779aff312035af1aa6eb00232faae3bad4cdba4a170a391f2",
+    "aws:asset:path": "asset.2a87c816d2c762419e57fa6e16fccb60b7cfd4651acc51840ec79f6ce8df7b7a",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1221,7 +1288,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "ed1ab46af5d6d476b2fc051e42576d3973671ce58779b05c1c7b1f44441018a2.zip"
+     "S3Key": "d39d4419d030925912a4912be6599b4414ab447b7e990dd980bee42dbbca26d0.zip"
     },
     "Environment": {
      "Variables": {
@@ -1261,7 +1328,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/CancelAcuityAppointmentFn/Resource",
-    "aws:asset:path": "asset.ed1ab46af5d6d476b2fc051e42576d3973671ce58779b05c1c7b1f44441018a2",
+    "aws:asset:path": "asset.d39d4419d030925912a4912be6599b4414ab447b7e990dd980bee42dbbca26d0",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1439,7 +1506,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "121cb7668efaec609ce5c61b73f554815b912b52c9ee9da8a87d1507419b76d8.zip"
+     "S3Key": "c6e8f8321b1409f946d6eba9da2a187363671e25260f79104d4fe0b235fd769a.zip"
     },
     "Environment": {
      "Variables": {
@@ -1479,7 +1546,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/NoshowAcuityAppointmentFn/Resource",
-    "aws:asset:path": "asset.121cb7668efaec609ce5c61b73f554815b912b52c9ee9da8a87d1507419b76d8",
+    "aws:asset:path": "asset.c6e8f8321b1409f946d6eba9da2a187363671e25260f79104d4fe0b235fd769a",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1508,6 +1575,442 @@
    },
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/NoshowAcuityAppointmentFn/LogRetention/Resource"
+   }
+  },
+  "CreateAppointmentFnServiceRoleA3D44389": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/CreateAppointmentFn/ServiceRole/Resource"
+   }
+  },
+  "CreateAppointmentFnServiceRoleDefaultPolicy030C93D1": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CreateAppointmentFnServiceRoleDefaultPolicy030C93D1",
+    "Roles": [
+     {
+      "Ref": "CreateAppointmentFnServiceRoleA3D44389"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/CreateAppointmentFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "CreateAppointmentFn361EA632": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "aa11709419c7793ffdf34987465fac2d42606191ee66dcfde8117c5a51723b98.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_NAME": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefVantageTableA92A5E33483C0F3E"
+      },
+      "AUDIO_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefAudioBucket96BEECBAEFFB6375"
+      },
+      "TRANSCRIPT_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefTranscriptBucketB04D660A43F395AF"
+      },
+      "KMS_KEY_ARN": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+      },
+      "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
+      "PRESIGN_EXPIRY_SECONDS": "900",
+      "MAX_UPLOAD_SIZE_MB": "100"
+     }
+    },
+    "FunctionName": "vantage-create-appointment-dev",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "CreateAppointmentFnServiceRoleA3D44389",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "CreateAppointmentFnServiceRoleDefaultPolicy030C93D1",
+    "CreateAppointmentFnServiceRoleA3D44389"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/CreateAppointmentFn/Resource",
+    "aws:asset:path": "asset.aa11709419c7793ffdf34987465fac2d42606191ee66dcfde8117c5a51723b98",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "CreateAppointmentFnLogRetention787A798F": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "CreateAppointmentFn361EA632"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/CreateAppointmentFn/LogRetention/Resource"
+   }
+  },
+  "UpdateAppointmentFnServiceRoleF7673265": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/UpdateAppointmentFn/ServiceRole/Resource"
+   }
+  },
+  "UpdateAppointmentFnServiceRoleDefaultPolicy5F6FF856": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+       }
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttVantageTableA92A5E33ArnE11DEBD2"
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:",
+          {
+           "Ref": "AWS::Partition"
+          },
+          ":secretsmanager:us-east-1:841722554807:secret:vantage/credentials/dev-??????"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "UpdateAppointmentFnServiceRoleDefaultPolicy5F6FF856",
+    "Roles": [
+     {
+      "Ref": "UpdateAppointmentFnServiceRoleF7673265"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/UpdateAppointmentFn/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "UpdateAppointmentFn9803F29D": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
+     "S3Key": "0a388b51b2865ccc9975299c6c8ca4e33d9cb0d3def6b0cfcd5cb7bed328274b.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "TABLE_NAME": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefVantageTableA92A5E33483C0F3E"
+      },
+      "AUDIO_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefAudioBucket96BEECBAEFFB6375"
+      },
+      "TRANSCRIPT_BUCKET": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputRefTranscriptBucketB04D660A43F395AF"
+      },
+      "KMS_KEY_ARN": {
+       "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttPhiEncryptionKey1BAC3520Arn67DDBD6D"
+      },
+      "STAGE": "dev",
+      "SECRET_NAME": "vantage/credentials/dev",
+      "PRESIGN_EXPIRY_SECONDS": "900",
+      "MAX_UPLOAD_SIZE_MB": "100"
+     }
+    },
+    "FunctionName": "vantage-update-appointment-dev",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "UpdateAppointmentFnServiceRoleF7673265",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "UpdateAppointmentFnServiceRoleDefaultPolicy5F6FF856",
+    "UpdateAppointmentFnServiceRoleF7673265"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/UpdateAppointmentFn/Resource",
+    "aws:asset:path": "asset.0a388b51b2865ccc9975299c6c8ca4e33d9cb0d3def6b0cfcd5cb7bed328274b",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "UpdateAppointmentFnLogRetention6B7F752B": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "UpdateAppointmentFn9803F29D"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 365
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/UpdateAppointmentFn/LogRetention/Resource"
    }
   },
   "CompleteAppointmentFnServiceRoleFED2D47D": {
@@ -1638,7 +2141,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "d6f75ebc13a8f708b11252a944d1f74b24e9776b4784bd958de4bdff59576705.zip"
+     "S3Key": "1635985acf1e0a55c3241445546b9a72e4671827518efa473093afb5399696d9.zip"
     },
     "Environment": {
      "Variables": {
@@ -1678,7 +2181,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/CompleteAppointmentFn/Resource",
-    "aws:asset:path": "asset.d6f75ebc13a8f708b11252a944d1f74b24e9776b4784bd958de4bdff59576705",
+    "aws:asset:path": "asset.1635985acf1e0a55c3241445546b9a72e4671827518efa473093afb5399696d9",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1833,6 +2336,30 @@
        ]
       },
       {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttAudioBucket96BEECBAArnC8B7DB4B"
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::ImportValue": "Vantage-Storage-dev:ExportsOutputFnGetAttAudioBucket96BEECBAArnC8B7DB4B"
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
        "Action": "kms:Decrypt",
        "Effect": "Allow",
        "Resource": {
@@ -1861,7 +2388,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "c7c2961e3196febb87980d2ca6f38835e1a514635151ec4cb16f1b99b0f85751.zip"
+     "S3Key": "30bb65c5fa2dbbc5bbdd687fa3d40d20da2d291aebcbe40917ef868086785df0.zip"
     },
     "Environment": {
      "Variables": {
@@ -1901,7 +2428,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/GetDictationFn/Resource",
-    "aws:asset:path": "asset.c7c2961e3196febb87980d2ca6f38835e1a514635151ec4cb16f1b99b0f85751",
+    "aws:asset:path": "asset.30bb65c5fa2dbbc5bbdd687fa3d40d20da2d291aebcbe40917ef868086785df0",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2060,7 +2587,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "9160a6afcf12c6fcda3cef883e143d58c6a4ae24a8c8872ae661883abc412034.zip"
+     "S3Key": "1bad1364772dca40a59a805b54da9d3b11593c1585d2a3835a61dcfb434e09f9.zip"
     },
     "Environment": {
      "Variables": {
@@ -2100,7 +2627,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/CreatePatientFn/Resource",
-    "aws:asset:path": "asset.9160a6afcf12c6fcda3cef883e143d58c6a4ae24a8c8872ae661883abc412034",
+    "aws:asset:path": "asset.1bad1364772dca40a59a805b54da9d3b11593c1585d2a3835a61dcfb434e09f9",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2252,7 +2779,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "4d5547b8aa43a59e0a1a9e6e3a31d8d40b6ac6b72160c9da9c0f8ef97d398e0f.zip"
+     "S3Key": "96b28634be5db948f068d02f3aee8ff04bdc0ff7d49ce6dd0d29b95c4e183cf6.zip"
     },
     "Environment": {
      "Variables": {
@@ -2292,7 +2819,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ListPatientsFn/Resource",
-    "aws:asset:path": "asset.4d5547b8aa43a59e0a1a9e6e3a31d8d40b6ac6b72160c9da9c0f8ef97d398e0f",
+    "aws:asset:path": "asset.96b28634be5db948f068d02f3aee8ff04bdc0ff7d49ce6dd0d29b95c4e183cf6",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2444,7 +2971,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "eb22c371ca3621a0356f449302d88686ca83991e3cb1004981c73bc121bcd1be.zip"
+     "S3Key": "72b9519442bb25e6fdd82033134fb64ffe5d9da4e6ef44364e866b771cdfbf0b.zip"
     },
     "Environment": {
      "Variables": {
@@ -2484,7 +3011,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/GetPatientFn/Resource",
-    "aws:asset:path": "asset.eb22c371ca3621a0356f449302d88686ca83991e3cb1004981c73bc121bcd1be",
+    "aws:asset:path": "asset.72b9519442bb25e6fdd82033134fb64ffe5d9da4e6ef44364e866b771cdfbf0b",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2643,7 +3170,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "a9df2bc56d8d28f56432c935d785a0a4302d1a5c41cf9dbe4a0e00b61ee4bbcd.zip"
+     "S3Key": "6faa0b1d7587d8f5537ec3ac9695110b152a18f3ad76ec4a03d93ac81ff9c162.zip"
     },
     "Environment": {
      "Variables": {
@@ -2683,7 +3210,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/CreateNoteFn/Resource",
-    "aws:asset:path": "asset.a9df2bc56d8d28f56432c935d785a0a4302d1a5c41cf9dbe4a0e00b61ee4bbcd",
+    "aws:asset:path": "asset.6faa0b1d7587d8f5537ec3ac9695110b152a18f3ad76ec4a03d93ac81ff9c162",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2835,7 +3362,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "b8b8aaa71d549ff0259ebdec9e3476fd26b0d3dbd81076954c171e923136cbe8.zip"
+     "S3Key": "d5c08b9b9badf0c9b2c00c7ab1b25e6cd470b9e8548aa632b4f3b0843bee272b.zip"
     },
     "Environment": {
      "Variables": {
@@ -2875,7 +3402,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ListNotesFn/Resource",
-    "aws:asset:path": "asset.b8b8aaa71d549ff0259ebdec9e3476fd26b0d3dbd81076954c171e923136cbe8",
+    "aws:asset:path": "asset.d5c08b9b9badf0c9b2c00c7ab1b25e6cd470b9e8548aa632b4f3b0843bee272b",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -3027,7 +3554,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "31e6c54991f0925660429ae32ae443eda241405f1776e7ee1c04c1ad7bca939a.zip"
+     "S3Key": "dcc9e686f770d848ca86161b9ae41c8048dc006e53740f3bbfef8b3ca3468a77.zip"
     },
     "Environment": {
      "Variables": {
@@ -3067,7 +3594,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/DashboardCountsFn/Resource",
-    "aws:asset:path": "asset.31e6c54991f0925660429ae32ae443eda241405f1776e7ee1c04c1ad7bca939a",
+    "aws:asset:path": "asset.dcc9e686f770d848ca86161b9ae41c8048dc006e53740f3bbfef8b3ca3468a77",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -3288,7 +3815,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "0c8e1d644a6000fdfc40d7fe048e57203551c84f1db7633ac97ecfdf2800993e.zip"
+     "S3Key": "d8feac2a9c57b366d45680745a157cca305ee3248cd8d7fa38eb1809b40713b4.zip"
     },
     "Environment": {
      "Variables": {
@@ -3328,7 +3855,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ListZoomVoicemailsFn/Resource",
-    "aws:asset:path": "asset.0c8e1d644a6000fdfc40d7fe048e57203551c84f1db7633ac97ecfdf2800993e",
+    "aws:asset:path": "asset.d8feac2a9c57b366d45680745a157cca305ee3248cd8d7fa38eb1809b40713b4",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -3506,7 +4033,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "debdcc9f653c5714b53f530de3a03bc2a463a89888d757ebc0a4f27658a4ffd4.zip"
+     "S3Key": "4d631a532f2dde1b4ff4d01faaa99d49fe98fab095659e4f498ac3923982cf0f.zip"
     },
     "Environment": {
      "Variables": {
@@ -3546,7 +4073,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ListZoomCallLogsFn/Resource",
-    "aws:asset:path": "asset.debdcc9f653c5714b53f530de3a03bc2a463a89888d757ebc0a4f27658a4ffd4",
+    "aws:asset:path": "asset.4d631a532f2dde1b4ff4d01faaa99d49fe98fab095659e4f498ac3923982cf0f",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -3724,7 +4251,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "c2a8803f5fb3af7f9a3439cca1fe8fc411c14bff43c643eb2ba287c15782b3eb.zip"
+     "S3Key": "fe9bc69960cfb8ea53457a6ba2111d6afd12580900d37fbf43dd7306cd2ce2c6.zip"
     },
     "Environment": {
      "Variables": {
@@ -3764,7 +4291,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/AttachVoicemailFn/Resource",
-    "aws:asset:path": "asset.c2a8803f5fb3af7f9a3439cca1fe8fc411c14bff43c643eb2ba287c15782b3eb",
+    "aws:asset:path": "asset.fe9bc69960cfb8ea53457a6ba2111d6afd12580900d37fbf43dd7306cd2ce2c6",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -3942,7 +4469,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "1fb3a743f160e705175ed44bc375ba57e5d80263efe17730e60386a32d5df591.zip"
+     "S3Key": "0e55fe09bf018bcb8387b7aa15d3b50cc3b5ce71e047418640068c29d24ce57d.zip"
     },
     "Environment": {
      "Variables": {
@@ -3982,7 +4509,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ArchiveVoicemailFn/Resource",
-    "aws:asset:path": "asset.1fb3a743f160e705175ed44bc375ba57e5d80263efe17730e60386a32d5df591",
+    "aws:asset:path": "asset.0e55fe09bf018bcb8387b7aa15d3b50cc3b5ce71e047418640068c29d24ce57d",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -4153,7 +4680,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "cd15c73605e2893173c5b5ca566a6262a668260487408e5bd16bf7bc2fffc5c8.zip"
+     "S3Key": "ac045a05511ee89c2277aea41d5519659fc4b56a41566327e9895f13932e4375.zip"
     },
     "Environment": {
      "Variables": {
@@ -4193,7 +4720,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/ListFaxesFn/Resource",
-    "aws:asset:path": "asset.cd15c73605e2893173c5b5ca566a6262a668260487408e5bd16bf7bc2fffc5c8",
+    "aws:asset:path": "asset.ac045a05511ee89c2277aea41d5519659fc4b56a41566327e9895f13932e4375",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -4371,7 +4898,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "7156ded48580218223a32e3674081e360686dc2ac84e783592eed227a8c0266c.zip"
+     "S3Key": "6212a725d85527c3410f5d385823182102b83c3bc71e2609ceec218139f46a66.zip"
     },
     "Environment": {
      "Variables": {
@@ -4411,7 +4938,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/SendFaxFn/Resource",
-    "aws:asset:path": "asset.7156ded48580218223a32e3674081e360686dc2ac84e783592eed227a8c0266c",
+    "aws:asset:path": "asset.6212a725d85527c3410f5d385823182102b83c3bc71e2609ceec218139f46a66",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -4522,7 +5049,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "c604c971d732a1f13a8d4d4f7832b9381e9c216117f950ebc0a13796742b8717.zip"
+     "S3Key": "9ff7f1ae3d8f068f13cc47da58449f6515bcf7f7e63133cdded580a28c936a25.zip"
     },
     "Environment": {
      "Variables": {
@@ -4562,7 +5089,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/StripeCustomerSearchFn/Resource",
-    "aws:asset:path": "asset.c604c971d732a1f13a8d4d4f7832b9381e9c216117f950ebc0a13796742b8717",
+    "aws:asset:path": "asset.9ff7f1ae3d8f068f13cc47da58449f6515bcf7f7e63133cdded580a28c936a25",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -4673,7 +5200,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "27d0a085d64e5d2378a4f08cfe61ad52fce14b7eb667b6092964b6ee9d005947.zip"
+     "S3Key": "c103ff341443dee6dd24c63f4634dee732e974c20d9d6ea7f1162105874d258c.zip"
     },
     "Environment": {
      "Variables": {
@@ -4713,7 +5240,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/StripePaymentIntentFn/Resource",
-    "aws:asset:path": "asset.27d0a085d64e5d2378a4f08cfe61ad52fce14b7eb667b6092964b6ee9d005947",
+    "aws:asset:path": "asset.c103ff341443dee6dd24c63f4634dee732e974c20d9d6ea7f1162105874d258c",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -4824,7 +5351,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "cb285170429445d9cceb86ed489322cd44cd7fc486dde0ecd9e4ea71dbf19d5c.zip"
+     "S3Key": "b05e949de596668c42a17d80d6025ce989bc3ce0aed26430adbf889eb9e65f37.zip"
     },
     "Environment": {
      "Variables": {
@@ -4864,7 +5391,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/StripeChargeNoshowFn/Resource",
-    "aws:asset:path": "asset.cb285170429445d9cceb86ed489322cd44cd7fc486dde0ecd9e4ea71dbf19d5c",
+    "aws:asset:path": "asset.b05e949de596668c42a17d80d6025ce989bc3ce0aed26430adbf889eb9e65f37",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -4975,7 +5502,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "92a8489a9f74a8b6ff4160e3294249a010d76824f8df3f9180fdb86420757d7d.zip"
+     "S3Key": "adc301679b639b2ac8b2d844a0bfae7d47ee18b74f55e135d4448fb12f7644b4.zip"
     },
     "Environment": {
      "Variables": {
@@ -5015,7 +5542,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/StripeSetupIntentFn/Resource",
-    "aws:asset:path": "asset.92a8489a9f74a8b6ff4160e3294249a010d76824f8df3f9180fdb86420757d7d",
+    "aws:asset:path": "asset.adc301679b639b2ac8b2d844a0bfae7d47ee18b74f55e135d4448fb12f7644b4",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -5126,7 +5653,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "6ea2d26c2610f6ab5e1c7ea46a34053518efba66f2386c340506684d6afe01f1.zip"
+     "S3Key": "94053c9833913982c2f4dd5d33e174976032c9bccc59f1ac34f2288843d69327.zip"
     },
     "Environment": {
      "Variables": {
@@ -5166,7 +5693,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/StripeConfirmSetupFn/Resource",
-    "aws:asset:path": "asset.6ea2d26c2610f6ab5e1c7ea46a34053518efba66f2386c340506684d6afe01f1",
+    "aws:asset:path": "asset.94053c9833913982c2f4dd5d33e174976032c9bccc59f1ac34f2288843d69327",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -5277,7 +5804,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "641ed3664c8bbf95a1c1f11286e9a6fcd044bb071a9990a158bee07170e572e0.zip"
+     "S3Key": "ccb0029ca88d23e85cce57986890e2261bab185eb932841eda8c975195d46b76.zip"
     },
     "Environment": {
      "Variables": {
@@ -5317,7 +5844,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/StripeTransactionsFn/Resource",
-    "aws:asset:path": "asset.641ed3664c8bbf95a1c1f11286e9a6fcd044bb071a9990a158bee07170e572e0",
+    "aws:asset:path": "asset.ccb0029ca88d23e85cce57986890e2261bab185eb932841eda8c975195d46b76",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -5500,7 +6027,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-841722554807-us-east-1",
-     "S3Key": "ba370709e994be25ac69a6b5d5470d8288dcc31a4eb66165fc50da742512fd81.zip"
+     "S3Key": "1b9698ad35a9372074961b1ae555f0e085dd28af6aa771df60a68aa46e83d668.zip"
     },
     "Environment": {
      "Variables": {
@@ -5541,7 +6068,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/BillingChargeFn/Resource",
-    "aws:asset:path": "asset.ba370709e994be25ac69a6b5d5470d8288dcc31a4eb66165fc50da742512fd81",
+    "aws:asset:path": "asset.1b9698ad35a9372074961b1ae555f0e085dd28af6aa771df60a68aa46e83d668",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -5788,7 +6315,7 @@
     "aws:cdk:path": "Vantage-Api-dev/VantageApi/Account"
    }
   },
-  "VantageApiDeployment89164B33746218881fce24fa559257fb7677601f": {
+  "VantageApiDeployment89164B3364dd06ed5a9d42e7f1d70345d35b5aee": {
    "Type": "AWS::ApiGateway::Deployment",
    "Properties": {
     "Description": "Vantage physician portal API",
@@ -5807,9 +6334,11 @@
     "VantageApiappointmentsidnoshowPUT13C2F251",
     "VantageApiappointmentsidnoshowBC9E8177",
     "VantageApiappointmentsidOPTIONS89A335C7",
+    "VantageApiappointmentsidPATCH88F3A73C",
     "VantageApiappointmentsid5A55DD7D",
     "VantageApiappointmentsGETDF789897",
     "VantageApiappointmentsOPTIONS39FF5F3F",
+    "VantageApiappointmentsPOST4737CD92",
     "VantageApiappointments788107C2",
     "VantageApibillingchargeOPTIONS28DB1E45",
     "VantageApibillingchargePOST0747A9BA",
@@ -5907,7 +6436,7 @@
    "Type": "AWS::ApiGateway::Stage",
    "Properties": {
     "DeploymentId": {
-     "Ref": "VantageApiDeployment89164B33746218881fce24fa559257fb7677601f"
+     "Ref": "VantageApiDeployment89164B3364dd06ed5a9d42e7f1d70345d35b5aee"
     },
     "MethodSettings": [
      {
@@ -6869,6 +7398,116 @@
     "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/appointments/GET/Resource"
    }
   },
+  "VantageApiappointmentsPOSTApiPermissionVantageApidevVantageApi61D49C06POSTappointments15CA8504": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CreateAppointmentFn361EA632",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/",
+       {
+        "Ref": "VantageApiDeploymentStagedevFF353021"
+       },
+       "/POST/appointments"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/appointments/POST/ApiPermission.VantageApidevVantageApi61D49C06.POST..appointments"
+   }
+  },
+  "VantageApiappointmentsPOSTApiPermissionTestVantageApidevVantageApi61D49C06POSTappointments29C18B71": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CreateAppointmentFn361EA632",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/test-invoke-stage/POST/appointments"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/appointments/POST/ApiPermission.Test.VantageApidevVantageApi61D49C06.POST..appointments"
+   }
+  },
+  "VantageApiappointmentsPOST4737CD92": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth8E818E2A"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "CreateAppointmentFn361EA632",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "VantageApiappointments788107C2"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/appointments/POST/Resource"
+   }
+  },
   "VantageApiappointmentsid5A55DD7D": {
    "Type": "AWS::ApiGateway::Resource",
    "Properties": {
@@ -6932,6 +7571,116 @@
    },
    "Metadata": {
     "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/appointments/{id}/OPTIONS/Resource"
+   }
+  },
+  "VantageApiappointmentsidPATCHApiPermissionVantageApidevVantageApi61D49C06PATCHappointmentsid60F0CCC5": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "UpdateAppointmentFn9803F29D",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/",
+       {
+        "Ref": "VantageApiDeploymentStagedevFF353021"
+       },
+       "/PATCH/appointments/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/appointments/{id}/PATCH/ApiPermission.VantageApidevVantageApi61D49C06.PATCH..appointments.{id}"
+   }
+  },
+  "VantageApiappointmentsidPATCHApiPermissionTestVantageApidevVantageApi61D49C06PATCHappointmentsidA3F2D32B": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "UpdateAppointmentFn9803F29D",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:841722554807:",
+       {
+        "Ref": "VantageApi795310AC"
+       },
+       "/test-invoke-stage/PATCH/appointments/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/appointments/{id}/PATCH/ApiPermission.Test.VantageApidevVantageApi61D49C06.PATCH..appointments.{id}"
+   }
+  },
+  "VantageApiappointmentsidPATCH88F3A73C": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuth8E818E2A"
+    },
+    "HttpMethod": "PATCH",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "UpdateAppointmentFn9803F29D",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "VantageApiappointmentsid5A55DD7D"
+    },
+    "RestApiId": {
+     "Ref": "VantageApi795310AC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "Vantage-Api-dev/VantageApi/Default/appointments/{id}/PATCH/Resource"
    }
   },
   "VantageApiappointmentsidcancel7AAA8075": {
