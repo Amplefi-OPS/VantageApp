@@ -10,12 +10,13 @@ frontend:
       commands:
         - npm run build
   artifacts:
-    baseDirectory: dist
+    baseDirectory: packages/web/dist
     files:
       - '**/*'
   cache:
     paths:
       - 'node_modules/**/*'
+      - 'packages/web/node_modules/**/*'
 
 customHeaders:
   - pattern: '**/*'
