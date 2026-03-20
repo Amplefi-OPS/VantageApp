@@ -58,8 +58,37 @@ function getUserPool(): CognitoUserPool {
 // Clean up legacy token key from the pre-SRP implementation
 sessionStorage.removeItem('vantage-auth-tokens');
 
-// Pending CognitoUser for multi-step auth flows (new password → MFA)
+// Pending CognitoUser for multi-step auth flows (new password → MFA).
+// Module-level so it survives React re-renders — this is the source of truth.
 let pendingUser: CognitoUser | null = null;
+let pendingUserCreatedAt: number = 0;
+
+const MFA_SESSION_TTL_MS = 3 * 60 * 1000; // 3 minutes
+
+function setPendingUser(user: CognitoUser | null): void {
+  pendingUser = user;
+  pendingUserCreatedAt = user ? Date.now() : 0;
+}
+
+/** Check if a pending CognitoUser exists and its session hasn't expired. */
+export function getPendingUser(): { user: CognitoUser; session: string; email: string } | null {
+  if (!pendingUser) return null;
+  if (Date.now() - pendingUserCreatedAt > MFA_SESSION_TTL_MS) {
+    pendingUser = null;
+    pendingUserCreatedAt = 0;
+    return null;
+  }
+  return {
+    user: pendingUser,
+    session: (pendingUser as any).Session as string || '',
+    email: pendingUser.getUsername(),
+  };
+}
+
+export function clearPendingUser(): void {
+  pendingUser = null;
+  pendingUserCreatedAt = 0;
+}
 
 // ── JWT Decode ──
 
@@ -260,7 +289,7 @@ export async function signIn(email: string, password: string): Promise<{
           // Detect it from the CognitoUser's internal state (set before the default case).
           const challenge = (cognitoUser as any).challengeName;
           if (challenge === 'EMAIL_OTP') {
-            pendingUser = cognitoUser;
+            setPendingUser(cognitoUser);
             resolve({
               success: false,
               mfaRequired: true,
@@ -326,11 +355,12 @@ export async function completeNewPasswordChallenge(
   newPassword: string,
   _session: string,
 ): Promise<{ success: boolean; mfaRequired?: boolean; session?: string; challengeName?: string; error?: string }> {
-  if (!pendingUser) {
-    return { success: false, error: 'No pending authentication session.' };
+  const pending = getPendingUser();
+  if (!pending) {
+    return { success: false, error: 'Session expired \u2014 please sign in again.' };
   }
 
-  const cognitoUser = pendingUser;
+  const cognitoUser = pending.user;
 
   return new Promise((resolve) => {
     try {
@@ -339,7 +369,7 @@ export async function completeNewPasswordChallenge(
           // HIPAA: MFA is mandatory after password change too.
           console.error('MFA bypass detected: Cognito returned tokens without MFA challenge after password change.');
           cognitoUser.signOut();
-          pendingUser = null;
+          setPendingUser(null);
           resolve({ success: false, error: 'MFA is required but was not enforced. Please contact your administrator.' });
         },
 
@@ -405,9 +435,19 @@ export async function completeNewPasswordChallenge(
 export async function completeMfaChallenge(
   email: string,
   code: string,
-  session: string,
+  _session: string,
   challengeName: string,
 ): Promise<{ success: boolean; error?: string }> {
+  // Read session from the module-level pendingUser (source of truth),
+  // not from the _session param which may be stale React state.
+  const pending = getPendingUser();
+  if (!pending) {
+    return { success: false, error: 'Session expired \u2014 please sign in again.' };
+  }
+
+  const activeSession = pending.session;
+  const activeEmail = pending.email || email;
+
   // EMAIL_OTP: the library doesn't support this challenge type, so use the raw API.
   // The SRP password exchange is already complete at this point — only the OTP code is sent.
   if (challengeName === 'EMAIL_OTP') {
@@ -417,16 +457,14 @@ export async function completeMfaChallenge(
         ClientId: POOL_CONFIG.ClientId,
         ChallengeResponses: {
           EMAIL_OTP_CODE: code,
-          USERNAME: email,
+          USERNAME: activeEmail,
         },
-        Session: session,
+        Session: activeSession,
       });
 
       if (data.AuthenticationResult) {
-        if (pendingUser) {
-          cacheSession(pendingUser, data.AuthenticationResult);
-          pendingUser = null;
-        }
+        cacheSession(pending.user, data.AuthenticationResult);
+        setPendingUser(null);
         return { success: true };
       }
 
@@ -437,11 +475,7 @@ export async function completeMfaChallenge(
   }
 
   // SMS_MFA / SOFTWARE_TOKEN_MFA: use the library's sendMFACode
-  if (!pendingUser) {
-    return { success: false, error: 'No pending MFA session.' };
-  }
-
-  const cognitoUser = pendingUser;
+  const cognitoUser = pending.user;
   const mfaType = challengeName === 'SOFTWARE_TOKEN_MFA' ? 'SOFTWARE_TOKEN_MFA' : 'SMS_MFA';
 
   return new Promise((resolve) => {
@@ -449,7 +483,7 @@ export async function completeMfaChallenge(
       code,
       {
         onSuccess: () => {
-          pendingUser = null;
+          setPendingUser(null);
           resolve({ success: true });
         },
         onFailure: (err) => {
@@ -555,7 +589,7 @@ export async function changePassword(
 // ── Sign Out (with server-side revocation) ──
 
 export async function signOut(): Promise<void> {
-  pendingUser = null;
+  clearPendingUser();
 
   const cognitoUser = getUserPool().getCurrentUser();
   if (!cognitoUser) return;

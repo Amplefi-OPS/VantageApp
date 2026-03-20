@@ -10,6 +10,8 @@ import {
   getCurrentUser,
   isAuthenticated,
   getTokensAsync,
+  getPendingUser,
+  clearPendingUser,
   type AuthUser,
 } from './cognito'
 import { queryClient } from '../lib/queryClient'
@@ -120,6 +122,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval)
   }, [user])
 
+  // ── MFA Session Timeout (3 minutes) ──
+  // If the user sits on the MFA screen too long, the Cognito challenge session
+  // expires server-side. Clear local state and return to login.
+  useEffect(() => {
+    if (!mfaRequired) return
+
+    const timeout = setTimeout(() => {
+      clearPendingUser()
+      setMfaRequired(false)
+      setMfaSession(null)
+      setChallengeName('')
+      setPendingEmail('')
+    }, 3 * 60 * 1000) // 3 minutes
+
+    return () => clearTimeout(timeout)
+  }, [mfaRequired])
+
   // Check existing session on mount
   useEffect(() => {
     if (isAuthenticated()) {
@@ -212,10 +231,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [mfaSession, pendingEmail])
 
   const verifyMfa = useCallback(async (code: string) => {
-    if (!mfaSession || !pendingEmail) return { success: false, error: 'No MFA session' }
+    // Read session from module-level pendingUser (survives re-renders),
+    // falling back to React state for the challenge metadata.
+    const pending = getPendingUser()
+    if (!pending) {
+      // Session expired or was never set — redirect to login
+      setMfaRequired(false)
+      setMfaSession(null)
+      setChallengeName('')
+      setPendingEmail('')
+      return { success: false, error: 'Session expired \u2014 please sign in again.' }
+    }
+
+    const activeEmail = pending.email || pendingEmail
+    const activeSession = pending.session || mfaSession || ''
+    const activeChallenge = challengeName || 'EMAIL_OTP'
+
     setIsLoading(true)
     try {
-      const result = await completeMfaChallenge(pendingEmail, code, mfaSession, challengeName)
+      const result = await completeMfaChallenge(activeEmail, code, activeSession, activeChallenge)
       if (result.success) {
         setUser(getCurrentUser())
         setMfaRequired(false)

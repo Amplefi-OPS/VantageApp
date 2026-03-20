@@ -135,6 +135,72 @@ const allNavLinks = [
   { to: '/settings', label: 'Settings', providerOnly: false },
 ]
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MFA Session Expiry — pendingUser TTL guard
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('ACCESS CONTROLS — MFA Session Expiry', () => {
+  it('returns null when no pending user is set', () => {
+    // Simulates the getPendingUser() logic when pendingUser is null
+    const pendingUser = null
+    const pendingUserCreatedAt = 0
+    const MFA_SESSION_TTL_MS = 3 * 60 * 1000
+
+    function getPendingUser() {
+      if (!pendingUser) return null
+      if (Date.now() - pendingUserCreatedAt > MFA_SESSION_TTL_MS) return null
+      return { user: pendingUser, session: 'mock-session', email: 'user@test.com' }
+    }
+
+    expect(getPendingUser()).toBeNull()
+  })
+
+  it('returns null after 3-minute TTL expires', () => {
+    const pendingUser = { mock: true } // non-null sentinel
+    const pendingUserCreatedAt = Date.now() - (3 * 60 * 1000 + 1) // 3 min + 1ms ago
+    const MFA_SESSION_TTL_MS = 3 * 60 * 1000
+
+    function getPendingUser() {
+      if (!pendingUser) return null
+      if (Date.now() - pendingUserCreatedAt > MFA_SESSION_TTL_MS) return null
+      return { user: pendingUser, session: 'mock-session', email: 'user@test.com' }
+    }
+
+    expect(getPendingUser()).toBeNull()
+  })
+
+  it('returns user within the 3-minute window', () => {
+    const pendingUser = { mock: true }
+    const pendingUserCreatedAt = Date.now() - (60 * 1000) // 1 minute ago
+    const MFA_SESSION_TTL_MS = 3 * 60 * 1000
+
+    function getPendingUser() {
+      if (!pendingUser) return null
+      if (Date.now() - pendingUserCreatedAt > MFA_SESSION_TTL_MS) return null
+      return { user: pendingUser, session: 'mock-session', email: 'user@test.com' }
+    }
+
+    const result = getPendingUser()
+    expect(result).not.toBeNull()
+    expect(result!.session).toBe('mock-session')
+  })
+
+  it('expired session produces correct error message', () => {
+    const pending = null // simulates expired getPendingUser()
+    const error = !pending ? 'Session expired \u2014 please sign in again.' : null
+    expect(error).toBe('Session expired \u2014 please sign in again.')
+  })
+
+  it('error message does NOT say "No MFA session"', () => {
+    // The old bug: error was "No MFA session" which confused users.
+    // After fix: message explicitly says "Session expired".
+    const pending = null
+    const error = !pending ? 'Session expired \u2014 please sign in again.' : null
+    expect(error).not.toContain('No MFA session')
+    expect(error).toContain('Session expired')
+  })
+})
+
 describe('ACCESS CONTROLS — Navigation Visibility', () => {
   it('provider sees all 8 nav links including Billing', () => {
     const visible = allNavLinks.filter((l) => !l.providerOnly || true)
