@@ -59,32 +59,29 @@ function getUserPool(): CognitoUserPool {
 sessionStorage.removeItem('vantage-auth-tokens');
 
 // ── Pending auth state (module-level, survives React re-renders) ──
+// Only store the CognitoUser object and the username.
+// Session is always read live from (pendingCognitoUser as any).Session
+// because the library sets it internally and a stale copy will be empty.
 
 let pendingCognitoUser: CognitoUser | null = null;
-let pendingSession: string | null = null;
 let pendingUsername: string | null = null;
 let pendingUserCreatedAt: number = 0;
 
 const MFA_SESSION_TTL_MS = 3 * 60 * 1000; // 3 minutes
 
-function setPendingAuth(user: CognitoUser | null, session?: string, username?: string): void {
+function setPendingAuth(user: CognitoUser | null, username?: string): void {
   pendingCognitoUser = user;
-  pendingSession = session ?? (user ? (user as any).Session as string || null : null);
   pendingUsername = username ?? (user ? user.getUsername() : null);
   pendingUserCreatedAt = user ? Date.now() : 0;
 }
 
-export function getPendingUser(): { user: CognitoUser; session: string; email: string } | null {
+export function getPendingUser(): CognitoUser | null {
   if (!pendingCognitoUser) return null;
   if (Date.now() - pendingUserCreatedAt > MFA_SESSION_TTL_MS) {
     setPendingAuth(null);
     return null;
   }
-  return {
-    user: pendingCognitoUser,
-    session: pendingSession || (pendingCognitoUser as any).Session as string || '',
-    email: pendingUsername || pendingCognitoUser.getUsername(),
-  };
+  return pendingCognitoUser;
 }
 
 export function clearPendingUser(): void {
@@ -259,7 +256,9 @@ export async function signIn(email: string, password: string): Promise<SignInRes
           // for unknown challenge types. Check CognitoUser internal state.
           const challenge = (cognitoUser as any).challengeName;
           if (challenge === 'EMAIL_OTP' || challenge === 'CUSTOM_CHALLENGE') {
-            setPendingAuth(cognitoUser, (cognitoUser as any).Session, email);
+            setPendingAuth(cognitoUser, email);
+            console.log('[auth] onFailure EMAIL_OTP detected, session length:',
+              (cognitoUser as any).Session?.length ?? 'MISSING');
             resolve({ type: 'MFA_REQUIRED', challengeName: 'EMAIL_OTP' });
             return;
           }
@@ -267,29 +266,30 @@ export async function signIn(email: string, password: string): Promise<SignInRes
         },
 
         newPasswordRequired: () => {
-          setPendingAuth(cognitoUser, (cognitoUser as any).Session, email);
+          setPendingAuth(cognitoUser, email);
           resolve({ type: 'NEW_PASSWORD_REQUIRED' });
         },
 
         mfaRequired: (challengeName) => {
-          setPendingAuth(cognitoUser, (cognitoUser as any).Session, email);
+          setPendingAuth(cognitoUser, email);
           resolve({ type: 'MFA_REQUIRED', challengeName: challengeName || 'SMS_MFA' });
         },
 
         totpRequired: () => {
-          setPendingAuth(cognitoUser, (cognitoUser as any).Session, email);
+          setPendingAuth(cognitoUser, email);
           resolve({ type: 'MFA_REQUIRED', challengeName: 'SOFTWARE_TOKEN_MFA' });
         },
 
         customChallenge: (challengeParameters) => {
           // EMAIL_OTP with ALLOW_CUSTOM_AUTH routes here.
+          // The library stores the session on cognitoUser.Session (capital S)
+          // BEFORE calling this callback — read it live, never copy.
+          setPendingAuth(cognitoUser, email);
           console.log('[auth] customChallenge fired:', {
             challengeParameters,
             challengeName: (cognitoUser as any).challengeName,
-            hasSession: !!(cognitoUser as any).Session,
-            sessionPrefix: ((cognitoUser as any).Session || '').slice(0, 20) + '...',
+            sessionLength: (cognitoUser as any).Session?.length ?? 'MISSING',
           });
-          setPendingAuth(cognitoUser, (cognitoUser as any).Session, email);
           resolve({ type: 'MFA_REQUIRED', challengeName: 'EMAIL_OTP' });
         },
       });
@@ -306,12 +306,10 @@ export async function completeNewPasswordChallenge(
   newPassword: string,
   _session: string,
 ): Promise<SignInResult> {
-  const pending = getPendingUser();
-  if (!pending) {
+  const cognitoUser = getPendingUser();
+  if (!cognitoUser) {
     return { type: 'ERROR', error: 'Session expired \u2014 please sign in again.' };
   }
-
-  const cognitoUser = pending.user;
 
   return new Promise((resolve) => {
     try {
@@ -321,19 +319,17 @@ export async function completeNewPasswordChallenge(
           resolve({ type: 'ERROR', error: 'Authentication error \u2014 please try again.' });
         },
 
-        onFailure: (err) => {
+        onFailure: (err: any) => {
           const challenge = (cognitoUser as any).challengeName;
           if (challenge === 'EMAIL_OTP' || challenge === 'CUSTOM_CHALLENGE') {
-            // Update the stored session for the next challenge step
-            pendingSession = (cognitoUser as any).Session || pendingSession;
             resolve({ type: 'MFA_REQUIRED', challengeName: 'EMAIL_OTP' });
             return;
           }
           resolve({ type: 'ERROR', error: sanitizeError(err, 'Failed to set new password.') });
         },
 
-        mfaRequired: (challengeName) => {
-          resolve({ type: 'MFA_REQUIRED', challengeName: challengeName || 'SMS_MFA' });
+        mfaRequired: (cn: any) => {
+          resolve({ type: 'MFA_REQUIRED', challengeName: cn || 'SMS_MFA' });
         },
 
         totpRequired: () => {
@@ -341,7 +337,6 @@ export async function completeNewPasswordChallenge(
         },
 
         customChallenge: () => {
-          pendingSession = (cognitoUser as any).Session || pendingSession;
           resolve({ type: 'MFA_REQUIRED', challengeName: 'EMAIL_OTP' });
         },
 
@@ -363,16 +358,26 @@ export async function completeMfaChallenge(
   _session: string,
   challengeName: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const pending = getPendingUser();
-  if (!pending) {
+  const cognitoUser = getPendingUser();
+  if (!cognitoUser) {
     return { success: false, error: 'Session expired \u2014 please sign in again.' };
   }
-
-  const cognitoUser = pending.user;
 
   // EMAIL_OTP: use raw RespondToAuthChallenge with ChallengeName 'EMAIL_OTP'.
   // The library's sendCustomChallengeAnswer sends 'CUSTOM_CHALLENGE' which Cognito rejects.
   if (challengeName === 'EMAIL_OTP' || challengeName === 'CUSTOM_CHALLENGE') {
+    // Read session directly from the live CognitoUser object — never from a stale copy.
+    const session = (cognitoUser as any).Session as string;
+    const username = (cognitoUser as any).username as string || pendingUsername || '';
+
+    if (!session || session.length < 20) {
+      console.error('[auth] Session missing or too short:', {
+        sessionLength: session?.length ?? 0,
+        username,
+      });
+      return { success: false, error: 'Session expired \u2014 please sign in again.' };
+    }
+
     try {
       const endpoint = `https://cognito-idp.${POOL_CONFIG.region}.amazonaws.com/`;
       const response = await fetch(endpoint, {
@@ -384,10 +389,10 @@ export async function completeMfaChallenge(
         body: JSON.stringify({
           ClientId: POOL_CONFIG.ClientId,
           ChallengeName: 'EMAIL_OTP',
-          Session: pending.session,
+          Session: session,
           ChallengeResponses: {
             EMAIL_OTP_CODE: code,
-            USERNAME: pending.email,
+            USERNAME: username,
           },
         }),
       });
@@ -398,8 +403,6 @@ export async function completeMfaChallenge(
           status: response.status,
           code: err?.__type || err?.code,
           message: err?.message,
-          sessionPrefix: (pending.session || '').slice(0, 20) + '...',
-          username: pending.email,
         });
         const errCode = err?.__type?.split('#').pop() || '';
         const errMsg = COGNITO_ERROR_MAP[errCode] || err?.message || 'Incorrect code \u2014 please try again.';
@@ -410,12 +413,12 @@ export async function completeMfaChallenge(
 
       if (data.AuthenticationResult) {
         // Cache tokens on the CognitoUser so the library's session state is consistent
-        const session = new CognitoUserSession({
+        const userSession = new CognitoUserSession({
           IdToken: new CognitoIdToken({ IdToken: data.AuthenticationResult.IdToken }),
           AccessToken: new CognitoAccessToken({ AccessToken: data.AuthenticationResult.AccessToken }),
           RefreshToken: new CognitoRefreshToken({ RefreshToken: data.AuthenticationResult.RefreshToken }),
         });
-        cognitoUser.setSignInUserSession(session);
+        cognitoUser.setSignInUserSession(userSession);
         setPendingAuth(null);
         return { success: true };
       }

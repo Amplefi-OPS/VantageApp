@@ -199,11 +199,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const setNewPassword = useCallback(async (newPassword: string) => {
-    const pending = getPendingUser()
-    if (!pending) return { success: false, error: 'Session expired \u2014 please sign in again.' }
+    const cognitoUser = getPendingUser()
+    if (!cognitoUser) return { success: false, error: 'Session expired \u2014 please sign in again.' }
     setIsLoading(true)
     try {
-      const result = await completeNewPasswordChallenge(pending.email, newPassword, '')
+      const result = await completeNewPasswordChallenge('', newPassword, '')
       if (result.type === 'MFA_REQUIRED') {
         setNewPasswordRequired(false)
         setMfaRequired(true)
@@ -225,19 +225,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const verifyMfa = useCallback(async (code: string) => {
     // Read from module-level pendingCognitoUser (survives re-renders).
-    const pending = getPendingUser()
-    if (!pending) {
+    const cognitoUser = getPendingUser()
+    if (!cognitoUser) {
       setMfaRequired(false)
       setChallengeName('')
       setPendingEmail('')
       return { success: false, error: 'Session expired \u2014 please sign in again.' }
     }
 
-    const activeChallenge = challengeName || 'CUSTOM_CHALLENGE'
+    const activeChallenge = challengeName || 'EMAIL_OTP'
 
     setIsLoading(true)
     try {
-      const result = await completeMfaChallenge(pending.email, code, '', activeChallenge)
+      const result = await completeMfaChallenge('', code, '', activeChallenge)
       if (result.success) {
         setUser(getCurrentUser())
         setMfaRequired(false)
