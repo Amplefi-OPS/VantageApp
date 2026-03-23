@@ -58,35 +58,37 @@ function getUserPool(): CognitoUserPool {
 // Clean up legacy token key from the pre-SRP implementation
 sessionStorage.removeItem('vantage-auth-tokens');
 
-// ── Pending CognitoUser (module-level, survives React re-renders) ──
+// ── Pending auth state (module-level, survives React re-renders) ──
 
 let pendingCognitoUser: CognitoUser | null = null;
+let pendingSession: string | null = null;
+let pendingUsername: string | null = null;
 let pendingUserCreatedAt: number = 0;
 
 const MFA_SESSION_TTL_MS = 3 * 60 * 1000; // 3 minutes
 
-function setPendingUser(user: CognitoUser | null): void {
+function setPendingAuth(user: CognitoUser | null, session?: string, username?: string): void {
   pendingCognitoUser = user;
+  pendingSession = session ?? (user ? (user as any).Session as string || null : null);
+  pendingUsername = username ?? (user ? user.getUsername() : null);
   pendingUserCreatedAt = user ? Date.now() : 0;
 }
 
 export function getPendingUser(): { user: CognitoUser; session: string; email: string } | null {
   if (!pendingCognitoUser) return null;
   if (Date.now() - pendingUserCreatedAt > MFA_SESSION_TTL_MS) {
-    pendingCognitoUser = null;
-    pendingUserCreatedAt = 0;
+    setPendingAuth(null);
     return null;
   }
   return {
     user: pendingCognitoUser,
-    session: (pendingCognitoUser as any).Session as string || '',
-    email: pendingCognitoUser.getUsername(),
+    session: pendingSession || (pendingCognitoUser as any).Session as string || '',
+    email: pendingUsername || pendingCognitoUser.getUsername(),
   };
 }
 
 export function clearPendingUser(): void {
-  pendingCognitoUser = null;
-  pendingUserCreatedAt = 0;
+  setPendingAuth(null);
 }
 
 // ── JWT Decode ──
@@ -260,35 +262,33 @@ export async function signIn(email: string, password: string): Promise<SignInRes
           // for unknown challenge types. Check CognitoUser internal state.
           const challenge = (cognitoUser as any).challengeName;
           if (challenge === 'EMAIL_OTP' || challenge === 'CUSTOM_CHALLENGE') {
-            setPendingUser(cognitoUser);
-            resolve({ type: 'MFA_REQUIRED', challengeName: challenge });
+            setPendingAuth(cognitoUser, (cognitoUser as any).Session, email);
+            resolve({ type: 'MFA_REQUIRED', challengeName: 'EMAIL_OTP' });
             return;
           }
           resolve({ type: 'ERROR', error: sanitizeError(err, 'Sign-in failed. Please check your email and password.') });
         },
 
         newPasswordRequired: () => {
-          setPendingUser(cognitoUser);
+          setPendingAuth(cognitoUser, (cognitoUser as any).Session, email);
           resolve({ type: 'NEW_PASSWORD_REQUIRED' });
         },
 
         mfaRequired: (challengeName) => {
-          setPendingUser(cognitoUser);
+          setPendingAuth(cognitoUser, (cognitoUser as any).Session, email);
           resolve({ type: 'MFA_REQUIRED', challengeName: challengeName || 'SMS_MFA' });
         },
 
         totpRequired: () => {
-          setPendingUser(cognitoUser);
+          setPendingAuth(cognitoUser, (cognitoUser as any).Session, email);
           resolve({ type: 'MFA_REQUIRED', challengeName: 'SOFTWARE_TOKEN_MFA' });
         },
 
-        customChallenge: (challengeParams) => {
-          // EMAIL_OTP with ALLOW_CUSTOM_AUTH enabled routes here
-          setPendingUser(cognitoUser);
-          resolve({
-            type: 'MFA_REQUIRED',
-            challengeName: (cognitoUser as any).challengeName || 'CUSTOM_CHALLENGE',
-          });
+        customChallenge: () => {
+          // EMAIL_OTP with ALLOW_CUSTOM_AUTH routes here.
+          // Store the session from the CognitoUser's internal state.
+          setPendingAuth(cognitoUser, (cognitoUser as any).Session, email);
+          resolve({ type: 'MFA_REQUIRED', challengeName: 'EMAIL_OTP' });
         },
       });
     } catch (err) {
@@ -325,7 +325,9 @@ export async function completeNewPasswordChallenge(
         onFailure: (err) => {
           const challenge = (cognitoUser as any).challengeName;
           if (challenge === 'EMAIL_OTP' || challenge === 'CUSTOM_CHALLENGE') {
-            resolve({ type: 'MFA_REQUIRED', challengeName: challenge });
+            // Update the stored session for the next challenge step
+            pendingSession = (cognitoUser as any).Session || pendingSession;
+            resolve({ type: 'MFA_REQUIRED', challengeName: 'EMAIL_OTP' });
             return;
           }
           resolve({ type: 'ERROR', error: sanitizeError(err, 'Failed to set new password.') });
@@ -340,10 +342,8 @@ export async function completeNewPasswordChallenge(
         },
 
         customChallenge: () => {
-          resolve({
-            type: 'MFA_REQUIRED',
-            challengeName: (cognitoUser as any).challengeName || 'CUSTOM_CHALLENGE',
-          });
+          pendingSession = (cognitoUser as any).Session || pendingSession;
+          resolve({ type: 'MFA_REQUIRED', challengeName: 'EMAIL_OTP' });
         },
 
         mfaSetup: () => {
@@ -371,24 +371,52 @@ export async function completeMfaChallenge(
 
   const cognitoUser = pending.user;
 
-  // EMAIL_OTP / CUSTOM_CHALLENGE: use sendCustomChallengeAnswer
-  // This keeps the library's internal CognitoUser session state consistent.
+  // EMAIL_OTP: use raw RespondToAuthChallenge with ChallengeName 'EMAIL_OTP'.
+  // The library's sendCustomChallengeAnswer sends 'CUSTOM_CHALLENGE' which Cognito rejects.
   if (challengeName === 'EMAIL_OTP' || challengeName === 'CUSTOM_CHALLENGE') {
-    return new Promise((resolve) => {
-      cognitoUser.sendCustomChallengeAnswer(code, {
-        onSuccess: () => {
-          setPendingUser(null);
-          resolve({ success: true });
+    try {
+      const endpoint = `https://cognito-idp.${POOL_CONFIG.region}.amazonaws.com/`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.RespondToAuthChallenge',
         },
-        onFailure: (err) => {
-          resolve({ success: false, error: sanitizeError(err, 'Invalid or expired verification code. Please try again.') });
-        },
-        customChallenge: () => {
-          // Another challenge round — treat as failure (code was wrong)
-          resolve({ success: false, error: 'Invalid verification code. Please try again.' });
-        },
+        body: JSON.stringify({
+          ClientId: POOL_CONFIG.ClientId,
+          ChallengeName: 'EMAIL_OTP',
+          Session: pending.session,
+          ChallengeResponses: {
+            EMAIL_OTP_CODE: code,
+            USERNAME: pending.email,
+          },
+        }),
       });
-    });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errCode = data?.__type?.split('#').pop() || '';
+        const errMsg = COGNITO_ERROR_MAP[errCode] || 'Incorrect code \u2014 please try again.';
+        return { success: false, error: errMsg };
+      }
+
+      if (data.AuthenticationResult) {
+        // Cache tokens on the CognitoUser so the library's session state is consistent
+        const session = new CognitoUserSession({
+          IdToken: new CognitoIdToken({ IdToken: data.AuthenticationResult.IdToken }),
+          AccessToken: new CognitoAccessToken({ AccessToken: data.AuthenticationResult.AccessToken }),
+          RefreshToken: new CognitoRefreshToken({ RefreshToken: data.AuthenticationResult.RefreshToken }),
+        });
+        cognitoUser.setSignInUserSession(session);
+        setPendingAuth(null);
+        return { success: true };
+      }
+
+      return { success: false, error: 'Verification failed. Please try again.' };
+    } catch {
+      return { success: false, error: 'Unable to connect to the server. Please check your connection and try again.' };
+    }
   }
 
   // SMS_MFA / SOFTWARE_TOKEN_MFA: use the library's sendMFACode
@@ -399,7 +427,7 @@ export async function completeMfaChallenge(
       code,
       {
         onSuccess: () => {
-          setPendingUser(null);
+          setPendingAuth(null);
           resolve({ success: true });
         },
         onFailure: (err) => {
