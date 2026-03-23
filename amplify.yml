@@ -21,16 +21,18 @@ frontend:
 customHeaders:
   - pattern: '**/*'
     headers:
+      - key: 'Content-Security-Policy'
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://cognito-idp.us-east-1.amazonaws.com https://zlbm38o7g5.execute-api.us-east-1.amazonaws.com https://api.stripe.com; frame-src https://js.stripe.com; frame-ancestors 'none'; img-src 'self' data:; font-src 'self' data:; media-src 'self' https://*.s3.us-east-1.amazonaws.com https://*.s3.amazonaws.com"
       - key: 'Strict-Transport-Security'
         value: 'max-age=31536000; includeSubDomains'
-      - key: 'X-Content-Type-Options'
-        value: 'nosniff'
       - key: 'X-Frame-Options'
         value: 'DENY'
-      - key: 'X-XSS-Protection'
-        value: '1; mode=block'
+      - key: 'X-Content-Type-Options'
+        value: 'nosniff'
       - key: 'Referrer-Policy'
         value: 'strict-origin-when-cross-origin'
+      - key: 'Permissions-Policy'
+        value: 'camera=(), microphone=(self), geolocation=()'
   - pattern: '/assets/*'
     headers:
       - key: 'Cache-Control'
