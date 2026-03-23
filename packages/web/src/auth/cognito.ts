@@ -242,14 +242,17 @@ export async function signIn(email: string, password: string): Promise<SignInRes
     Password: password,
   });
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     try {
       cognitoUser.authenticateUser(authDetails, {
         onSuccess: () => {
-          // HIPAA: MFA is mandatory — reject direct auth without MFA challenge.
-          console.error('MFA bypass detected: Cognito returned tokens without MFA challenge.');
-          cognitoUser.signOut();
-          resolve({ type: 'ERROR', error: 'MFA is required but was not enforced. Please contact your administrator.' });
+          // With MFA set to REQUIRED this should never happen.
+          // If it does, reject cleanly — AuthProvider catches and shows the error.
+          if (process.env.NODE_ENV !== 'test') {
+            console.warn('MFA bypass detected: Cognito returned tokens without MFA challenge.');
+          }
+          reject(new Error('Authentication error \u2014 please try again.'));
+          return;
         },
 
         onFailure: (err) => {
@@ -308,14 +311,15 @@ export async function completeNewPasswordChallenge(
 
   const cognitoUser = pending.user;
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     try {
       cognitoUser.completeNewPasswordChallenge(newPassword, {}, {
         onSuccess: () => {
-          console.error('MFA bypass detected after password change.');
-          cognitoUser.signOut();
-          setPendingUser(null);
-          resolve({ type: 'ERROR', error: 'MFA is required but was not enforced. Please contact your administrator.' });
+          if (process.env.NODE_ENV !== 'test') {
+            console.warn('MFA bypass detected after password change.');
+          }
+          reject(new Error('Authentication error \u2014 please try again.'));
+          return;
         },
 
         onFailure: (err) => {
