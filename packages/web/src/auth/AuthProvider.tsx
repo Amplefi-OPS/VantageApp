@@ -10,8 +10,7 @@ import {
   getCurrentUser,
   isAuthenticated,
   getTokensAsync,
-  getPendingUser,
-  clearPendingUser,
+  clearPendingSession,
   type AuthUser,
 } from './cognito'
 import { queryClient } from '../lib/queryClient'
@@ -128,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!mfaRequired) return
 
     const timeout = setTimeout(() => {
-      clearPendingUser()
+      clearPendingSession()
       setMfaRequired(false)
       setChallengeName('')
       setPendingEmail('')
@@ -199,40 +198,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const setNewPassword = useCallback(async (newPassword: string) => {
-    const cognitoUser = getPendingUser()
-    if (!cognitoUser) return { success: false, error: 'Session expired \u2014 please sign in again.' }
     setIsLoading(true)
     try {
       const result = await completeNewPasswordChallenge('', newPassword, '')
       if (result.type === 'MFA_REQUIRED') {
         setNewPasswordRequired(false)
         setMfaRequired(true)
-        setChallengeName(result.challengeName || 'CUSTOM_CHALLENGE')
+        setChallengeName(result.challengeName || 'EMAIL_OTP')
         setIsLoading(false)
         return { success: false, error: 'MFA required' }
       }
-      if (result.type === 'ERROR') {
+      if (result.type === 'SUCCESS') {
+        setUser(getCurrentUser())
+        setNewPasswordRequired(false)
         setIsLoading(false)
-        return { success: false, error: result.error }
+        return { success: true }
       }
       setIsLoading(false)
       return { success: false, error: result.error || 'Unexpected result.' }
-    } catch (err) {
+    } catch (err: any) {
       setIsLoading(false)
-      return { success: false, error: String(err) }
+      return { success: false, error: err?.message || String(err) }
     }
   }, [])
 
   const verifyMfa = useCallback(async (code: string) => {
-    // Read from module-level pendingCognitoUser (survives re-renders).
-    const cognitoUser = getPendingUser()
-    if (!cognitoUser) {
-      setMfaRequired(false)
-      setChallengeName('')
-      setPendingEmail('')
-      return { success: false, error: 'Session expired \u2014 please sign in again.' }
-    }
-
     const activeChallenge = challengeName || 'EMAIL_OTP'
 
     setIsLoading(true)
