@@ -58,35 +58,34 @@ function getUserPool(): CognitoUserPool {
 // Clean up legacy token key from the pre-SRP implementation
 sessionStorage.removeItem('vantage-auth-tokens');
 
-// Pending CognitoUser for multi-step auth flows (new password → MFA).
-// Module-level so it survives React re-renders — this is the source of truth.
-let pendingUser: CognitoUser | null = null;
+// ── Pending CognitoUser (module-level, survives React re-renders) ──
+
+let pendingCognitoUser: CognitoUser | null = null;
 let pendingUserCreatedAt: number = 0;
 
 const MFA_SESSION_TTL_MS = 3 * 60 * 1000; // 3 minutes
 
 function setPendingUser(user: CognitoUser | null): void {
-  pendingUser = user;
+  pendingCognitoUser = user;
   pendingUserCreatedAt = user ? Date.now() : 0;
 }
 
-/** Check if a pending CognitoUser exists and its session hasn't expired. */
 export function getPendingUser(): { user: CognitoUser; session: string; email: string } | null {
-  if (!pendingUser) return null;
+  if (!pendingCognitoUser) return null;
   if (Date.now() - pendingUserCreatedAt > MFA_SESSION_TTL_MS) {
-    pendingUser = null;
+    pendingCognitoUser = null;
     pendingUserCreatedAt = 0;
     return null;
   }
   return {
-    user: pendingUser,
-    session: (pendingUser as any).Session as string || '',
-    email: pendingUser.getUsername(),
+    user: pendingCognitoUser,
+    session: (pendingCognitoUser as any).Session as string || '',
+    email: pendingCognitoUser.getUsername(),
   };
 }
 
 export function clearPendingUser(): void {
-  pendingUser = null;
+  pendingCognitoUser = null;
   pendingUserCreatedAt = 0;
 }
 
@@ -96,21 +95,6 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
   const payload = token.split('.')[1];
   const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
   return JSON.parse(decoded);
-}
-
-// ── Raw Cognito API (for EMAIL_OTP — not supported by the library) ──
-
-async function cognitoFetch(target: string, body: Record<string, unknown>): Promise<any> {
-  const endpoint = `https://cognito-idp.${POOL_CONFIG.region}.amazonaws.com/`;
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-amz-json-1.1',
-      'X-Amz-Target': `AWSCognitoIdentityProviderService.${target}`,
-    },
-    body: JSON.stringify(body),
-  });
-  return response.json();
 }
 
 // ── Error Message Sanitization ──
@@ -134,7 +118,6 @@ const COGNITO_ERROR_MAP: Record<string, string> = {
 };
 
 function sanitizeError(err: any, fallback: string): string {
-  // amazon-cognito-identity-js errors use .code; raw API responses use .__type
   const code = err?.code || err?.name || err?.__type?.split('#').pop() || '';
   if (COGNITO_ERROR_MAP[code]) return COGNITO_ERROR_MAP[code];
   return fallback;
@@ -151,19 +134,7 @@ function extractTokens(session: CognitoUserSession): AuthTokens {
   };
 }
 
-/** Build a CognitoUserSession from a raw AuthenticationResult and cache it on the user */
-function cacheSession(cognitoUser: CognitoUser, authResult: any): void {
-  const session = new CognitoUserSession({
-    IdToken: new CognitoIdToken({ IdToken: authResult.IdToken }),
-    AccessToken: new CognitoAccessToken({ AccessToken: authResult.AccessToken }),
-    RefreshToken: new CognitoRefreshToken({ RefreshToken: authResult.RefreshToken }),
-  });
-  cognitoUser.setSignInUserSession(session); // also writes to sessionStorage
-}
-
 // ── Synchronous Token Access ──
-// Reads directly from sessionStorage using the library's key format,
-// since pool.getCurrentUser().getSignInUserSession() requires an async getSession() first.
 
 export function getTokens(): AuthTokens | null {
   const clientId = POOL_CONFIG.ClientId;
@@ -184,7 +155,6 @@ export function getTokens(): AuthTokens | null {
   try {
     const payload = decodeJwtPayload(accessToken);
     const exp = payload.exp as number;
-    // 5-minute buffer before expiry
     if (Date.now() / 1000 > exp - 300) return null;
     return { idToken, accessToken, refreshToken: refreshToken || '', expiresAt: exp };
   } catch {
@@ -192,7 +162,6 @@ export function getTokens(): AuthTokens | null {
   }
 }
 
-/** Get current user from the ID token in sessionStorage */
 export function getCurrentUser(): AuthUser | null {
   const tokens = getTokens();
   if (!tokens) return null;
@@ -221,12 +190,10 @@ export function getCurrentUser(): AuthUser | null {
   }
 }
 
-/** Check if user is authenticated (synchronous) */
 export function isAuthenticated(): boolean {
   return getTokens() !== null;
 }
 
-/** Auth header for API calls */
 export function getAuthHeader(): string | null {
   const tokens = getTokens();
   return tokens ? `Bearer ${tokens.idToken}` : null;
@@ -249,18 +216,19 @@ export async function getTokensAsync(): Promise<AuthTokens | null> {
   });
 }
 
+// ── Sign In Result ──
+
+export interface SignInResult {
+  type: 'SUCCESS' | 'MFA_REQUIRED' | 'NEW_PASSWORD_REQUIRED' | 'ERROR';
+  error?: string;
+  challengeName?: string;
+}
+
 // ── Sign In (SRP) ──
 
-export async function signIn(email: string, password: string): Promise<{
-  success: boolean;
-  mfaRequired?: boolean;
-  newPasswordRequired?: boolean;
-  session?: string;
-  challengeName?: string;
-  error?: string;
-}> {
+export async function signIn(email: string, password: string): Promise<SignInResult> {
   if (!POOL_CONFIG.UserPoolId || !POOL_CONFIG.ClientId) {
-    return { success: false, error: 'Cognito is not configured. Set VITE_COGNITO_USER_POOL_ID and VITE_COGNITO_CLIENT_ID.' };
+    return { type: 'ERROR', error: 'Cognito is not configured. Set VITE_COGNITO_USER_POOL_ID and VITE_COGNITO_CLIENT_ID.' };
   }
 
   const pool = getUserPool();
@@ -281,69 +249,47 @@ export async function signIn(email: string, password: string): Promise<{
           // HIPAA: MFA is mandatory — reject direct auth without MFA challenge.
           console.error('MFA bypass detected: Cognito returned tokens without MFA challenge.');
           cognitoUser.signOut();
-          resolve({ success: false, error: 'MFA is required but was not enforced. Please contact your administrator.' });
+          resolve({ type: 'ERROR', error: 'MFA is required but was not enforced. Please contact your administrator.' });
         },
 
         onFailure: (err) => {
-          // The library doesn't handle EMAIL_OTP natively — it lands here.
-          // Detect it from the CognitoUser's internal state (set before the default case).
+          // The library doesn't handle EMAIL_OTP natively — it may land here
+          // for unknown challenge types. Check CognitoUser internal state.
           const challenge = (cognitoUser as any).challengeName;
-          if (challenge === 'EMAIL_OTP') {
+          if (challenge === 'EMAIL_OTP' || challenge === 'CUSTOM_CHALLENGE') {
             setPendingUser(cognitoUser);
-            resolve({
-              success: false,
-              mfaRequired: true,
-              session: (cognitoUser as any).Session as string,
-              challengeName: 'EMAIL_OTP',
-            });
+            resolve({ type: 'MFA_REQUIRED', challengeName: challenge });
             return;
           }
-          resolve({ success: false, error: sanitizeError(err, 'Sign-in failed. Please check your email and password.') });
+          resolve({ type: 'ERROR', error: sanitizeError(err, 'Sign-in failed. Please check your email and password.') });
         },
 
         newPasswordRequired: () => {
-          pendingUser = cognitoUser;
-          resolve({
-            success: false,
-            newPasswordRequired: true,
-            session: (cognitoUser as any).Session as string,
-            challengeName: 'NEW_PASSWORD_REQUIRED',
-          });
+          setPendingUser(cognitoUser);
+          resolve({ type: 'NEW_PASSWORD_REQUIRED' });
         },
 
         mfaRequired: (challengeName) => {
-          pendingUser = cognitoUser;
-          resolve({
-            success: false,
-            mfaRequired: true,
-            session: (cognitoUser as any).Session as string,
-            challengeName: challengeName || 'SMS_MFA',
-          });
+          setPendingUser(cognitoUser);
+          resolve({ type: 'MFA_REQUIRED', challengeName: challengeName || 'SMS_MFA' });
         },
 
         totpRequired: () => {
-          pendingUser = cognitoUser;
-          resolve({
-            success: false,
-            mfaRequired: true,
-            session: (cognitoUser as any).Session as string,
-            challengeName: 'SOFTWARE_TOKEN_MFA',
-          });
+          setPendingUser(cognitoUser);
+          resolve({ type: 'MFA_REQUIRED', challengeName: 'SOFTWARE_TOKEN_MFA' });
         },
 
-        customChallenge: () => {
-          // Some Cognito configurations route EMAIL_OTP through CUSTOM_CHALLENGE
-          pendingUser = cognitoUser;
+        customChallenge: (challengeParams) => {
+          // EMAIL_OTP with ALLOW_CUSTOM_AUTH enabled routes here
+          setPendingUser(cognitoUser);
           resolve({
-            success: false,
-            mfaRequired: true,
-            session: (cognitoUser as any).Session as string,
+            type: 'MFA_REQUIRED',
             challengeName: (cognitoUser as any).challengeName || 'CUSTOM_CHALLENGE',
           });
         },
       });
-    } catch {
-      resolve({ success: false, error: 'Unable to connect to the server. Please check your connection and try again.' });
+    } catch (err) {
+      resolve({ type: 'ERROR', error: 'Unable to connect to the server. Please check your connection and try again.' });
     }
   });
 }
@@ -354,10 +300,10 @@ export async function completeNewPasswordChallenge(
   _email: string,
   newPassword: string,
   _session: string,
-): Promise<{ success: boolean; mfaRequired?: boolean; session?: string; challengeName?: string; error?: string }> {
+): Promise<SignInResult> {
   const pending = getPendingUser();
   if (!pending) {
-    return { success: false, error: 'Session expired \u2014 please sign in again.' };
+    return { type: 'ERROR', error: 'Session expired \u2014 please sign in again.' };
   }
 
   const cognitoUser = pending.user;
@@ -366,66 +312,42 @@ export async function completeNewPasswordChallenge(
     try {
       cognitoUser.completeNewPasswordChallenge(newPassword, {}, {
         onSuccess: () => {
-          // HIPAA: MFA is mandatory after password change too.
-          console.error('MFA bypass detected: Cognito returned tokens without MFA challenge after password change.');
+          console.error('MFA bypass detected after password change.');
           cognitoUser.signOut();
           setPendingUser(null);
-          resolve({ success: false, error: 'MFA is required but was not enforced. Please contact your administrator.' });
+          resolve({ type: 'ERROR', error: 'MFA is required but was not enforced. Please contact your administrator.' });
         },
 
         onFailure: (err) => {
-          // Check for EMAIL_OTP (not handled natively by the library)
           const challenge = (cognitoUser as any).challengeName;
-          if (challenge === 'EMAIL_OTP') {
-            resolve({
-              success: false,
-              mfaRequired: true,
-              session: (cognitoUser as any).Session as string,
-              challengeName: 'EMAIL_OTP',
-            });
+          if (challenge === 'EMAIL_OTP' || challenge === 'CUSTOM_CHALLENGE') {
+            resolve({ type: 'MFA_REQUIRED', challengeName: challenge });
             return;
           }
-          resolve({ success: false, error: sanitizeError(err, 'Failed to set new password. Please ensure it meets the requirements.') });
+          resolve({ type: 'ERROR', error: sanitizeError(err, 'Failed to set new password.') });
         },
 
         mfaRequired: (challengeName) => {
-          resolve({
-            success: false,
-            mfaRequired: true,
-            session: (cognitoUser as any).Session as string,
-            challengeName: challengeName || 'SMS_MFA',
-          });
+          resolve({ type: 'MFA_REQUIRED', challengeName: challengeName || 'SMS_MFA' });
         },
 
         totpRequired: () => {
-          resolve({
-            success: false,
-            mfaRequired: true,
-            session: (cognitoUser as any).Session as string,
-            challengeName: 'SOFTWARE_TOKEN_MFA',
-          });
+          resolve({ type: 'MFA_REQUIRED', challengeName: 'SOFTWARE_TOKEN_MFA' });
         },
 
         customChallenge: () => {
           resolve({
-            success: false,
-            mfaRequired: true,
-            session: (cognitoUser as any).Session as string,
+            type: 'MFA_REQUIRED',
             challengeName: (cognitoUser as any).challengeName || 'CUSTOM_CHALLENGE',
           });
         },
 
         mfaSetup: () => {
-          resolve({
-            success: false,
-            mfaRequired: true,
-            session: (cognitoUser as any).Session as string,
-            challengeName: 'MFA_SETUP',
-          });
+          resolve({ type: 'MFA_REQUIRED', challengeName: 'MFA_SETUP' });
         },
       });
     } catch {
-      resolve({ success: false, error: 'Unable to connect to the server. Please check your connection and try again.' });
+      resolve({ type: 'ERROR', error: 'Unable to connect to the server. Please check your connection and try again.' });
     }
   });
 }
@@ -433,49 +355,39 @@ export async function completeNewPasswordChallenge(
 // ── Complete MFA Challenge ──
 
 export async function completeMfaChallenge(
-  email: string,
+  _email: string,
   code: string,
   _session: string,
   challengeName: string,
 ): Promise<{ success: boolean; error?: string }> {
-  // Read session from the module-level pendingUser (source of truth),
-  // not from the _session param which may be stale React state.
   const pending = getPendingUser();
   if (!pending) {
     return { success: false, error: 'Session expired \u2014 please sign in again.' };
   }
 
-  const activeSession = pending.session;
-  const activeEmail = pending.email || email;
+  const cognitoUser = pending.user;
 
-  // EMAIL_OTP: the library doesn't support this challenge type, so use the raw API.
-  // The SRP password exchange is already complete at this point — only the OTP code is sent.
-  if (challengeName === 'EMAIL_OTP') {
-    try {
-      const data = await cognitoFetch('RespondToAuthChallenge', {
-        ChallengeName: 'EMAIL_OTP',
-        ClientId: POOL_CONFIG.ClientId,
-        ChallengeResponses: {
-          EMAIL_OTP_CODE: code,
-          USERNAME: activeEmail,
+  // EMAIL_OTP / CUSTOM_CHALLENGE: use sendCustomChallengeAnswer
+  // This keeps the library's internal CognitoUser session state consistent.
+  if (challengeName === 'EMAIL_OTP' || challengeName === 'CUSTOM_CHALLENGE') {
+    return new Promise((resolve) => {
+      cognitoUser.sendCustomChallengeAnswer(code, {
+        onSuccess: () => {
+          setPendingUser(null);
+          resolve({ success: true });
         },
-        Session: activeSession,
+        onFailure: (err) => {
+          resolve({ success: false, error: sanitizeError(err, 'Invalid or expired verification code. Please try again.') });
+        },
+        customChallenge: () => {
+          // Another challenge round — treat as failure (code was wrong)
+          resolve({ success: false, error: 'Invalid verification code. Please try again.' });
+        },
       });
-
-      if (data.AuthenticationResult) {
-        cacheSession(pending.user, data.AuthenticationResult);
-        setPendingUser(null);
-        return { success: true };
-      }
-
-      return { success: false, error: sanitizeError(data, 'Invalid or expired verification code. Please try again.') };
-    } catch {
-      return { success: false, error: 'Unable to connect to the server. Please check your connection and try again.' };
-    }
+    });
   }
 
   // SMS_MFA / SOFTWARE_TOKEN_MFA: use the library's sendMFACode
-  const cognitoUser = pending.user;
   const mfaType = challengeName === 'SOFTWARE_TOKEN_MFA' ? 'SOFTWARE_TOKEN_MFA' : 'SMS_MFA';
 
   return new Promise((resolve) => {
@@ -547,7 +459,7 @@ export async function confirmSignUp(
   });
 
   return new Promise((resolve) => {
-    cognitoUser.confirmRegistration(code, false, (err, result) => {
+    cognitoUser.confirmRegistration(code, false, (err) => {
       if (err) {
         resolve({ success: false, error: sanitizeError(err, 'Email verification failed. Please check the code and try again.') });
         return;
@@ -569,7 +481,6 @@ export async function changePassword(
   }
 
   return new Promise((resolve) => {
-    // getSession loads + refreshes the session before we attempt the change
     cognitoUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
       if (err || !session) {
         resolve({ success: false, error: 'Session expired. Please sign in again.' });
@@ -594,7 +505,6 @@ export async function signOut(): Promise<void> {
   const cognitoUser = getUserPool().getCurrentUser();
   if (!cognitoUser) return;
 
-  // Try global sign-out to invalidate all tokens server-side (best effort)
   try {
     await new Promise<void>((resolve) => {
       cognitoUser.getSession((err: Error | null) => {
@@ -604,7 +514,7 @@ export async function signOut(): Promise<void> {
         }
         cognitoUser.globalSignOut({
           onSuccess: () => resolve(),
-          onFailure: () => resolve(), // best effort
+          onFailure: () => resolve(),
         });
       });
     });
@@ -612,6 +522,5 @@ export async function signOut(): Promise<void> {
     // Don't block logout
   }
 
-  // Always clear local tokens
   cognitoUser.signOut();
 }

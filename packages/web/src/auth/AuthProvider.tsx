@@ -58,8 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [showInactivityWarning, setShowInactivityWarning] = useState(false)
   const [pendingSignUpEmail, setPendingSignUpEmail] = useState('')
 
-  // Challenge context — passed explicitly, no module-level mutable state
-  const [mfaSession, setMfaSession] = useState<string | null>(null)
+  // Challenge context — challengeName for routing, pendingEmail for display
   const [challengeName, setChallengeName] = useState<string>('')
   const [pendingEmail, setPendingEmail] = useState('')
 
@@ -131,7 +130,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const timeout = setTimeout(() => {
       clearPendingUser()
       setMfaRequired(false)
-      setMfaSession(null)
       setChallengeName('')
       setPendingEmail('')
     }, 3 * 60 * 1000) // 3 minutes
@@ -160,7 +158,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setConfirmationPending(false)
     setPendingSignUpEmail('')
     setPendingEmail('')
-    setMfaSession(null)
     setChallengeName('')
     setShowInactivityWarning(false)
     window.history.replaceState(null, '', '/dashboard')
@@ -170,31 +167,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     try {
       const result = await cognitoSignIn(email, password)
-      if (result.newPasswordRequired) {
+
+      if (result.type === 'NEW_PASSWORD_REQUIRED') {
         setNewPasswordRequired(true)
-        setMfaSession(result.session || null)
         setPendingEmail(email)
         setIsLoading(false)
         return { success: false, error: 'New password required' }
       }
-      if (result.mfaRequired) {
+
+      if (result.type === 'MFA_REQUIRED') {
         setMfaRequired(true)
-        setMfaSession(result.session || null)
-        setChallengeName(result.challengeName || 'EMAIL_OTP')
+        setChallengeName(result.challengeName || 'CUSTOM_CHALLENGE')
         setPendingEmail(email)
         setIsLoading(false)
         return { success: false, error: 'MFA required' }
       }
-      if (result.success) {
-        setUser(getCurrentUser())
-        setMfaRequired(false)
-        setNewPasswordRequired(false)
-        setMfaSession(null)
-        setChallengeName('')
-        setPendingEmail('')
+
+      if (result.type === 'ERROR') {
+        setIsLoading(false)
+        return { success: false, error: result.error }
       }
+
+      // SUCCESS — should not happen (HIPAA: MFA mandatory), but handle gracefully
       setIsLoading(false)
-      return { success: result.success, error: result.error }
+      return { success: false, error: result.error || 'Unexpected authentication result.' }
     } catch (err) {
       setIsLoading(false)
       return { success: false, error: String(err) }
@@ -202,59 +198,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const setNewPassword = useCallback(async (newPassword: string) => {
-    if (!mfaSession || !pendingEmail) return { success: false, error: 'No session' }
+    const pending = getPendingUser()
+    if (!pending) return { success: false, error: 'Session expired \u2014 please sign in again.' }
     setIsLoading(true)
     try {
-      const result = await completeNewPasswordChallenge(pendingEmail, newPassword, mfaSession)
-      if (result.mfaRequired) {
+      const result = await completeNewPasswordChallenge(pending.email, newPassword, '')
+      if (result.type === 'MFA_REQUIRED') {
         setNewPasswordRequired(false)
         setMfaRequired(true)
-        setMfaSession(result.session || null)
-        setChallengeName(result.challengeName || 'EMAIL_OTP')
+        setChallengeName(result.challengeName || 'CUSTOM_CHALLENGE')
         setIsLoading(false)
         return { success: false, error: 'MFA required' }
       }
-      if (result.success) {
-        setUser(getCurrentUser())
-        setNewPasswordRequired(false)
-        setMfaRequired(false)
-        setMfaSession(null)
-        setChallengeName('')
-        setPendingEmail('')
+      if (result.type === 'ERROR') {
+        setIsLoading(false)
+        return { success: false, error: result.error }
       }
       setIsLoading(false)
-      return { success: result.success, error: result.error }
+      return { success: false, error: result.error || 'Unexpected result.' }
     } catch (err) {
       setIsLoading(false)
       return { success: false, error: String(err) }
     }
-  }, [mfaSession, pendingEmail])
+  }, [])
 
   const verifyMfa = useCallback(async (code: string) => {
-    // Read session from module-level pendingUser (survives re-renders),
-    // falling back to React state for the challenge metadata.
+    // Read from module-level pendingCognitoUser (survives re-renders).
     const pending = getPendingUser()
     if (!pending) {
-      // Session expired or was never set — redirect to login
       setMfaRequired(false)
-      setMfaSession(null)
       setChallengeName('')
       setPendingEmail('')
       return { success: false, error: 'Session expired \u2014 please sign in again.' }
     }
 
-    const activeEmail = pending.email || pendingEmail
-    const activeSession = pending.session || mfaSession || ''
-    const activeChallenge = challengeName || 'EMAIL_OTP'
+    const activeChallenge = challengeName || 'CUSTOM_CHALLENGE'
 
     setIsLoading(true)
     try {
-      const result = await completeMfaChallenge(activeEmail, code, activeSession, activeChallenge)
+      const result = await completeMfaChallenge(pending.email, code, '', activeChallenge)
       if (result.success) {
         setUser(getCurrentUser())
         setMfaRequired(false)
         setNewPasswordRequired(false)
-        setMfaSession(null)
         setChallengeName('')
         setPendingEmail('')
       }
@@ -264,7 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false)
       return { success: false, error: String(err) }
     }
-  }, [mfaSession, pendingEmail, challengeName])
+  }, [challengeName])
 
   const signUp = useCallback(async (email: string, password: string, firstName: string, lastName: string) => {
     setIsLoading(true)
