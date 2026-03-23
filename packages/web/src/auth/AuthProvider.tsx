@@ -191,9 +191,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // SUCCESS — should not happen (HIPAA: MFA mandatory), but handle gracefully
       setIsLoading(false)
       return { success: false, error: result.error || 'Unexpected authentication result.' }
-    } catch (err) {
+    } catch (err: any) {
       setIsLoading(false)
-      return { success: false, error: String(err) }
+      const message = err?.message || String(err) || 'Sign-in failed'
+      return { success: false, error: message }
     }
   }, [])
 
@@ -246,9 +247,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setIsLoading(false)
       return result
-    } catch (err) {
+    } catch (err: any) {
       setIsLoading(false)
-      return { success: false, error: String(err) }
+      const message = err?.message || String(err) || 'Verification failed'
+      return { success: false, error: message }
     }
   }, [challengeName])
 

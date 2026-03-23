@@ -244,17 +244,14 @@ export async function signIn(email: string, password: string): Promise<SignInRes
     Password: password,
   });
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     try {
       cognitoUser.authenticateUser(authDetails, {
         onSuccess: () => {
           // With MFA set to REQUIRED this should never happen.
-          // If it does, reject cleanly — AuthProvider catches and shows the error.
-          if (process.env.NODE_ENV !== 'test') {
-            console.warn('MFA bypass detected: Cognito returned tokens without MFA challenge.');
-          }
-          reject(new Error('Authentication error \u2014 please try again.'));
-          return;
+          // Resolve with error — never reject or reload.
+          console.warn('[auth] MFA bypass: tokens returned without MFA challenge.');
+          resolve({ type: 'ERROR', error: 'Authentication error \u2014 please try again.' });
         },
 
         onFailure: (err) => {
@@ -284,9 +281,14 @@ export async function signIn(email: string, password: string): Promise<SignInRes
           resolve({ type: 'MFA_REQUIRED', challengeName: 'SOFTWARE_TOKEN_MFA' });
         },
 
-        customChallenge: () => {
+        customChallenge: (challengeParameters) => {
           // EMAIL_OTP with ALLOW_CUSTOM_AUTH routes here.
-          // Store the session from the CognitoUser's internal state.
+          console.log('[auth] customChallenge fired:', {
+            challengeParameters,
+            challengeName: (cognitoUser as any).challengeName,
+            hasSession: !!(cognitoUser as any).Session,
+            sessionPrefix: ((cognitoUser as any).Session || '').slice(0, 20) + '...',
+          });
           setPendingAuth(cognitoUser, (cognitoUser as any).Session, email);
           resolve({ type: 'MFA_REQUIRED', challengeName: 'EMAIL_OTP' });
         },
@@ -311,15 +313,12 @@ export async function completeNewPasswordChallenge(
 
   const cognitoUser = pending.user;
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     try {
       cognitoUser.completeNewPasswordChallenge(newPassword, {}, {
         onSuccess: () => {
-          if (process.env.NODE_ENV !== 'test') {
-            console.warn('MFA bypass detected after password change.');
-          }
-          reject(new Error('Authentication error \u2014 please try again.'));
-          return;
+          console.warn('[auth] MFA bypass after password change.');
+          resolve({ type: 'ERROR', error: 'Authentication error \u2014 please try again.' });
         },
 
         onFailure: (err) => {
@@ -393,13 +392,21 @@ export async function completeMfaChallenge(
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        const errCode = data?.__type?.split('#').pop() || '';
-        const errMsg = COGNITO_ERROR_MAP[errCode] || 'Incorrect code \u2014 please try again.';
+        const err = await response.json().catch(() => ({}));
+        console.error('[auth] EMAIL_OTP challenge failed:', {
+          status: response.status,
+          code: err?.__type || err?.code,
+          message: err?.message,
+          sessionPrefix: (pending.session || '').slice(0, 20) + '...',
+          username: pending.email,
+        });
+        const errCode = err?.__type?.split('#').pop() || '';
+        const errMsg = COGNITO_ERROR_MAP[errCode] || err?.message || 'Incorrect code \u2014 please try again.';
         return { success: false, error: errMsg };
       }
+
+      const data = await response.json();
 
       if (data.AuthenticationResult) {
         // Cache tokens on the CognitoUser so the library's session state is consistent
