@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Phone, Search, User, UserPlus, Play, Pause, Archive, ClipboardList, FileText, Loader2 } from 'lucide-react'
-import { listVoicemails, listAllPatients, attachVoicemail, archiveVoicemail, createPatient, createTodo, transcribeVoicemail, getTranscriptionResult } from '../api/endpoints'
+import { Phone, Search, User, UserPlus, Play, Pause, Archive, ClipboardList, FileText, Loader2, Trash2 } from 'lucide-react'
+import { listVoicemails, listAllPatients, attachVoicemail, archiveVoicemail, deleteVoicemail, createPatient, createTodo, transcribeVoicemail, getTranscriptionResult } from '../api/endpoints'
 import type { Voicemail, Patient } from '../api/types'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -10,8 +10,10 @@ import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { EmptyState } from '../components/ui/EmptyState'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Tabs } from '../components/ui/Tabs'
 import { useToast } from '../components/ui/Toast'
+import { useAuth } from '../auth/AuthProvider'
 import { formatDateTime, formatDuration, timeAgo } from '../lib/utils'
 
 const categoryBadge: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'> = {
@@ -205,6 +207,7 @@ function TranscriptDisplay({ vm, onTranscribed }: { vm: Voicemail; onTranscribed
 
 export default function Voicemails() {
   const { toast } = useToast()
+  const { user } = useAuth()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState('all')
   const [attachModal, setAttachModal] = useState<Voicemail | null>(null)
@@ -212,8 +215,9 @@ export default function Voicemails() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPatientId, setSelectedPatientId] = useState('')
   const [newPatient, setNewPatient] = useState({ firstName: '', lastName: '', phone: '' })
+  const [deleteTarget, setDeleteTarget] = useState<Voicemail | null>(null)
 
-  const { data: voicemails, isLoading, isError } = useQuery({
+  const { data: voicemails, isLoading, isError, error: queryError } = useQuery({
     queryKey: ['voicemails'],
     queryFn: listVoicemails,
   })
@@ -258,6 +262,20 @@ export default function Voicemails() {
       toast('success', 'Voicemail archived!')
     },
     onError: () => toast('error', 'Failed to archive voicemail. Please try again.'),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (vm: Voicemail) => deleteVoicemail(vm.id, user?.providerId || ''),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['voicemails'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
+      setDeleteTarget(null)
+      toast('success', 'Voicemail deleted.')
+    },
+    onError: (err: any) => {
+      setDeleteTarget(null)
+      toast('error', err?.message || 'Failed to delete voicemail.')
+    },
   })
 
   const createTaskMutation = useMutation({
@@ -335,7 +353,25 @@ export default function Voicemails() {
   }
 
   if (isLoading) return <LoadingSpinner />
-  if (isError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load voicemails. Please refresh.</div>
+  if (isError) {
+    const errMsg = (queryError as any)?.message || 'Unknown error'
+    const status = (queryError as any)?.status
+    return (
+      <div className="py-8">
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm">
+          <p className="font-semibold text-red-700 dark:text-red-300 mb-1">
+            Could not load voicemails{status ? ` (${status})` : ''}
+          </p>
+          <p className="text-red-600 dark:text-red-400">{errMsg}</p>
+          {status === 404 && (
+            <p className="text-red-500 dark:text-red-400 mt-2 text-xs">
+              API route may not be configured. Expected: GET /zoom/voicemails
+            </p>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -447,6 +483,16 @@ export default function Voicemails() {
                     icon={<Archive size={16} />}
                   >
                     Archive
+                  </Button>
+                )}
+                {vm.taskId && vm.taskCompleted && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setDeleteTarget(vm)}
+                    icon={<Trash2 size={16} className="text-red-500" />}
+                  >
+                    <span className="text-red-500">Delete</span>
                   </Button>
                 )}
               </div>
@@ -579,6 +625,19 @@ export default function Voicemails() {
           </div>
         )}
       </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
+        title="Delete Voicemail"
+        message="Delete this voicemail? This will also remove the audio recording from storage and cannot be undone."
+        confirmLabel="Delete permanently"
+        cancelLabel="Cancel"
+        danger
+        loading={deleteMutation.isPending}
+      />
     </div>
   )
 }

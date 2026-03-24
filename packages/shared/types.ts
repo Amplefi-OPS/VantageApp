@@ -84,6 +84,8 @@ export const VoicemailSchema = z.object({
   transcriptStatus: z.enum(['Pending', 'Transcribing', 'Complete', 'Failed']).optional(),
   transcriptionStatus: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED']).optional(),
   suggestedPatientIds: z.array(z.string()).optional(),
+  taskId: z.string().optional(),
+  taskCompleted: z.boolean().optional(),
 })
 export type Voicemail = z.infer<typeof VoicemailSchema>
 
