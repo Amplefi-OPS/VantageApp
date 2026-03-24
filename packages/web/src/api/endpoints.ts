@@ -19,7 +19,7 @@ import type {
   UploadToS3Response,
   DashboardCounts,
 } from './types'
-import { apiGet, apiPost, apiPut, apiPatch, apiDelete, apiUpload } from './client'
+import { apiGet, apiPost, apiPut, apiPatch, apiUpload } from './client'
 
 // ── Dashboard ──────────────────────────────────────────
 
@@ -116,10 +116,6 @@ export async function attachVoicemail(req: AttachVoicemailRequest): Promise<Voic
 
 export async function archiveVoicemail(voicemailId: string): Promise<void> {
   return apiPatch<void>(`/voicemails/${voicemailId}/archive`, {})
-}
-
-export async function deleteVoicemail(id: string, providerId: string): Promise<void> {
-  return apiDelete<void>(`/voicemails/${id}?providerId=${encodeURIComponent(providerId)}`)
 }
 
 // ── Todos (backed by /tasks API) ───────────────────────

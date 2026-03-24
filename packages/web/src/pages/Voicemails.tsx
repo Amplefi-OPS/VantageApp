@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Phone, Search, User, UserPlus, Play, Pause, Archive, FileText, Loader2, Trash2 } from 'lucide-react'
-import { listVoicemails, listAllPatients, listTodos, attachVoicemail, archiveVoicemail, deleteVoicemail, createPatient, transcribeVoicemail, getTranscriptionResult } from '../api/endpoints'
-import type { Voicemail, Patient, Todo } from '../api/types'
+import { Phone, Search, User, UserPlus, Play, Pause, Archive, FileText, Loader2 } from 'lucide-react'
+import { listVoicemails, listAllPatients, attachVoicemail, archiveVoicemail, createPatient, transcribeVoicemail, getTranscriptionResult } from '../api/endpoints'
+import type { Voicemail, Patient } from '../api/types'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -10,10 +10,8 @@ import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { EmptyState } from '../components/ui/EmptyState'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
-import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Tabs } from '../components/ui/Tabs'
 import { useToast } from '../components/ui/Toast'
-import { useAuth } from '../auth/AuthProvider'
 import { formatDateTime, formatDuration, timeAgo } from '../lib/utils'
 
 const categoryBadge: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'> = {
@@ -192,7 +190,6 @@ function TranscriptDisplay({ vm, onTranscribed }: { vm: Voicemail; onTranscribed
 
 export default function Voicemails() {
   const { toast } = useToast()
-  const { user } = useAuth()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState('all')
   const [attachModal, setAttachModal] = useState<Voicemail | null>(null)
@@ -200,7 +197,6 @@ export default function Voicemails() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPatientId, setSelectedPatientId] = useState('')
   const [newPatient, setNewPatient] = useState({ firstName: '', lastName: '', phone: '' })
-  const [deleteTarget, setDeleteTarget] = useState<Voicemail | null>(null)
 
   const { data: voicemails, isLoading, isError, error: queryError } = useQuery({
     queryKey: ['voicemails'],
@@ -224,11 +220,6 @@ export default function Voicemails() {
   const { data: patients } = useQuery({
     queryKey: ['patients'],
     queryFn: listAllPatients,
-  })
-
-  const { data: todos } = useQuery({
-    queryKey: ['todos'],
-    queryFn: listTodos,
   })
 
   const attachMutation = useMutation({
@@ -266,20 +257,6 @@ export default function Voicemails() {
       toast('success', 'Voicemail archived!')
     },
     onError: () => toast('error', 'Failed to archive voicemail. Please try again.'),
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: (vm: Voicemail) => deleteVoicemail(vm.id, user?.providerId || ''),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voicemails'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
-      setDeleteTarget(null)
-      toast('success', 'Voicemail deleted.')
-    },
-    onError: (err: any) => {
-      setDeleteTarget(null)
-      toast('error', err?.message || 'Failed to delete voicemail.')
-    },
   })
 
   const filtered = voicemails?.filter((vm) => {
@@ -327,14 +304,6 @@ export default function Voicemails() {
     const p = patients.find((p) => p.id === patientId)
     if (p) return `${p.firstName} ${p.lastName}`
     return null
-  }
-
-  // Derive whether a voicemail's linked task is completed
-  const isTaskCompleted = (vm: Voicemail): boolean => {
-    if (vm.taskCompleted) return true
-    if (!todos) return false
-    const linked = todos.find((t) => t.id === vm.taskId || t.voicemailId === vm.id)
-    return linked?.status === 'Done'
   }
 
   if (isLoading) return <LoadingSpinner />
@@ -457,16 +426,6 @@ export default function Voicemails() {
                     icon={<Archive size={16} />}
                   >
                     Archive
-                  </Button>
-                )}
-                {isTaskCompleted(vm) && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setDeleteTarget(vm)}
-                    icon={<Trash2 size={16} className="text-red-500" />}
-                  >
-                    <span className="text-red-500">Delete</span>
                   </Button>
                 )}
               </div>
@@ -599,19 +558,6 @@ export default function Voicemails() {
           </div>
         )}
       </Modal>
-
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
-        title="Delete Voicemail"
-        message="Delete this voicemail? This will also remove the audio recording from storage and cannot be undone."
-        confirmLabel="Delete permanently"
-        cancelLabel="Cancel"
-        danger
-        loading={deleteMutation.isPending}
-      />
     </div>
   )
 }
