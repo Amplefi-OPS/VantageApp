@@ -412,8 +412,16 @@ export class ApiStack extends cdk.Stack {
       environment: billingEnv,
     });
 
+    const billingPaymentIntentFn = new lambdaNode.NodejsFunction(this, 'BillingPaymentIntentFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-billing-payment-intent-${props.stageName}`,
+      entry: path.join(lambdaDir, 'billing', 'billing-payment-intent.ts'),
+      handler: 'handler',
+      environment: billingEnv,
+    });
+
     // IAM: Stripe secret, leads table scan/query, main table audit log writes
-    const billingApiFns = [billingLookupFn, billingDirectChargeFn, billingNoShowFn];
+    const billingApiFns = [billingLookupFn, billingDirectChargeFn, billingNoShowFn, billingPaymentIntentFn];
     for (const fn of billingApiFns) {
       fn.addToRolePolicy(new iam.PolicyStatement({
         actions: ['secretsmanager:GetSecretValue'],
@@ -701,7 +709,7 @@ export class ApiStack extends cdk.Stack {
     const stripeTransactions = stripe.addResource('transactions');
     stripeTransactions.addMethod('GET', new apigateway.LambdaIntegration(stripeTransactionsFn), authMethodOptions);
 
-    // GET /billing/lookup  &  POST /billing/charge  &  POST /billing/no-show
+    // GET /billing/lookup  &  POST /billing/charge  &  POST /billing/no-show  &  POST /billing/payment-intent
     const billing = this.api.root.addResource('billing');
     const billingLookup = billing.addResource('lookup');
     billingLookup.addMethod('GET', new apigateway.LambdaIntegration(billingLookupFn), authMethodOptions);
@@ -709,6 +717,8 @@ export class ApiStack extends cdk.Stack {
     charge.addMethod('POST', new apigateway.LambdaIntegration(billingDirectChargeFn), authMethodOptions);
     const noShow = billing.addResource('no-show');
     noShow.addMethod('POST', new apigateway.LambdaIntegration(billingNoShowFn), authMethodOptions);
+    const billingPaymentIntent = billing.addResource('payment-intent');
+    billingPaymentIntent.addMethod('POST', new apigateway.LambdaIntegration(billingPaymentIntentFn), authMethodOptions);
 
     // POST /notifications/login-failure (no auth — user isn't logged in)
     const notifications = this.api.root.addResource('notifications');

@@ -397,6 +397,15 @@ export async function chargeNoShow(
   return apiPost('/billing/no-show', { customerId, paymentMethodId })
 }
 
+export async function createPaymentIntentForCharge(
+  customerId: string,
+  amount: number,
+  description?: string,
+  saveCard?: boolean,
+): Promise<{ clientSecret: string; paymentIntentId: string }> {
+  return apiPost('/billing/payment-intent', { customerId, amount, description, saveCard })
+}
+
 // ── Notifications ──────────────────────────────────────
 
 /** Fire-and-forget login failure report for Slack alerting. */

@@ -47,6 +47,7 @@ import {
   lookupPatient,
   chargePatient,
   chargeNoShow,
+  createPaymentIntentForCharge,
 } from '../api/endpoints'
 import type { DictationRecord, BillingPatient } from '../api/endpoints'
 import type { Appointment, SendFaxRequest } from '../api/types'
@@ -61,6 +62,8 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useToast } from '../components/ui/Toast'
 import { formatDate, formatDateTime, formatDuration, timeAgo, isOverdue } from '../lib/utils'
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import stripePromise from '../lib/stripe'
 import DictationMode from './DictationMode'
 import type { Voicemail } from '../api/types'
 
@@ -119,6 +122,82 @@ function VoicemailTranscript({ vm }: { vm: Voicemail }) {
   )
 }
 
+// Inner form for new-card charge — must be inside <Elements> provider
+function NewCardChargeForm({
+  customerId,
+  amountCents,
+  description,
+  saveCard,
+  onSuccess,
+  onError,
+}: {
+  customerId: string
+  amountCents: number
+  description: string
+  saveCard: boolean
+  onSuccess: (result: { paymentIntentId: string; amount: number }) => void
+  onError: (msg: string) => void
+}) {
+  const stripe = useStripe()
+  const elements = useElements()
+  const [processing, setProcessing] = useState(false)
+
+  const handleSubmit = async () => {
+    if (!stripe || !elements) return
+    const cardElement = elements.getElement(CardElement)
+    if (!cardElement) return
+
+    setProcessing(true)
+    try {
+      const { clientSecret, paymentIntentId } = await createPaymentIntentForCharge(
+        customerId,
+        amountCents,
+        description || undefined,
+        saveCard,
+      )
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card: cardElement },
+      })
+      if (error) {
+        onError(error.message || 'Card payment failed.')
+      } else if (paymentIntent?.status === 'succeeded') {
+        onSuccess({ paymentIntentId, amount: amountCents })
+      } else {
+        onError('Payment requires additional action. Please try again.')
+      }
+    } catch (err: any) {
+      onError(err?.message || 'Payment failed.')
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="p-3 border border-light-gray dark:border-gray-600 rounded-lg">
+        <CardElement options={{
+          style: {
+            base: {
+              fontSize: '16px',
+              color: '#2D3748',
+              '::placeholder': { color: '#A0AEC0' },
+            },
+          },
+        }} />
+      </div>
+      <Button
+        onClick={handleSubmit}
+        loading={processing}
+        disabled={!stripe || amountCents <= 0}
+        icon={<DollarSign size={16} />}
+        className="w-full"
+      >
+        Charge ${(amountCents / 100).toFixed(2)}
+      </Button>
+    </div>
+  )
+}
+
 export default function PatientProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -140,6 +219,8 @@ export default function PatientProfile() {
   const [charging, setCharging] = useState(false)
   const [chargeResult, setChargeResult] = useState<{ paymentIntentId: string; amount: number } | null>(null)
   const [chargeError, setChargeError] = useState('')
+  const [chargeStep, setChargeStep] = useState<'amount' | 'newcard'>('amount')
+  const [saveNewCard, setSaveNewCard] = useState(false)
   const [noShowLoading, setNoShowLoading] = useState(false)
   const [noShowResult, setNoShowResult] = useState(false)
   const [noShowError, setNoShowError] = useState('')
@@ -341,6 +422,8 @@ export default function PatientProfile() {
     setChargeResult(null)
     setChargeError('')
     setCharging(false)
+    setChargeStep('amount')
+    setSaveNewCard(false)
   }
 
   const resetNoShowModal = () => {
@@ -1247,7 +1330,6 @@ export default function PatientProfile() {
                     <Button
                       onClick={openChargeModal}
                       icon={<DollarSign size={18} />}
-                      disabled={!billing.paymentMethod}
                     >
                       Charge Patient
                     </Button>
@@ -1277,14 +1359,14 @@ export default function PatientProfile() {
             <p className="text-xs text-warm-gray dark:text-gray-400 mt-2">{chargeResult.paymentIntentId}</p>
             <Button className="mt-4" onClick={resetChargeModal}>Done</Button>
           </div>
-        ) : (
+        ) : chargeStep === 'amount' ? (
           <div className="space-y-4">
             {billingLoading && <div className="flex justify-center py-4"><LoadingSpinner /></div>}
             {billing?.paymentMethod && (
               <div className="flex items-center gap-2 p-3 bg-light-gray dark:bg-gray-700 rounded-lg text-sm">
                 <CreditCard size={16} className="text-slate-blue" />
                 <span className="text-charcoal dark:text-white capitalize">
-                  {billing.paymentMethod.brand} •••• {billing.paymentMethod.last4}
+                  {billing.paymentMethod.brand} {'\u2022\u2022\u2022\u2022'} {billing.paymentMethod.last4}
                 </span>
               </div>
             )}
@@ -1308,14 +1390,57 @@ export default function PatientProfile() {
             )}
             <div className="flex gap-3 justify-end pt-2">
               <Button variant="ghost" onClick={resetChargeModal} disabled={charging}>Cancel</Button>
+              {billing?.paymentMethod && (
+                <Button
+                  onClick={handleCharge}
+                  loading={charging}
+                  disabled={!chargeAmount || parseFloat(chargeAmount) <= 0}
+                  icon={<DollarSign size={16} />}
+                >
+                  Charge this card
+                </Button>
+              )}
               <Button
-                onClick={handleCharge}
-                loading={charging}
-                disabled={!billing?.paymentMethod || !chargeAmount || parseFloat(chargeAmount) <= 0}
-                icon={<DollarSign size={16} />}
+                variant={billing?.paymentMethod ? 'ghost' : 'primary'}
+                onClick={() => setChargeStep('newcard')}
+                disabled={!chargeAmount || parseFloat(chargeAmount) <= 0}
+                icon={<CreditCard size={16} />}
               >
-                Charge {chargeAmount && parseFloat(chargeAmount) > 0 ? `$${parseFloat(chargeAmount).toFixed(2)}` : ''}
+                {billing?.paymentMethod ? 'Use a different card' : 'Enter card'}
               </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-warm-gray dark:text-gray-300">
+              Charging <strong className="text-charcoal dark:text-white">${parseFloat(chargeAmount).toFixed(2)}</strong> to a new card
+              {chargeDesc && <> for <em>{chargeDesc}</em></>}
+            </p>
+            <Elements stripe={stripePromise}>
+              <NewCardChargeForm
+                customerId={billing?.customerId || ''}
+                amountCents={Math.round(parseFloat(chargeAmount) * 100)}
+                description={chargeDesc}
+                saveCard={saveNewCard}
+                onSuccess={(result) => setChargeResult(result)}
+                onError={(msg) => setChargeError(msg)}
+              />
+            </Elements>
+            <label className="flex items-center gap-2 text-sm text-charcoal dark:text-gray-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={saveNewCard}
+                onChange={(e) => setSaveNewCard(e.target.checked)}
+                className="rounded border-light-gray text-slate-blue focus:ring-slate-blue"
+              />
+              Save this card on file for future use
+            </label>
+            {chargeError && (
+              <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">{chargeError}</p>
+            )}
+            <div className="flex gap-3 justify-end pt-2">
+              <Button variant="ghost" onClick={() => { setChargeStep('amount'); setChargeError('') }}>Back</Button>
+              <Button variant="ghost" onClick={resetChargeModal}>Cancel</Button>
             </div>
           </div>
         )}
