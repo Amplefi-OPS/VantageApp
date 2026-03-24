@@ -6,10 +6,15 @@
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
 import { getCallerIdentity } from '../../shared/auth';
 import { queryItems } from '../../shared/dynamo';
 import { success, badRequest, notFound, serverError } from '../../shared/response';
 import { stripeGet } from '../../shared/stripe';
+
+const ddbClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const LEADS_TABLE = process.env.LEADS_TABLE || 'vantage-patient-leads';
 
 interface StripeCustomer {
   id: string;
@@ -95,7 +100,67 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       }
     }
 
-    // 3. DynamoDB fallback — scan patients by email or phone
+    // 3. DynamoDB fallback — check vantage-patient-leads (VR Landing bookings) first
+    if (!customer) {
+      try {
+        const phone = normalizePhone(q);
+        const filterExpr = isEmail
+          ? 'email = :q'
+          : 'contains(#ph, :q)';
+        const exprAttrNames = isEmail ? undefined : { '#ph': 'phone' };
+        const exprValues: Record<string, string> = { ':q': isEmail ? q.toLowerCase() : phone };
+
+        if (!isEmail && phone.length < 10) {
+          // Not enough digits, skip
+        } else {
+          const leadsResult = await ddbClient.send(new ScanCommand({
+            TableName: LEADS_TABLE,
+            FilterExpression: filterExpr,
+            ExpressionAttributeNames: exprAttrNames,
+            ExpressionAttributeValues: exprValues,
+            Limit: 10,
+          }));
+
+          if (leadsResult.Items && leadsResult.Items.length > 0) {
+            const lead = leadsResult.Items[0];
+            // If they have a Stripe customerId stored in the leads table, fetch their card
+            if (lead.customerId) {
+              const pmRes = await stripeGet<StripePaymentMethodList>(
+                `/payment_methods?customer=${lead.customerId}&type=card&limit=1`,
+              );
+              const pm = pmRes.ok && pmRes.data.data?.length > 0 ? pmRes.data.data[0] : null;
+              return success({
+                customerId: lead.customerId as string,
+                firstName: (lead.firstName as string) || '',
+                lastName: (lead.lastName as string) || '',
+                email: (lead.email as string) || '',
+                phone: (lead.phone as string) || '',
+                paymentMethod: pm?.card ? {
+                  id: pm.id,
+                  brand: pm.card.brand,
+                  last4: pm.card.last4,
+                  expMonth: pm.card.exp_month,
+                  expYear: pm.card.exp_year,
+                } : null,
+              });
+            }
+            // No Stripe ID, return name/contact only
+            return success({
+              customerId: null,
+              firstName: (lead.firstName as string) || '',
+              lastName: (lead.lastName as string) || '',
+              email: (lead.email as string) || '',
+              phone: (lead.phone as string) || '',
+              paymentMethod: null,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Leads table lookup failed (non-fatal):', (err as Error).message);
+      }
+    }
+
+    // 4. DynamoDB fallback — scan Vantage main table patients by email or phone
     if (!customer) {
       try {
         const filterParts: string[] = [];
@@ -128,12 +193,11 @@ export const handler: APIGatewayProxyHandler = async (event) => {
             const p = patients[0];
             return success({
               customerId: null,
-              firstName: p.firstName as string || '',
-              lastName: p.lastName as string || '',
+              firstName: (p.firstName as string) || '',
+              lastName: (p.lastName as string) || '',
               email: (p.email as string) || '',
               phone: (p.phone as string) || '',
               paymentMethod: null,
-              source: 'dynamo',
             });
           }
         }

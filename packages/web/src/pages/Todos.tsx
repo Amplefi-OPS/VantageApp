@@ -251,15 +251,12 @@ export default function Todos() {
 
                   {todo.status === 'Open' && (
                     <div className="mt-2 flex gap-2 flex-wrap">
-                      {todo.title.toLowerCase().includes('no-show fee') && (
+                      {todo.title.toLowerCase().includes('no-show fee') && todo.patientId && (
                         <Button
                           size="sm"
                           variant="danger"
                           icon={<DollarSign size={14} />}
-                          onClick={() => {
-                            const name = getPatientName(todo.patientId)
-                            navigate(`/billing/no-show${name ? `?name=${encodeURIComponent(name)}` : ''}`)
-                          }}
+                          onClick={() => navigate(`/patients/${todo.patientId}?tab=billing`)}
                         >
                           Charge $30 Fee
                         </Button>

@@ -384,7 +384,8 @@ export class ApiStack extends cdk.Stack {
     const billingEnv: Record<string, string> = {
       ...commonEnv,
       LEADS_TABLE: 'vantage-patient-leads',
-      STRIPE_SECRET_ARN: `arn:aws:secretsmanager:${this.region}:${this.account}:secret:vantage/stripe-key-${props.stageName}`,
+      // Must match the secret name used by VR Landing site
+      STRIPE_SECRET_NAME: 'vantage/stripe/secret-key',
     };
 
     const billingLookupFn = new lambdaNode.NodejsFunction(this, 'BillingLookupFn', {
@@ -416,7 +417,8 @@ export class ApiStack extends cdk.Stack {
     for (const fn of billingApiFns) {
       fn.addToRolePolicy(new iam.PolicyStatement({
         actions: ['secretsmanager:GetSecretValue'],
-        resources: [`arn:aws:secretsmanager:${this.region}:${this.account}:secret:vantage/stripe-key-${props.stageName}*`],
+        // Same secret used by VR Landing: vantage/stripe/secret-key
+        resources: [`arn:aws:secretsmanager:${this.region}:${this.account}:secret:vantage/stripe/secret-key*`],
       }));
       fn.addToRolePolicy(new iam.PolicyStatement({
         actions: ['dynamodb:Scan', 'dynamodb:Query'],
