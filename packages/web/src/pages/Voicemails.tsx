@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Phone, Search, User, UserPlus, Play, Pause, Archive, ClipboardList, FileText, Loader2, Trash2 } from 'lucide-react'
-import { listVoicemails, listAllPatients, attachVoicemail, archiveVoicemail, deleteVoicemail, createPatient, createTodo, transcribeVoicemail, getTranscriptionResult } from '../api/endpoints'
-import type { Voicemail, Patient } from '../api/types'
+import { Phone, Search, User, UserPlus, Play, Pause, Archive, FileText, Loader2, Trash2 } from 'lucide-react'
+import { listVoicemails, listAllPatients, listTodos, attachVoicemail, archiveVoicemail, deleteVoicemail, createPatient, transcribeVoicemail, getTranscriptionResult } from '../api/endpoints'
+import type { Voicemail, Patient, Todo } from '../api/types'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -23,15 +23,6 @@ const categoryBadge: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'
   'New Patient': 'red',
   'Basic Questions': 'gray',
   'Everything Else': 'gray',
-}
-
-const CATEGORY_TO_TODO_TYPE: Record<string, string> = {
-  Scheduling: 'Schedule',
-  Refills: 'Refill',
-  Billing: 'General',
-  'New Patient': 'CallBack',
-  'Basic Questions': 'CallBack',
-  'Everything Else': 'CallBack',
 }
 
 function AudioPlayer({ url }: { url: string }) {
@@ -235,6 +226,11 @@ export default function Voicemails() {
     queryFn: listAllPatients,
   })
 
+  const { data: todos } = useQuery({
+    queryKey: ['todos'],
+    queryFn: listTodos,
+  })
+
   const attachMutation = useMutation({
     mutationFn: attachVoicemail,
     onSuccess: () => {
@@ -286,16 +282,6 @@ export default function Voicemails() {
     },
   })
 
-  const createTaskMutation = useMutation({
-    mutationFn: createTodo,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
-      toast('success', 'Task created!')
-    },
-    onError: () => toast('error', 'Failed to create task. Please try again.'),
-  })
-
   const filtered = voicemails?.filter((vm) => {
     if (tab === 'unattached') return vm.attachedTo.type === 'none' && vm.status !== 'Archived'
     if (tab === 'archived') return vm.status === 'Archived'
@@ -343,21 +329,12 @@ export default function Voicemails() {
     return null
   }
 
-  const handleCreateTask = (vm: Voicemail) => {
-    const patientId = vm.attachedTo.patientId
-    const callerLabel = vm.callerName || vm.callerNumber
-    const todoType = CATEGORY_TO_TODO_TYPE[vm.category] || 'CallBack'
-    const title = `Voicemail from ${callerLabel} — ${vm.category}`
-
-    createTaskMutation.mutate({
-      type: todoType as 'Schedule' | 'Refill' | 'CallBack' | 'SendDocs' | 'General',
-      title,
-      status: 'Open',
-      priority: 'Med',
-      patientId: patientId || undefined,
-      voicemailId: vm.id,
-      notes: vm.transcript ? `Transcript: ${vm.transcript.slice(0, 500)}` : undefined,
-    })
+  // Derive whether a voicemail's linked task is completed
+  const isTaskCompleted = (vm: Voicemail): boolean => {
+    if (vm.taskCompleted) return true
+    if (!todos) return false
+    const linked = todos.find((t) => t.id === vm.taskId || t.voicemailId === vm.id)
+    return linked?.status === 'Done'
   }
 
   if (isLoading) return <LoadingSpinner />
@@ -476,24 +453,13 @@ export default function Voicemails() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleCreateTask(vm)}
-                    loading={createTaskMutation.isPending}
-                    icon={<ClipboardList size={16} />}
-                  >
-                    Task
-                  </Button>
-                )}
-                {vm.status !== 'Archived' && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
                     onClick={() => archiveMutation.mutate(vm.id)}
                     icon={<Archive size={16} />}
                   >
                     Archive
                   </Button>
                 )}
-                {vm.taskId && vm.taskCompleted && (
+                {isTaskCompleted(vm) && (
                   <Button
                     size="sm"
                     variant="ghost"
