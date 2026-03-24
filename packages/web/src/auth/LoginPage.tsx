@@ -534,12 +534,17 @@ export default function LoginPage() {
               {successMsg && (
                 <p className="text-sm text-green-700 bg-green-50 p-2 rounded">{successMsg}</p>
               )}
-              {error && (
-                <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
-              )}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
+              {error && (
+                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <svg className="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-9v4a1 1 0 102 0V9a1 1 0 10-2 0zm0-4a1 1 0 112 0 1 1 0 01-2 0z" clipRule="evenodd" />
+                  </svg>
+                  <p className="text-sm text-red-700 font-medium">{error}</p>
+                </div>
+              )}
               <p className="text-xs text-warm-gray text-center mt-3">
                 <button
                   type="button"
