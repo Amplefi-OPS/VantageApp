@@ -28,7 +28,6 @@ export class AuthStack extends cdk.Stack {
       handler: 'handler',
       memorySize: 128,
       timeout: cdk.Duration.seconds(5),
-      logRetention: logs.RetentionDays.ONE_YEAR,
     });
 
     // ── Post-Authentication Trigger: Slack Notification ──
@@ -44,7 +43,6 @@ export class AuthStack extends cdk.Stack {
         SECRET_NAME: `vantage/credentials/${props.stageName}`,
         STAGE: props.stageName,
       },
-      logRetention: logs.RetentionDays.ONE_YEAR,
     });
 
     // Grant Secrets Manager read
@@ -86,7 +84,7 @@ export class AuthStack extends cdk.Stack {
         tempPasswordValidity: cdk.Duration.days(1),
       },
       accountRecovery: cognito.AccountRecovery.NONE, // Admin-only reset (email used for MFA)
-      advancedSecurityMode: cognito.AdvancedSecurityMode.ENFORCED,
+      standardThreatProtectionMode: cognito.StandardThreatProtectionMode.FULL_FUNCTION,
       lambdaTriggers: {
         preSignUp: preSignUpFn,
         postAuthentication: postAuthFn,
@@ -96,7 +94,10 @@ export class AuthStack extends cdk.Stack {
 
     // ── Override MFA to Email OTP (CDK L2 doesn't support EMAIL_OTP yet) ──
     const cfnUserPool = this.userPool.node.defaultChild as cognito.CfnUserPool;
+    cfnUserPool.addPropertyOverride('MfaConfiguration', 'ON');
     cfnUserPool.addPropertyOverride('EnabledMfas', ['EMAIL_OTP']);
+    // EmailMfaConfiguration (custom message/subject) is API-only, not supported
+    // in CloudFormation. Set via CLI: aws cognito-idp update-user-pool
     cfnUserPool.addPropertyOverride('EmailConfiguration', {
       EmailSendingAccount: 'DEVELOPER',
       SourceArn: `arn:aws:ses:us-east-1:${this.account}:identity/vantagerefinery.com`,

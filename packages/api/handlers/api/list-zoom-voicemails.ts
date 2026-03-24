@@ -19,10 +19,20 @@ import { putItem, updateItem, deleteItem, buildUpdateExpression, queryItems, wri
 import { zoomGet, zoomDownload } from '../../shared/zoom';
 import { success, serverError } from '../../shared/response';
 import { getSecrets } from '../../shared/secrets';
+import {
+  TranscribeClient,
+  StartMedicalTranscriptionJobCommand,
+  type LanguageCode,
+  type MediaFormat,
+  type Specialty,
+  type Type,
+} from '@aws-sdk/client-transcribe';
 
 const s3 = new S3Client({});
+const transcribe = new TranscribeClient({});
 const AUDIO_BUCKET = process.env.AUDIO_BUCKET!;
 const KMS_KEY_ARN = process.env.KMS_KEY_ARN!;
+const TRANSCRIPT_BUCKET = process.env.TRANSCRIPT_BUCKET || AUDIO_BUCKET;
 const PRESIGN_EXPIRY = parseInt(process.env.PRESIGN_EXPIRY_SECONDS || '900', 10);
 
 // ── Zoom API types ──
@@ -153,6 +163,31 @@ async function audioExistsInS3(key: string): Promise<boolean> {
   }
 }
 
+/** Start Transcribe Medical job for a voicemail (fire-and-forget). */
+async function startVmTranscription(vmId: string, s3Key: string, providerId: string): Promise<string | null> {
+  const jobName = `vantage-vm-${vmId}-${Date.now()}`;
+  const outputKey = `transcripts/${providerId}/voicemails/${vmId}.json`;
+  try {
+    await transcribe.send(new StartMedicalTranscriptionJobCommand({
+      MedicalTranscriptionJobName: jobName,
+      LanguageCode: 'en-US' as LanguageCode,
+      MediaFormat: 'mp3' as MediaFormat,
+      Media: { MediaFileUri: `s3://${AUDIO_BUCKET}/${s3Key}` },
+      OutputBucketName: TRANSCRIPT_BUCKET,
+      OutputKey: outputKey,
+      OutputEncryptionKMSKeyId: KMS_KEY_ARN,
+      Specialty: 'PRIMARYCARE' as Specialty,
+      Type: 'CONVERSATION' as Type,
+      Settings: { ShowSpeakerLabels: false, ChannelIdentification: false },
+    }));
+    console.log(`Started transcription for VM ${vmId}: ${jobName}`);
+    return jobName;
+  } catch (err) {
+    console.warn(`Failed to start transcription for VM ${vmId}:`, (err as Error).message);
+    return null;
+  }
+}
+
 /** Download voicemail audio from Zoom and store in S3, return presigned URL */
 async function getAudioUrl(vmId: string, zoomDownloadUrl: string, providerId: string): Promise<string> {
   const s3Key = `voicemails/${providerId}/${vmId}.mp3`;
@@ -172,6 +207,28 @@ async function getAudioUrl(vmId: string, zoomDownloadUrl: string, providerId: st
         SSEKMSKeyId: KMS_KEY_ARN,
       }));
       console.log(`Cached voicemail audio in S3: ${s3Key} (${buffer.length} bytes)`);
+
+      // Start transcription immediately — no EventBridge delay
+      const jobName = await startVmTranscription(vmId, s3Key, providerId);
+      if (jobName) {
+        const now = new Date().toISOString();
+        const expr = buildUpdateExpression({
+          transcriptStatus: 'Transcribing',
+          jobName,
+          transcriptKey: `transcripts/${providerId}/voicemails/${vmId}.json`,
+          updatedAt: now,
+        });
+        if (expr) {
+          try {
+            await updateItem({
+              Key: { PK: `PROVIDER#${providerId}`, SK: `VOICEMAIL#${vmId}` },
+              ...expr,
+            });
+          } catch (e) {
+            console.warn(`Failed to update transcription status for ${vmId}:`, (e as Error).message);
+          }
+        }
+      }
     } catch (err) {
       console.warn(`Failed to cache voicemail ${vmId} audio:`, (err as Error).message);
       // Return Zoom URL as fallback (won't play but doesn't break)
@@ -391,7 +448,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       },
     });
 
-    const attachMap = new Map<string, { type: string; patientId?: string; category?: string; status?: string; transcript?: string; transcriptStatus?: string; suggestedPatientIds?: string[] }>();
+    const attachMap = new Map<string, { type: string; patientId?: string; category?: string; status?: string; transcript?: string; transcriptStatus?: string; suggestedPatientIds?: string[]; taskId?: string }>();
     for (const item of attachments) {
       attachMap.set(item.voicemailId as string, {
         type: item.attachmentType as string,
@@ -401,6 +458,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         transcript: item.transcript as string | undefined,
         transcriptStatus: item.transcriptStatus as string | undefined,
         suggestedPatientIds: item.suggestedPatientIds as string[] | undefined,
+        taskId: item.taskId as string | undefined,
       });
     }
 
@@ -570,6 +628,16 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
       try {
         await putItem(taskRecord);
+        // Store taskId on the voicemail record
+        const taskExpr = buildUpdateExpression({ taskId, updatedAt: now });
+        if (taskExpr) {
+          await updateItem({
+            Key: { PK: `PROVIDER#${providerId}`, SK: `VOICEMAIL#${vm.id}` },
+            ...taskExpr,
+          });
+        }
+        const cached = attachMap.get(vm.id);
+        if (cached) cached.taskId = taskId;
         await writeAuditLog({
           providerId,
           action: 'AUTO_CREATE_TASK',
@@ -590,9 +658,19 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         ':pk': `PROVIDER#${providerId}`,
         ':sk': 'TASK#',
       },
-      ProjectionExpression: 'voicemailId',
+      ProjectionExpression: 'voicemailId, taskId, #s',
+      ExpressionAttributeNames: { '#s': 'status' },
     });
     const taskVmIds = new Set(existingTasks.map((t) => t.voicemailId as string).filter(Boolean));
+
+    // Build voicemailId → { taskId, status } lookup for the response
+    const vmTaskMap = new Map<string, { taskId: string; status: string }>();
+    for (const t of existingTasks) {
+      const vmId = t.voicemailId as string;
+      if (vmId) {
+        vmTaskMap.set(vmId, { taskId: t.taskId as string, status: t.status as string });
+      }
+    }
 
     for (const vm of uniqueVoicemails) {
       if (taskVmIds.has(vm.id)) continue; // task already exists
@@ -636,6 +714,15 @@ export const handler: APIGatewayProxyHandler = async (event) => {
           GSI2SK: `${now}#${taskId}`,
           entityType: 'Task',
         });
+        // Store taskId on the voicemail record
+        const taskExpr = buildUpdateExpression({ taskId, updatedAt: now });
+        if (taskExpr) {
+          await updateItem({
+            Key: { PK: `PROVIDER#${providerId}`, SK: `VOICEMAIL#${vm.id}` },
+            ...taskExpr,
+          }).catch(() => {});
+        }
+        if (attachment) attachment.taskId = taskId;
         console.log(`Backfill: created task ${taskId} for existing voicemail ${vm.id}`);
       } catch (err) {
         console.warn(`Backfill: failed to create task for ${vm.id}:`, (err as Error).message);
@@ -702,6 +789,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       // Always resolve from fresh Zoom data
       const category = resolveCategory(vm.callee_name || '', vm.callee_number || '');
 
+      // Resolve task status for delete button
+      const taskInfo = vmTaskMap.get(vm.id) || (attachment?.taskId ? { taskId: attachment.taskId, status: 'Open' } : undefined);
+      const taskCompleted = taskInfo?.status === 'Done';
+
       return {
         id: vm.id,
         callerNumber: vm.caller_number || 'Unknown',
@@ -718,6 +809,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         transcript: attachment?.transcript || undefined,
         transcriptStatus: attachment?.transcriptStatus || undefined,
         suggestedPatientIds: attachment?.suggestedPatientIds || undefined,
+        taskId: taskInfo?.taskId || attachment?.taskId || undefined,
+        taskCompleted,
       };
     });
 

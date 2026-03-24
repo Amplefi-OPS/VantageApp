@@ -16,7 +16,9 @@ export class ApiError extends Error {
 }
 
 function baseUrl(): string {
-  return getSettings().apiBaseUrl || '/api'
+  const url = getSettings().apiBaseUrl || '/api'
+  // Strip trailing slash to prevent double-slash when paths start with /
+  return url.endsWith('/') ? url.slice(0, -1) : url
 }
 
 function authHeaders(): Record<string, string> {

@@ -74,7 +74,6 @@ export class ApiStack extends cdk.Stack {
         target: 'node20',
         externalModules: ['@aws-sdk/*'],
       },
-      logRetention: logs.RetentionDays.ONE_YEAR,
     };
 
     // ── Lambda: Presign Upload ──
@@ -381,6 +380,54 @@ export class ApiStack extends cdk.Stack {
       resources: [`arn:aws:events:${this.region}:${this.account}:event-bus/vantage-billing-${props.stageName}`],
     }));
 
+    // ── Billing API Lambdas (Stripe direct) ──
+    const billingEnv: Record<string, string> = {
+      ...commonEnv,
+      LEADS_TABLE: 'vantage-patient-leads',
+      STRIPE_SECRET_ARN: `arn:aws:secretsmanager:${this.region}:${this.account}:secret:vantage/stripe-key-${props.stageName}`,
+    };
+
+    const billingLookupFn = new lambdaNode.NodejsFunction(this, 'BillingLookupFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-billing-lookup-${props.stageName}`,
+      entry: path.join(lambdaDir, 'billing', 'billing-lookup.ts'),
+      handler: 'handler',
+      environment: billingEnv,
+    });
+
+    const billingDirectChargeFn = new lambdaNode.NodejsFunction(this, 'BillingDirectChargeFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-billing-direct-charge-${props.stageName}`,
+      entry: path.join(lambdaDir, 'billing', 'billing-charge.ts'),
+      handler: 'handler',
+      environment: billingEnv,
+    });
+
+    const billingNoShowFn = new lambdaNode.NodejsFunction(this, 'BillingNoShowFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-billing-noshow-${props.stageName}`,
+      entry: path.join(lambdaDir, 'billing', 'billing-noshow.ts'),
+      handler: 'handler',
+      environment: billingEnv,
+    });
+
+    // IAM: Stripe secret, leads table scan/query, main table audit log writes
+    const billingApiFns = [billingLookupFn, billingDirectChargeFn, billingNoShowFn];
+    for (const fn of billingApiFns) {
+      fn.addToRolePolicy(new iam.PolicyStatement({
+        actions: ['secretsmanager:GetSecretValue'],
+        resources: [`arn:aws:secretsmanager:${this.region}:${this.account}:secret:vantage/stripe-key-${props.stageName}*`],
+      }));
+      fn.addToRolePolicy(new iam.PolicyStatement({
+        actions: ['dynamodb:Scan', 'dynamodb:Query'],
+        resources: [
+          `arn:aws:dynamodb:${this.region}:${this.account}:table/vantage-patient-leads`,
+          `arn:aws:dynamodb:${this.region}:${this.account}:table/vantage-patient-leads/index/*`,
+        ],
+      }));
+      props.table.grantWriteData(fn);
+    }
+
     // ── Lambda: Notify Login Failure (unauthenticated — user isn't logged in) ──
     const notifyLoginFailureFn = new lambdaNode.NodejsFunction(this, 'NotifyLoginFailureFn', {
       ...lambdaDefaults,
@@ -477,6 +524,9 @@ export class ApiStack extends cdk.Stack {
       billingChargeFn,            // shared/slack
       notifyLoginFailureFn,       // shared/slack
       createPatientFn,            // shared/slack
+      billingLookupFn,            // getSecrets (Stripe)
+      billingDirectChargeFn,      // getSecrets (Stripe)
+      billingNoShowFn,            // getSecrets (Stripe)
     ];
     for (const fn of secretConsumers) {
       appSecret.grantRead(fn);
@@ -649,10 +699,14 @@ export class ApiStack extends cdk.Stack {
     const stripeTransactions = stripe.addResource('transactions');
     stripeTransactions.addMethod('GET', new apigateway.LambdaIntegration(stripeTransactionsFn), authMethodOptions);
 
-    // POST /billing/charge
+    // GET /billing/lookup  &  POST /billing/charge  &  POST /billing/no-show
     const billing = this.api.root.addResource('billing');
+    const billingLookup = billing.addResource('lookup');
+    billingLookup.addMethod('GET', new apigateway.LambdaIntegration(billingLookupFn), authMethodOptions);
     const charge = billing.addResource('charge');
-    charge.addMethod('POST', new apigateway.LambdaIntegration(billingChargeFn), authMethodOptions);
+    charge.addMethod('POST', new apigateway.LambdaIntegration(billingDirectChargeFn), authMethodOptions);
+    const noShow = billing.addResource('no-show');
+    noShow.addMethod('POST', new apigateway.LambdaIntegration(billingNoShowFn), authMethodOptions);
 
     // POST /notifications/login-failure (no auth — user isn't logged in)
     const notifications = this.api.root.addResource('notifications');

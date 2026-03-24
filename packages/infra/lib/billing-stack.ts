@@ -50,7 +50,6 @@ export class BillingStack extends cdk.Stack {
       },
       deadLetterQueue: dlq,
       retryAttempts: 2,
-      logRetention: logs.RetentionDays.ONE_YEAR,
     });
     props.table.grantReadWriteData(stripeProcessorFn);
 
@@ -77,7 +76,6 @@ export class BillingStack extends cdk.Stack {
       },
       deadLetterQueue: dlq,
       retryAttempts: 2,
-      logRetention: logs.RetentionDays.ONE_YEAR,
     });
     props.table.grantReadWriteData(quickbooksProcessorFn);
 
@@ -133,7 +131,6 @@ export class BillingStack extends cdk.Stack {
         SECRET_NAME: `vantage/credentials/${props.stageName}`,
         STAGE: props.stageName,
       },
-      logRetention: logs.RetentionDays.ONE_YEAR,
     });
 
     appSecret.grantRead(dlqAlertFn);

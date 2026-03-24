@@ -88,6 +88,21 @@ export async function zoomDownload(url: string): Promise<{ buffer: Buffer; conte
   return { buffer: Buffer.from(arrayBuffer), contentType };
 }
 
+/** Make an authenticated DELETE request to the Zoom API. */
+export async function zoomDelete(path: string): Promise<void> {
+  const token = await getAccessToken();
+
+  const res = await fetch(`${ZOOM_API_BASE}${path}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  // 204 No Content = success, 404 = already deleted (both OK)
+  if (!res.ok && res.status !== 404) {
+    throw thirdPartyError('Zoom', `DELETE ${path}`, res.status);
+  }
+}
+
 /** Make an authenticated POST request to the Zoom API. */
 export async function zoomPost<T = unknown>(path: string, body: unknown): Promise<T> {
   const token = await getAccessToken();

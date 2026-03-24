@@ -39,7 +39,6 @@ export class ScheduledTasksStack extends cdk.Stack {
         target: 'node20',
         externalModules: ['@aws-sdk/*'],
       },
-      logRetention: logs.RetentionDays.ONE_YEAR,
     });
 
     props.table.grantReadWriteData(createDailyFaxTaskFn);

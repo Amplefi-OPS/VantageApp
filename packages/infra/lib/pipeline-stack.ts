@@ -45,7 +45,6 @@ export class TranscriptionPipelineStack extends cdk.Stack {
       memorySize: 256,
       timeout: cdk.Duration.seconds(60),
       environment: commonEnv,
-      logRetention: logs.RetentionDays.ONE_YEAR,
     });
 
     // Transcribe Medical permissions
@@ -71,7 +70,6 @@ export class TranscriptionPipelineStack extends cdk.Stack {
       memorySize: 256,
       timeout: cdk.Duration.seconds(30),
       environment: commonEnv,
-      logRetention: logs.RetentionDays.ONE_YEAR,
     });
 
     checkTranscriptionFn.addToRolePolicy(new iam.PolicyStatement({
@@ -89,7 +87,6 @@ export class TranscriptionPipelineStack extends cdk.Stack {
       memorySize: 512,
       timeout: cdk.Duration.seconds(60),
       environment: commonEnv,
-      logRetention: logs.RetentionDays.ONE_YEAR,
     });
 
     props.transcriptBucket.grantReadWrite(completeTranscriptionFn);
@@ -103,9 +100,14 @@ export class TranscriptionPipelineStack extends cdk.Stack {
       outputPath: '$.Payload',
     });
 
-    // State 2: Wait before polling
+    // State 2a: Initial wait (15s — audio needs time to start processing)
+    const initialWait = new sfn.Wait(this, 'InitialWait', {
+      time: sfn.WaitTime.duration(cdk.Duration.seconds(15)),
+    });
+
+    // State 2b: Subsequent poll wait (10s)
     const waitForTranscription = new sfn.Wait(this, 'WaitForTranscription', {
-      time: sfn.WaitTime.duration(cdk.Duration.seconds(30)),
+      time: sfn.WaitTime.duration(cdk.Duration.seconds(10)),
     });
 
     // State 3: Check job status
@@ -135,11 +137,14 @@ export class TranscriptionPipelineStack extends cdk.Stack {
       .when(sfn.Condition.stringEquals('$.status', 'FAILED'), handleFailure)
       .otherwise(waitForTranscription);
 
-    // Wire up the state machine
+    // Wire up: start → initial wait (15s) → check → choice → poll wait (10s) → check ...
     const definition = startJob
-      .next(waitForTranscription)
+      .next(initialWait)
       .next(checkStatus)
       .next(isComplete);
+
+    waitForTranscription
+      .next(checkStatus);
 
     const stateMachine = new sfn.StateMachine(this, 'TranscriptionStateMachine', {
       stateMachineName: `vantage-transcription-${props.stageName}`,
@@ -168,7 +173,6 @@ export class TranscriptionPipelineStack extends cdk.Stack {
         STATE_MACHINE_ARN: stateMachine.stateMachineArn,
         TABLE_NAME: props.table.tableName,
       },
-      logRetention: logs.RetentionDays.ONE_YEAR,
     });
 
     stateMachine.grantStartExecution(triggerFn);

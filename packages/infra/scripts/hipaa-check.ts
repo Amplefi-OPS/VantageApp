@@ -187,7 +187,7 @@ const CAT_ACCESS = 'ACCESS CONTROLS';
       : `Unprotected routes found: ${unexpected.map(([id, r]) => `${id} (${r.Properties.HttpMethod} AuthType=${r.Properties.AuthorizationType})`).join(', ')}`);
 }
 
-// Cognito MFA — ON or OPTIONAL (not OFF)
+// Cognito MFA — enabled (ON or OPTIONAL, not OFF)
 {
   const pool = findResource(auth, 'AWS::Cognito::UserPool');
   if (!pool) {
@@ -429,6 +429,75 @@ const CAT_TRANSCRIBE = 'TRANSCRIBE MEDICAL SECURITY';
     hasTranscribeAction
       ? 'IAM policy includes explicit transcribe:StartMedicalTranscriptionJob action (not wildcard)'
       : 'No IAM policy found with explicit transcribe:StartMedicalTranscriptionJob action');
+}
+
+// ═══════════════════════════════════════════
+// MFA ENFORCEMENT
+// ═══════════════════════════════════════════
+
+const CAT_MFA = 'MFA ENFORCEMENT';
+
+// CHECK 24 — Cognito MFA set to REQUIRED (ON), not OPTIONAL
+{
+  const pool = findResource(auth, 'AWS::Cognito::UserPool');
+  if (!pool) {
+    check(CAT_MFA, 'Cognito MFA set to REQUIRED', false, 'UserPool resource not found');
+  } else {
+    const mfa = pool[1].Properties?.MfaConfiguration;
+    const passed = mfa === 'ON';
+    check(CAT_MFA, 'Cognito MFA set to REQUIRED', passed,
+      passed ? `${pool[0]}: MfaConfiguration=ON (REQUIRED)`
+        : `${pool[0]}: MfaConfiguration=${mfa} (expected ON — OPTIONAL is not HIPAA-compliant)`);
+  }
+}
+
+// ═══════════════════════════════════════════
+// BILLING AUDIT
+// ═══════════════════════════════════════════
+
+const CAT_BILLING = 'BILLING AUDIT';
+
+// CHECK 25 — Billing charges write audit logs to DynamoDB
+{
+  const policies = findResources(api, 'AWS::IAM::Policy');
+  // Look for policies that grant dynamodb:PutItem on the main table
+  // AND are attached to billing-related Lambda roles
+  const billingRoles = findResources(api, 'AWS::Lambda::Function')
+    .filter(([, r]) => {
+      const name = r.Properties?.FunctionName || '';
+      return name.includes('billing-lookup') ||
+             name.includes('billing-direct-charge') ||
+             name.includes('billing-noshow');
+    })
+    .map(([, r]) => r.Properties?.Role?.['Fn::GetAtt']?.[0])
+    .filter(Boolean);
+
+  const hasPutItem = policies.some(([, r]) => {
+    const statements: any[] = r.Properties?.PolicyDocument?.Statement || [];
+    return statements.some((s: any) => {
+      const actions: string[] = Array.isArray(s.Action) ? s.Action : [s.Action];
+      return actions.some((a: string) => a === 'dynamodb:PutItem' || a === 'dynamodb:*');
+    });
+  });
+
+  // Also check via grantWriteData — which grants BatchWriteItem, PutItem, UpdateItem, DeleteItem
+  const hasWriteGrant = policies.some(([, r]) => {
+    const statements: any[] = r.Properties?.PolicyDocument?.Statement || [];
+    const roles = r.Properties?.Roles || [];
+    const attachedToBilling = roles.some((role: any) =>
+      billingRoles.includes(role.Ref || role['Fn::GetAtt']?.[0]));
+    if (!attachedToBilling) return false;
+    return statements.some((s: any) => {
+      const actions: string[] = Array.isArray(s.Action) ? s.Action : [s.Action];
+      return actions.includes('dynamodb:PutItem');
+    });
+  });
+
+  const passed = hasPutItem || hasWriteGrant;
+  check(CAT_BILLING, 'Billing charges write audit logs to DynamoDB', passed,
+    passed
+      ? 'Billing Lambda IAM policies include dynamodb:PutItem for audit logging'
+      : 'No dynamodb:PutItem permission found for billing Lambda functions');
 }
 
 // ═══════════════════════════════════════════

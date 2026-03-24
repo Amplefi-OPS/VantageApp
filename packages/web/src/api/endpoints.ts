@@ -355,6 +355,48 @@ export async function transcribeVoicemail(
   return startTranscription(s3Key, 'VOICEMAIL', voicemailId)
 }
 
+// ── Billing (Stripe) ────────────────────────────────────
+
+export interface BillingPatient {
+  customerId: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  paymentMethod: {
+    id: string
+    brand: string
+    last4: string
+    expMonth: number
+    expYear: number
+  } | null
+}
+
+export async function lookupPatient(q: string): Promise<BillingPatient> {
+  return apiGet<BillingPatient>(`/billing/lookup?q=${encodeURIComponent(q)}`)
+}
+
+export async function chargePatient(
+  customerId: string,
+  paymentMethodId: string,
+  amountCents: number,
+  description?: string,
+): Promise<{ paymentIntentId: string; status: string; amount: number }> {
+  return apiPost('/billing/charge', {
+    customerId,
+    paymentMethodId,
+    amount: amountCents,
+    description: description || undefined,
+  })
+}
+
+export async function chargeNoShow(
+  customerId: string,
+  paymentMethodId: string,
+): Promise<{ paymentIntentId: string; status: string; amount: number }> {
+  return apiPost('/billing/no-show', { customerId, paymentMethodId })
+}
+
 // ── Notifications ──────────────────────────────────────
 
 /** Fire-and-forget login failure report for Slack alerting. */
