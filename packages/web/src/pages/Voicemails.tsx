@@ -112,20 +112,14 @@ function TranscriptDisplay({ vm, onTranscribed }: { vm: Voicemail; onTranscribed
     vm.transcriptionStatus === 'IN_PROGRESS' ||
     isTranscribing
 
-  if (isPending) {
-    return (
-      <div className="mt-2 flex items-center gap-2 text-sm text-warm-gray dark:text-gray-400">
-        <Loader2 size={14} className="animate-spin" />
-        <span>Queued for transcription...</span>
-      </div>
-    )
-  }
-
-  if (isInProgress) {
+  if (isPending || isInProgress) {
     return (
       <div className="mt-2 flex items-center gap-2 text-sm text-warm-gray dark:text-gray-400" data-testid="transcribing-indicator">
-        <Loader2 size={14} className="animate-spin" />
-        <span>Transcribing\u2026</span>
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+        </span>
+        <span>{isPending ? 'Queued for transcription\u2026' : 'Transcribing\u2026'}</span>
       </div>
     )
   }
@@ -220,6 +214,20 @@ export default function Voicemails() {
   const { data: voicemails, isLoading, isError, error: queryError } = useQuery({
     queryKey: ['voicemails'],
     queryFn: listVoicemails,
+    // Auto-poll every 15s while any voicemail has an active transcription
+    refetchInterval: (query) => {
+      const vms = query.state.data as Voicemail[] | undefined
+      const hasActive = vms?.some((vm) =>
+        !vm.transcript &&
+        vm.transcriptStatus !== 'Failed' &&
+        vm.transcriptionStatus !== 'FAILED' &&
+        (vm.transcriptStatus === 'Pending' ||
+         vm.transcriptStatus === 'Transcribing' ||
+         vm.transcriptionStatus === 'PENDING' ||
+         vm.transcriptionStatus === 'IN_PROGRESS')
+      )
+      return hasActive ? 15_000 : false
+    },
   })
 
   const { data: patients } = useQuery({
