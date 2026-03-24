@@ -83,7 +83,7 @@ export class AuthStack extends cdk.Stack {
         requireSymbols: true,
         tempPasswordValidity: cdk.Duration.days(1),
       },
-      accountRecovery: cognito.AccountRecovery.NONE, // Admin-only reset (email used for MFA)
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY, // Self-service reset via email code
       standardThreatProtectionMode: cognito.StandardThreatProtectionMode.FULL_FUNCTION,
       lambdaTriggers: {
         preSignUp: preSignUpFn,
