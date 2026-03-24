@@ -385,7 +385,7 @@ export async function chargePatient(
   return apiPost('/billing/charge', {
     customerId,
     paymentMethodId,
-    amount: amountCents,
+    amountCents,
     description: description || undefined,
   })
 }
