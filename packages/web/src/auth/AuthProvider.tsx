@@ -7,6 +7,8 @@ import {
   completeNewPasswordChallenge,
   changePassword as cognitoChangePassword,
   signOut as cognitoSignOut,
+  forgotPassword as cognitoForgotPassword,
+  confirmForgotPassword as cognitoConfirmForgotPassword,
   getCurrentUser,
   isAuthenticated,
   getTokensAsync,
@@ -34,6 +36,8 @@ interface AuthContextValue {
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ success: boolean; error?: string }>
   confirmSignUp: (code: string) => Promise<{ success: boolean; error?: string }>
   changePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>
+  forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>
+  confirmForgotPassword: (email: string, code: string, newPassword: string) => Promise<{ success: boolean; error?: string }>
   setSignUpMode: (mode: boolean) => void
   extendSession: () => void
   logout: () => void
@@ -305,6 +309,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         confirmSignUp,
         changePassword,
+        forgotPassword: cognitoForgotPassword,
+        confirmForgotPassword: cognitoConfirmForgotPassword,
         setSignUpMode,
         extendSession,
         logout: performLogout,

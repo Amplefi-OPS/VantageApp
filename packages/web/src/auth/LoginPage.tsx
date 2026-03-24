@@ -4,13 +4,23 @@ import { reportLoginFailure } from '../api/endpoints'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Card } from '../components/ui/Card'
-import { Shield, KeyRound, UserPlus, Mail } from 'lucide-react'
+import { Shield, KeyRound, UserPlus, Mail, LockKeyhole } from 'lucide-react'
 
 export default function LoginPage() {
   const {
     login, setNewPassword, verifyMfa, signUp, confirmSignUp, setSignUpMode,
+    forgotPassword, confirmForgotPassword,
     mfaRequired, newPasswordRequired, signUpMode, confirmationPending, isLoading,
   } = useAuth()
+
+  // Forgot password state
+  const [forgotMode, setForgotMode] = useState(false)
+  const [forgotStep, setForgotStep] = useState<'request' | 'reset'>('request')
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [resetCode, setResetCode] = useState('')
+  const [resetPwd, setResetPwd] = useState('')
+  const [resetConfirmPwd, setResetConfirmPwd] = useState('')
+  const [forgotLoading, setForgotLoading] = useState(false)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -37,6 +47,59 @@ export default function LoginPage() {
   const [suPassword, setSuPassword] = useState('')
   const [suConfirmPwd, setSuConfirmPwd] = useState('')
   const [confirmCode, setConfirmCode] = useState('')
+
+  async function handleForgotRequest(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setForgotLoading(true)
+    const result = await forgotPassword(forgotEmail)
+    setForgotLoading(false)
+    if (result.success) {
+      setForgotStep('reset')
+    } else {
+      setError(result.error || 'Failed to send reset code.')
+    }
+  }
+
+  async function handleForgotReset(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    if (resetPwd !== resetConfirmPwd) {
+      setError('Passwords do not match.')
+      return
+    }
+    if (resetPwd.length < 8) {
+      setError('Password must be at least 8 characters.')
+      return
+    }
+    setForgotLoading(true)
+    const result = await confirmForgotPassword(forgotEmail, resetCode, resetPwd)
+    setForgotLoading(false)
+    if (result.success) {
+      setForgotMode(false)
+      setForgotStep('request')
+      setForgotEmail('')
+      setResetCode('')
+      setResetPwd('')
+      setResetConfirmPwd('')
+      setSuccessMsg('Password reset! You can now sign in with your new password.')
+    } else {
+      setError(result.error || 'Failed to reset password.')
+    }
+  }
+
+  function openForgotMode() {
+    setError('')
+    setSuccessMsg('')
+    setForgotMode(true)
+    setForgotStep('request')
+  }
+
+  function closeForgotMode() {
+    setError('')
+    setForgotMode(false)
+    setForgotStep('request')
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -127,6 +190,7 @@ export default function LoginPage() {
   const showMfa = mfaRequired && !newPasswordRequired
   const showConfirmation = confirmationPending
   const showSignUp = signUpMode && !showNewPassword && !showMfa && !showConfirmation
+  const showForgot = forgotMode && !showNewPassword && !showMfa && !showConfirmation && !showSignUp
 
   return (
     <div className="min-h-screen bg-off-white flex items-center justify-center p-4">
@@ -352,6 +416,93 @@ export default function LoginPage() {
               </p>
             </form>
 
+          ) : showForgot ? (
+            forgotStep === 'request' ? (
+              <form onSubmit={handleForgotRequest} className="space-y-4">
+                <div className="text-center mb-2">
+                  <LockKeyhole className="w-8 h-8 text-slate-blue mx-auto mb-2" />
+                  <h2 className="text-lg font-semibold text-charcoal">Reset Password</h2>
+                  <p className="text-sm text-warm-gray">
+                    Enter your email and we'll send a reset code.
+                  </p>
+                </div>
+                <Input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="name@vantagerefinery.com"
+                  required
+                  autoComplete="email"
+                />
+                {error && (
+                  <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
+                )}
+                <Button type="submit" className="w-full" disabled={forgotLoading}>
+                  {forgotLoading ? 'Sending code...' : 'Send Reset Code'}
+                </Button>
+                <p className="text-xs text-warm-gray text-center mt-2">
+                  <button type="button" onClick={closeForgotMode} className="text-slate-blue font-medium hover:underline">
+                    Back to Sign In
+                  </button>
+                </p>
+              </form>
+            ) : (
+              <form onSubmit={handleForgotReset} className="space-y-4">
+                <div className="text-center mb-2">
+                  <LockKeyhole className="w-8 h-8 text-slate-blue mx-auto mb-2" />
+                  <h2 className="text-lg font-semibold text-charcoal">Set New Password</h2>
+                  <p className="text-sm text-warm-gray">
+                    Enter the code sent to <strong>{forgotEmail}</strong> and choose a new password.
+                  </p>
+                </div>
+                <Input
+                  type="text"
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value)}
+                  placeholder="Reset code"
+                  maxLength={6}
+                  className="text-center text-2xl tracking-widest"
+                  required
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                />
+                <Input
+                  type="password"
+                  value={resetPwd}
+                  onChange={(e) => setResetPwd(e.target.value)}
+                  placeholder="New password"
+                  required
+                  autoComplete="new-password"
+                />
+                <Input
+                  type="password"
+                  value={resetConfirmPwd}
+                  onChange={(e) => setResetConfirmPwd(e.target.value)}
+                  placeholder="Confirm new password"
+                  required
+                  autoComplete="new-password"
+                />
+                <p className="text-xs text-warm-gray">
+                  8+ characters, uppercase, lowercase, number, and symbol.
+                </p>
+                {error && (
+                  <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
+                )}
+                <Button type="submit" className="w-full" disabled={forgotLoading}>
+                  {forgotLoading ? 'Resetting...' : 'Reset Password'}
+                </Button>
+                <p className="text-xs text-warm-gray text-center mt-2">
+                  <button type="button" onClick={() => setForgotStep('request')} className="text-slate-blue font-medium hover:underline">
+                    Resend code
+                  </button>
+                  {' · '}
+                  <button type="button" onClick={closeForgotMode} className="text-slate-blue font-medium hover:underline">
+                    Back to Sign In
+                  </button>
+                </p>
+              </form>
+            )
+
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
@@ -390,7 +541,13 @@ export default function LoginPage() {
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
               <p className="text-xs text-warm-gray text-center mt-3">
-                Forgot your password? Contact your administrator.
+                <button
+                  type="button"
+                  onClick={openForgotMode}
+                  className="text-slate-blue font-medium hover:underline"
+                >
+                  Forgot your password?
+                </button>
               </p>
               <p className="text-xs text-warm-gray text-center mt-1">
                 Don't have an account?{' '}

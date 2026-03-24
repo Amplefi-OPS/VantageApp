@@ -510,6 +510,48 @@ export async function changePassword(
   });
 }
 
+// ── Forgot Password (send reset code) ──
+
+export async function forgotPassword(
+  email: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!POOL_CONFIG.ClientId) {
+    return { success: false, error: 'Cognito is not configured.' };
+  }
+  try {
+    await cognitoFetch('ForgotPassword', {
+      ClientId: POOL_CONFIG.ClientId,
+      Username: email,
+    });
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to send reset code.' };
+  }
+}
+
+// ── Confirm Forgot Password (reset with code + new password) ──
+
+export async function confirmForgotPassword(
+  email: string,
+  code: string,
+  newPassword: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!POOL_CONFIG.ClientId) {
+    return { success: false, error: 'Cognito is not configured.' };
+  }
+  try {
+    await cognitoFetch('ConfirmForgotPassword', {
+      ClientId: POOL_CONFIG.ClientId,
+      Username: email,
+      ConfirmationCode: code,
+      Password: newPassword,
+    });
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to reset password.' };
+  }
+}
+
 // ── Sign Out ──
 
 export async function signOut(): Promise<void> {
