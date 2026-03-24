@@ -16,7 +16,6 @@ frontend:
   cache:
     paths:
       - 'node_modules/**/*'
-      - 'packages/web/node_modules/**/*'
 
 customHeaders:
   - pattern: '**/*'
