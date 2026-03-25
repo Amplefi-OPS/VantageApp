@@ -31,7 +31,7 @@ export default function Patients() {
     }
   }, [searchParams, setSearchParams])
 
-  const { isLoading, isError } = useQuery({
+  const { isLoading, isError, error } = useQuery({
     queryKey: ['patients-paginated'],
     queryFn: async () => {
       const res = await listPatients(undefined, PAGE_SIZE)
@@ -64,7 +64,13 @@ export default function Patients() {
   })
 
   if (isLoading) return <LoadingSpinner />
-  if (isError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load patients. Please refresh.</div>
+  if (isError) return (
+    <div className="text-center py-12">
+      <p className="text-warm-gray dark:text-gray-400 mb-2">Failed to load patients.</p>
+      <p className="text-xs text-red-400 font-mono">{error instanceof Error ? error.message : 'Unknown error'}</p>
+      <button onClick={() => window.location.reload()} className="mt-4 text-sm text-slate-blue underline">Refresh</button>
+    </div>
+  )
 
   return (
     <div>
