@@ -19,7 +19,7 @@ export default function Patients() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [showNewPatient, setShowNewPatient] = useState(false)
-  const [allPatients, setAllPatients] = useState<Patient[]>([])
+  const [extraPatients, setExtraPatients] = useState<Patient[]>([])
   const [nextToken, setNextToken] = useState<string | undefined>(undefined)
   const [loadingMore, setLoadingMore] = useState(false)
 
@@ -31,22 +31,28 @@ export default function Patients() {
     }
   }, [searchParams, setSearchParams])
 
-  const { isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['patients-paginated'],
-    queryFn: async () => {
-      const res = await listPatients(undefined, PAGE_SIZE)
-      setAllPatients(res.patients)
-      setNextToken(res.nextToken)
-      return res
-    },
+    queryFn: () => listPatients(undefined, PAGE_SIZE),
   })
+
+  // Sync pagination token from query data
+  useEffect(() => {
+    if (data) {
+      setNextToken(data.nextToken)
+      setExtraPatients([])
+    }
+  }, [data])
+
+  // First page from React Query cache + extra pages from Load More
+  const allPatients = [...(data?.patients ?? []), ...extraPatients]
 
   const loadMore = useCallback(async () => {
     if (!nextToken || loadingMore) return
     setLoadingMore(true)
     try {
       const res = await listPatients(nextToken, PAGE_SIZE)
-      setAllPatients((prev) => [...prev, ...res.patients])
+      setExtraPatients((prev) => [...prev, ...res.patients])
       setNextToken(res.nextToken)
     } finally {
       setLoadingMore(false)
