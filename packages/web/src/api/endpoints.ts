@@ -38,11 +38,12 @@ export async function listPatients(nextToken?: string, limit = 25): Promise<Pagi
   const params = new URLSearchParams({ limit: String(limit) })
   if (nextToken) params.set('nextToken', nextToken)
   const res = await apiGet<Patient[] | { patients: Patient[]; nextToken?: string }>(`/patients?${params}`)
+  console.log('[Patients] API response:', JSON.stringify(res).slice(0, 200))
   // Handle both array response (legacy) and paginated response
   if (Array.isArray(res)) {
     return { patients: res }
   }
-  return { patients: res.patients, nextToken: res.nextToken }
+  return { patients: res.patients ?? [], nextToken: res.nextToken }
 }
 
 export async function listAllPatients(): Promise<Patient[]> {
