@@ -7,7 +7,6 @@
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { queryItemsPaginated } from '../../shared/dynamo';
-import { getCallerIdentity, isAdmin } from '../../shared/auth';
 import { success, badRequest, serverError } from '../../shared/response';
 
 function mapPatient(item: Record<string, unknown>) {
@@ -40,7 +39,6 @@ function mapPatient(item: Record<string, unknown>) {
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    const caller = getCallerIdentity(event);
     const params = event.queryStringParameters || {};
 
     const limit = Math.min(Math.max(parseInt(params.limit || '25', 10), 1), 100);
@@ -53,29 +51,15 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       }
     }
 
-    let result: { items: Record<string, unknown>[]; lastEvaluatedKey?: Record<string, unknown> };
-    if (isAdmin(caller)) {
-      result = await queryItemsPaginated({
-        IndexName: 'GSI2',
-        KeyConditionExpression: 'GSI2PK = :pk',
-        ExpressionAttributeValues: {
-          ':pk': 'PATIENT',
-        },
-        Limit: limit,
-        ExclusiveStartKey: exclusiveStartKey,
-      });
-    } else {
-      result = await queryItemsPaginated({
-        IndexName: 'GSI1',
-        KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
-        ExpressionAttributeValues: {
-          ':pk': `PROVIDER#${caller.providerId}`,
-          ':sk': 'PATIENT#',
-        },
-        Limit: limit,
-        ExclusiveStartKey: exclusiveStartKey,
-      });
-    }
+    const result = await queryItemsPaginated({
+      IndexName: 'GSI2',
+      KeyConditionExpression: 'GSI2PK = :pk',
+      ExpressionAttributeValues: {
+        ':pk': 'PATIENT',
+      },
+      Limit: limit,
+      ExclusiveStartKey: exclusiveStartKey,
+    });
 
     const patients = result.items.map(mapPatient);
     const nextToken = result.lastEvaluatedKey
