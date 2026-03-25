@@ -10,51 +10,32 @@
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { queryItems } from '../../shared/dynamo';
-import { getCallerIdentity, isAdmin } from '../../shared/auth';
+import { getCallerIdentity } from '../../shared/auth';
 import { success, serverError } from '../../shared/response';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    const caller = getCallerIdentity(event);
-    const admin = isAdmin(caller);
+    getCallerIdentity(event); // authenticate + set CORS origin
 
-    // Admins: clinic-wide counts via GSI2. Non-admins: scoped to their provider.
-    const [patients, tasks, voicemails] = admin
-      ? await Promise.all([
-          queryItems({
-            IndexName: 'GSI2',
-            KeyConditionExpression: 'GSI2PK = :pk',
-            ExpressionAttributeValues: { ':pk': 'PATIENT' },
-            ProjectionExpression: 'PK',
-          }),
-          queryItems({
-            IndexName: 'GSI2',
-            KeyConditionExpression: 'GSI2PK = :pk',
-            ExpressionAttributeValues: { ':pk': 'TASK' },
-          }),
-          queryItems({
-            IndexName: 'GSI2',
-            KeyConditionExpression: 'GSI2PK = :pk',
-            ExpressionAttributeValues: { ':pk': 'VOICEMAIL' },
-          }),
-        ])
-      : await Promise.all([
-          queryItems({
-            IndexName: 'GSI1',
-            KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
-            ExpressionAttributeValues: { ':pk': `PROVIDER#${caller.providerId}`, ':sk': 'PATIENT#' },
-            ProjectionExpression: 'PK',
-          }),
-          queryItems({
-            KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
-            ExpressionAttributeValues: { ':pk': `PROVIDER#${caller.providerId}`, ':sk': 'TASK#' },
-          }),
-          queryItems({
-            IndexName: 'GSI1',
-            KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
-            ExpressionAttributeValues: { ':pk': `PROVIDER#${caller.providerId}`, ':sk': 'VOICEMAIL#' },
-          }),
-        ]);
+    // Practice-wide counts via GSI2 for all authenticated users
+    const [patients, tasks, voicemails] = await Promise.all([
+      queryItems({
+        IndexName: 'GSI2',
+        KeyConditionExpression: 'GSI2PK = :pk',
+        ExpressionAttributeValues: { ':pk': 'PATIENT' },
+        ProjectionExpression: 'PK',
+      }),
+      queryItems({
+        IndexName: 'GSI2',
+        KeyConditionExpression: 'GSI2PK = :pk',
+        ExpressionAttributeValues: { ':pk': 'TASK' },
+      }),
+      queryItems({
+        IndexName: 'GSI2',
+        KeyConditionExpression: 'GSI2PK = :pk',
+        ExpressionAttributeValues: { ':pk': 'VOICEMAIL' },
+      }),
+    ]);
 
     const now = new Date().toISOString();
     let openTodos = 0;

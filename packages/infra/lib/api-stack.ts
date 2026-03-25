@@ -474,7 +474,7 @@ export class ApiStack extends cdk.Stack {
     const apiStartTranscriptionFn = new lambdaNode.NodejsFunction(this, 'ApiStartTranscriptionFn', {
       ...lambdaDefaults,
       functionName: `vantage-api-start-transcription-${props.stageName}`,
-      entry: path.join(lambdaDir, 'transcription', 'start-transcription.ts'),
+      entry: path.join(lambdaDir, 'transcription', 'start-medical-transcription.ts'),
       handler: 'handler',
       environment: transcriptionEnv,
     });
@@ -500,11 +500,17 @@ export class ApiStack extends cdk.Stack {
       }));
       fn.addToRolePolicy(new iam.PolicyStatement({
         actions: ['s3:PutObject'],
-        resources: [`${props.audioBucket.bucketArn}/audio/*`],
+        resources: [
+          `${props.audioBucket.bucketArn}/audio/*`,
+          `${props.audioBucket.bucketArn}/transcriptions/*`,
+        ],
       }));
       fn.addToRolePolicy(new iam.PolicyStatement({
         actions: ['s3:GetObject'],
-        resources: [`${props.audioBucket.bucketArn}/transcriptions/*`],
+        resources: [
+          `${props.audioBucket.bucketArn}/audio/*`,
+          `${props.audioBucket.bucketArn}/transcriptions/*`,
+        ],
       }));
       props.kmsKey.grantEncryptDecrypt(fn);
       props.table.grantReadWriteData(fn);

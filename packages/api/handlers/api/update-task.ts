@@ -18,9 +18,9 @@
  */
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
-import { getCallerIdentity, canAccessProvider } from '../../shared/auth';
-import { getItem, updateItem, buildUpdateExpression, writeAuditLog } from '../../shared/dynamo';
-import { success, badRequest, forbidden, notFound, serverError, parseBody } from '../../shared/response';
+import { getCallerIdentity } from '../../shared/auth';
+import { queryItems, updateItem, buildUpdateExpression, writeAuditLog } from '../../shared/dynamo';
+import { success, badRequest, notFound, serverError, parseBody } from '../../shared/response';
 
 const VALID_STATUSES = new Set([
   'Open', 'Done', 'AwaitingTranscription', 'DraftReady', 'TranscriptionFailed',
@@ -35,14 +35,15 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     const body = parseBody(event);
     if (!body) return badRequest('Invalid JSON in request body');
-    const provider_id = (body.provider_id as string) || caller.providerId;
 
-    if (!canAccessProvider(caller, provider_id)) {
-      return forbidden('Cannot update tasks for another provider');
-    }
-
-    // Verify task exists
-    const existing = await getItem(`PROVIDER#${provider_id}`, `TASK#${taskId}`);
+    // Find task by taskId via GSI2 (practice-wide, not tied to any provider PK)
+    const matches = await queryItems({
+      IndexName: 'GSI2',
+      KeyConditionExpression: 'GSI2PK = :pk',
+      FilterExpression: 'taskId = :tid',
+      ExpressionAttributeValues: { ':pk': 'TASK', ':tid': taskId },
+    });
+    const existing = matches[0];
     if (!existing) return notFound('Task not found');
 
     // Validate fields
@@ -73,13 +74,13 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     if (!expr) return badRequest('No fields to update');
 
     const updated = await updateItem({
-      Key: { PK: `PROVIDER#${provider_id}`, SK: `TASK#${taskId}` },
+      Key: { PK: existing.PK as string, SK: existing.SK as string },
       ...expr,
       ReturnValues: 'ALL_NEW',
     });
 
     await writeAuditLog({
-      providerId: provider_id,
+      providerId: (existing.providerId as string) || caller.providerId,
       action: 'UPDATE_TASK',
       entityType: 'Task',
       entityId: taskId,

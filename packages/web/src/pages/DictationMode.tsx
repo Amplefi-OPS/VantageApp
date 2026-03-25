@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Mic, Square, X, Loader2, AlertCircle } from 'lucide-react'
-import { getUploadUrl, startTranscription, getTranscriptionResult } from '../api/endpoints'
+import { getUploadUrl, startTranscription, getTranscriptionResult, createNote } from '../api/endpoints'
 import { Button } from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
 
@@ -56,6 +56,8 @@ export default function DictationMode({
   const [elapsed, setElapsed] = useState(0)
   const [noteText, setNoteText] = useState('')
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [noteTitle, setNoteTitle] = useState('SOAP')
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -190,6 +192,31 @@ export default function DictationMode({
     if (template) {
       setNoteText(template)
       setSelectedTemplate(name)
+      setNoteTitle(name)
+    }
+  }
+
+  const saveNote = async () => {
+    if (!noteText.trim()) {
+      toast('error', 'Note is empty — record or type something first.')
+      return
+    }
+    setIsSaving(true)
+    try {
+      await createNote({
+        patientId,
+        title: `${noteTitle} — ${new Date().toLocaleDateString()}`,
+        body: noteText.trim(),
+      })
+      toast('success', 'Note saved to patient record.')
+      queryClient.invalidateQueries({ queryKey: ['patient-notes'] })
+      queryClient.invalidateQueries({ queryKey: ['patient-dictations'] })
+      onClose()
+    } catch (err) {
+      console.error('Save note error:', err)
+      toast('error', 'Failed to save note. Please try again.')
+    } finally {
+      setIsSaving(false)
     }
   }
 

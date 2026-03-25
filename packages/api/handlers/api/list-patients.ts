@@ -7,7 +7,7 @@
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { queryItemsPaginated } from '../../shared/dynamo';
-import { success, badRequest, serverError } from '../../shared/response';
+import { success, badRequest, serverError, setRequestOrigin } from '../../shared/response';
 
 function mapPatient(item: Record<string, unknown>) {
   return {
@@ -39,6 +39,7 @@ function mapPatient(item: Record<string, unknown>) {
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
+    setRequestOrigin(event.headers?.origin || event.headers?.Origin);
     const params = event.queryStringParameters || {};
 
     const limit = Math.min(Math.max(parseInt(params.limit || '25', 10), 1), 100);

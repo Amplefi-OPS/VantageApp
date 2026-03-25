@@ -36,12 +36,12 @@
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { queryItemsPaginated } from '../../shared/dynamo';
-import { getCallerIdentity, isAdmin } from '../../shared/auth';
+import { getCallerIdentity } from '../../shared/auth';
 import { success, badRequest, serverError } from '../../shared/response';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
-    const caller = getCallerIdentity(event);
+    getCallerIdentity(event); // authenticate + set CORS origin
     const params = event.queryStringParameters || {};
 
     const status = params.status;
@@ -57,30 +57,16 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       }
     }
 
-    let result: { items: Record<string, unknown>[]; lastEvaluatedKey?: Record<string, unknown> };
-    if (isAdmin(caller)) {
-      // Admins: clinic-wide task list via GSI2
-      result = await queryItemsPaginated({
-        IndexName: 'GSI2',
-        KeyConditionExpression: 'GSI2PK = :pk',
-        ExpressionAttributeValues: {
-          ':pk': 'TASK',
-        },
-        Limit: limit,
-        ExclusiveStartKey: exclusiveStartKey,
-      });
-    } else {
-      // Non-admins: only their own tasks
-      result = await queryItemsPaginated({
-        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
-        ExpressionAttributeValues: {
-          ':pk': `PROVIDER#${caller.providerId}`,
-          ':sk': 'TASK#',
-        },
-        Limit: limit,
-        ExclusiveStartKey: exclusiveStartKey,
-      });
-    }
+    // Practice-wide task list via GSI2 for all authenticated users
+    const result = await queryItemsPaginated({
+      IndexName: 'GSI2',
+      KeyConditionExpression: 'GSI2PK = :pk',
+      ExpressionAttributeValues: {
+        ':pk': 'TASK',
+      },
+      Limit: limit,
+      ExclusiveStartKey: exclusiveStartKey,
+    });
 
     // Apply status filter client-side
     let filteredItems = result.items;

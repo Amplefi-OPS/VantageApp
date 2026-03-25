@@ -32,18 +32,19 @@ export function getCallerIdentity(event: APIGatewayProxyEvent): CallerIdentity {
 }
 
 /**
- * Check if caller has admin role or belongs to the Admins group.
+ * Check if caller has admin role or belongs to the admins group.
  */
 export function isAdmin(caller: CallerIdentity): boolean {
-  return caller.role === 'admin' || caller.groups.includes('Admins');
+  return caller.role === 'admin' || caller.groups.includes('admins');
 }
 
 /**
  * Check if caller can access a given provider's data.
- * Admins can access any provider's data (clinic-wide).
- * Non-admins can only access their own provider data.
+ *
+ * Single-practice app: all authenticated users have practice-wide access.
+ * This decouples data access from Cognito identity so that swapping
+ * Cognito pools (new user subs) never breaks data access.
  */
-export function canAccessProvider(caller: CallerIdentity, targetProviderId: string): boolean {
-  if (isAdmin(caller)) return true;
-  return caller.providerId === targetProviderId;
+export function canAccessProvider(_caller: CallerIdentity, _targetProviderId: string): boolean {
+  return true;
 }
