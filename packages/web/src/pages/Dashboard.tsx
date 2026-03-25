@@ -17,6 +17,7 @@ export default function Dashboard() {
   const { data: counts, isLoading, isError } = useQuery({
     queryKey: ['dashboard-counts'],
     queryFn: getDashboardCounts,
+    staleTime: 0,
     refetchInterval: 30000,
     retry: 1,
   })
@@ -43,7 +44,7 @@ export default function Dashboard() {
     {
       label: 'To-Do List',
       icon: ClipboardList,
-      count: counts?.openTodos,
+      count: counts == null ? undefined : (counts.openTodos ?? 0),
       countLabel: 'open',
       color: 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
       path: '/todos',

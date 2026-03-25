@@ -1,5 +1,6 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { queryClient } from './lib/queryClient'
 import { ToastProvider } from './components/ui/Toast'
 import { AuthProvider, useAuth } from './auth/AuthProvider'
@@ -17,6 +18,29 @@ import Fax from './pages/Fax'
 import StripeDashboard from './pages/stripe/StripeDashboard'
 import ScheduleAppointment from './pages/ScheduleAppointment'
 import Settings from './pages/Settings'
+import {
+  getDashboardCounts,
+  listVoicemails,
+  listPatients,
+  listTodos,
+} from './api/endpoints'
+
+// Kicks off parallel prefetches the moment the user is authenticated so data
+// is already cached by the time they navigate to any page.
+function PrefetchOnAuth() {
+  const { isLoggedIn } = useAuth()
+  const qc = useQueryClient()
+
+  useEffect(() => {
+    if (!isLoggedIn) return
+    qc.prefetchQuery({ queryKey: ['dashboard-counts'], queryFn: getDashboardCounts })
+    qc.prefetchQuery({ queryKey: ['voicemails'], queryFn: listVoicemails })
+    qc.prefetchQuery({ queryKey: ['patients-paginated'], queryFn: () => listPatients(undefined, 25) })
+    qc.prefetchQuery({ queryKey: ['todos'], queryFn: listTodos })
+  }, [isLoggedIn, qc])
+
+  return null
+}
 
 function ProviderRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
@@ -57,6 +81,7 @@ function AppRoutes() {
 
   return (
     <>
+      <PrefetchOnAuth />
       <InactivityWarning />
       <Routes>
         <Route element={<Layout />}>
