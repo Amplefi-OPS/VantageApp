@@ -68,7 +68,7 @@ export default function PatientLookup() {
                 <Button
                   size="sm"
                   icon={<CreditCard size={16} />}
-                  onClick={() => navigate(`/billing/charge?customerId=${customer.id}&name=${encodeURIComponent(customer.name || '')}`)}
+                  onClick={() => navigate(`/billing?search=${encodeURIComponent(customer.name || customer.email || '')}`)}
                 >
                   Charge
                 </Button>
@@ -76,7 +76,7 @@ export default function PatientLookup() {
                   size="sm"
                   variant="danger"
                   icon={<UserX size={16} />}
-                  onClick={() => navigate(`/billing/no-show?customerId=${customer.id}&name=${encodeURIComponent(customer.name || '')}`)}
+                  onClick={() => navigate(`/billing?search=${encodeURIComponent(customer.name || customer.email || '')}`)}
                 >
                   No-Show
                 </Button>
