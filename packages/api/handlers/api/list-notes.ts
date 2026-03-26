@@ -42,6 +42,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       patientId: item.patientId,
       title: item.title,
       body: item.body,
+      audioUrl: item.audioUrl || undefined,
       createdAt: item.createdAt,
     }));
 

@@ -33,7 +33,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     const body = parseBody(event);
     if (!body) return badRequest('Invalid JSON in request body');
-    const { title, body: noteBody } = body;
+    const { title, body: noteBody, audioUrl } = body;
 
     if (!title || !noteBody) {
       return badRequest('Missing required fields: title, body');
@@ -49,6 +49,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       patientId,
       title,
       body: noteBody,
+      audioUrl: audioUrl || null,
       createdAt: now,
       createdBy: caller.email,
       // GSI keys for provider-scoped queries
@@ -73,6 +74,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       patientId,
       title,
       body: noteBody,
+      audioUrl: audioUrl || undefined,
       createdAt: now,
     });
   } catch (err) {

@@ -109,6 +109,7 @@ export const NoteSchema = z.object({
   createdAt: z.string(),
   title: z.string(),
   body: z.string(),
+  audioUrl: z.string().optional(),
 })
 export type Note = z.infer<typeof NoteSchema>
 
@@ -199,6 +200,7 @@ export interface CreateNoteRequest {
   patientId: string
   title: string
   body: string
+  audioUrl?: string
 }
 
 export interface Appointment {

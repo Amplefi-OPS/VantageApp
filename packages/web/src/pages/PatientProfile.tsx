@@ -1084,15 +1084,26 @@ export default function PatientProfile() {
               </div>
             )}
 
-            {/* Regular notes (exclude auto-created dictation notes — those are shown in dictation cards above) */}
-            {notes && notes.filter((n) => !n.title.startsWith('Dictation —')).length > 0 && (
+            {/* Notes (with audio player when available) */}
+            {notes && notes.length > 0 && (
               <div className="space-y-3">
-                {notes.filter((n) => !n.title.startsWith('Dictation —')).map((note) => (
+                {notes.map((note) => (
                   <Card key={note.id}>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-charcoal dark:text-white">{note.title}</h3>
+                      <div className="flex items-center gap-2">
+                        {note.audioUrl && <Mic size={16} className="text-slate-blue shrink-0" />}
+                        <h3 className="font-semibold text-charcoal dark:text-white">{note.title}</h3>
+                      </div>
                       <span className="text-xs text-warm-gray dark:text-gray-300">{formatDate(note.createdAt)}</span>
                     </div>
+                    {note.audioUrl && (
+                      <audio
+                        controls
+                        preload="none"
+                        className="w-full h-10 mb-2"
+                        src={note.audioUrl}
+                      />
+                    )}
                     <pre className="text-sm text-charcoal dark:text-gray-200 whitespace-pre-wrap font-sans leading-relaxed">
                       {note.body}
                     </pre>

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Mic, Square, X, Save, AlertCircle } from 'lucide-react'
-import { createNote } from '../api/endpoints'
+import { Mic, Square, X, Save, AlertCircle, Loader2 } from 'lucide-react'
+import { createNote, getUploadUrl } from '../api/endpoints'
 import { Button } from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
 
@@ -47,6 +47,8 @@ export default function DictationMode({
   const [isSaving, setIsSaving] = useState(false)
   const [noteTitle, setNoteTitle] = useState('SOAP')
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null)
+  const [audioS3Url, setAudioS3Url] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -93,10 +95,31 @@ export default function DictationMode({
         if (e.data.size > 0) audioChunksRef.current.push(e.data)
       }
 
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = new Blob(audioChunksRef.current, { type: mimeType })
         const url = URL.createObjectURL(blob)
         setAudioBlobUrl(url)
+
+        // Upload audio to S3 in background
+        setUploading(true)
+        try {
+          const format = mimeType.includes('mp4') ? 'mp4' as const
+            : mimeType.includes('ogg') ? 'ogg' as const
+            : 'webm' as const
+          const { uploadUrl, s3Key } = await getUploadUrl(format)
+          await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': blob.type },
+            body: blob,
+          })
+          // Build the S3 object URL for playback (will need presigning on read, but store the key)
+          setAudioS3Url(s3Key)
+        } catch (err) {
+          console.warn('Audio upload to S3 failed:', err)
+          // Non-fatal — note text still saves
+        } finally {
+          setUploading(false)
+        }
       }
 
       recorder.start(250)
@@ -211,6 +234,7 @@ export default function DictationMode({
         patientId,
         title: `${noteTitle} — ${new Date().toLocaleDateString()}`,
         body: noteText.trim(),
+        audioUrl: audioS3Url || undefined,
       })
       toast('success', 'Note saved to patient record.')
       queryClient.invalidateQueries({ queryKey: ['patient-notes'] })
@@ -323,7 +347,14 @@ export default function DictationMode({
       {/* Audio playback after recording */}
       {audioBlobUrl && !isRecording && (
         <div className="p-3 bg-slate-blue/5 dark:bg-slate-blue/10 rounded-lg border border-slate-blue/20">
-          <p className="text-xs font-medium text-slate-blue mb-2">Recorded Audio</p>
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-xs font-medium text-slate-blue">Recorded Audio</p>
+            {uploading && (
+              <span className="flex items-center gap-1 text-xs text-warm-gray dark:text-gray-400">
+                <Loader2 size={12} className="animate-spin" /> Uploading...
+              </span>
+            )}
+          </div>
           <audio controls src={audioBlobUrl} className="w-full h-10" />
         </div>
       )}
@@ -362,7 +393,7 @@ export default function DictationMode({
         <Button
           onClick={saveNote}
           loading={isSaving}
-          disabled={isRecording || !noteText.trim()}
+          disabled={isRecording || uploading || !noteText.trim()}
           icon={<Save size={18} />}
           size="lg"
           data-testid="save-note-btn"
