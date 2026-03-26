@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Mic, Square, X, Loader2, AlertCircle } from 'lucide-react'
+import { Mic, Square, X, Loader2, AlertCircle, Save } from 'lucide-react'
 import { getUploadUrl, startTranscription, getTranscriptionResult, createNote } from '../api/endpoints'
 import { Button } from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
@@ -328,6 +328,33 @@ export default function DictationMode({
         className="w-full min-h-[240px] p-4 rounded-lg border border-light-gray dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-white text-base resize-y focus:outline-none focus:ring-2 focus:ring-slate-blue"
         data-testid="dictation-textarea"
       />
+
+      {/* Save / Cancel */}
+      <div className="flex items-center justify-end gap-3 pt-2">
+        <Button
+          variant="ghost"
+          onClick={() => {
+            if (mediaRecorderRef.current?.state === 'recording') {
+              mediaRecorderRef.current.stop()
+            }
+            stopStream()
+            if (timerRef.current) clearInterval(timerRef.current)
+            onClose()
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={saveNote}
+          loading={isSaving}
+          disabled={isRecording || isProcessing || !noteText.trim()}
+          icon={<Save size={18} />}
+          size="lg"
+          data-testid="save-note-btn"
+        >
+          Save Note
+        </Button>
+      </div>
     </div>
   )
 }

@@ -483,6 +483,7 @@ export default function PatientProfile() {
         patientName={`${patient.firstName} ${patient.lastName}`}
         onClose={() => {
           setDictating(false)
+          setTab('notes')
           refetchNotes()
           queryClient.invalidateQueries({ queryKey: ['patient-dictations'] })
         }}
@@ -927,7 +928,7 @@ export default function PatientProfile() {
               <div className="space-y-3">
                 {voicemails.map((vm) => (
                   <Card key={vm.id}>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Badge
                         variant={
                           vm.category === 'Scheduling'
@@ -940,6 +941,17 @@ export default function PatientProfile() {
                         }
                       >
                         {vm.category}
+                      </Badge>
+                      <Badge
+                        variant={
+                          vm.status === 'Attached' || vm.status === 'Reviewed'
+                            ? 'green'
+                            : vm.status === 'Archived'
+                              ? 'gray'
+                              : 'red'
+                        }
+                      >
+                        {vm.status}
                       </Badge>
                       <span className="text-sm text-warm-gray dark:text-gray-300">{timeAgo(vm.receivedAt)}</span>
                       <span className="text-sm text-warm-gray dark:text-gray-300">
