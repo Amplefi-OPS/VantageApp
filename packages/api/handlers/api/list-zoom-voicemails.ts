@@ -598,10 +598,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       // Auto-create todo task for every voicemail
       const taskId = `task-${randomUUID().slice(0, 12)}`;
       const todoType = CATEGORY_TO_TODO_TYPE[category] || 'CallBack';
-      const patientLabel = matchedPatient
+      const callerLabel = matchedPatient
         ? `${matchedPatient.firstName} ${matchedPatient.lastName}`
-        : 'New Patient';
-      const title = `${patientLabel} — ${category}`;
+        : vm.caller_name || vm.caller_number || 'Unknown';
+      const title = `Voicemail — ${callerLabel} — ${category}`;
 
       const taskRecord = {
         PK: `PROVIDER#${providerId}`,
@@ -652,7 +652,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       }
     }
 
-    // ── Backfill: create tasks for voicemails that have records but no tasks ──
+    // ── Build task lookup for the response (no backfill — tasks are only created once above) ──
     const existingTasks = await queryItems({
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
       ExpressionAttributeValues: {
@@ -662,71 +662,12 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       ProjectionExpression: 'voicemailId, taskId, #s',
       ExpressionAttributeNames: { '#s': 'status' },
     });
-    const taskVmIds = new Set(existingTasks.map((t) => t.voicemailId as string).filter(Boolean));
 
-    // Build voicemailId → { taskId, status } lookup for the response
     const vmTaskMap = new Map<string, { taskId: string; status: string }>();
     for (const t of existingTasks) {
       const vmId = t.voicemailId as string;
       if (vmId) {
         vmTaskMap.set(vmId, { taskId: t.taskId as string, status: t.status as string });
-      }
-    }
-
-    for (const vm of uniqueVoicemails) {
-      if (taskVmIds.has(vm.id)) continue; // task already exists
-      const attachment = attachMap.get(vm.id);
-      if (!attachment) continue; // no voicemail record yet (shouldn't happen after loop above)
-
-      const category = attachment.category || resolveCategory(vm.callee_name || '', vm.callee_number || '');
-      const todoType = CATEGORY_TO_TODO_TYPE[category] || 'CallBack';
-      const callerPhone = normalizePhone(vm.caller_number || '');
-      const matchedPatient = attachment.patientId
-        ? patientItems.find((p) => p.patientId === attachment.patientId)
-        : callerPhone ? phoneToPatient.get(callerPhone) : undefined;
-
-      const patientLabel = matchedPatient
-        ? `${matchedPatient.firstName || ''} ${matchedPatient.lastName || ''}`.trim() || vm.caller_name || vm.caller_number
-        : 'New Patient';
-      const title = `${patientLabel} — ${category}`;
-      const taskId = `task-${randomUUID().slice(0, 12)}`;
-
-      try {
-        await putItem({
-          PK: `PROVIDER#${providerId}`,
-          SK: `TASK#${taskId}`,
-          taskId,
-          providerId,
-          patientId: (matchedPatient as Record<string, unknown>)?.patientId || attachment.patientId || null,
-          voicemailId: vm.id,
-          type: todoType,
-          title,
-          status: 'Open',
-          priority: 'Med',
-          dueDate: null,
-          assignedTo: null,
-          notes: `Auto-created from voicemail. Caller: ${vm.caller_name || vm.caller_number || 'Unknown'}. Duration: ${vm.duration}s.`,
-          dictationId: null,
-          createdAt: now,
-          updatedAt: now,
-          GSI1PK: `PROVIDER#${providerId}`,
-          GSI1SK: `TASKSTATUS#Open#${now}`,
-          GSI2PK: 'TASK',
-          GSI2SK: `${now}#${taskId}`,
-          entityType: 'Task',
-        });
-        // Store taskId on the voicemail record
-        const taskExpr = buildUpdateExpression({ taskId, updatedAt: now });
-        if (taskExpr) {
-          await updateItem({
-            Key: { PK: `PROVIDER#${providerId}`, SK: `VOICEMAIL#${vm.id}` },
-            ...taskExpr,
-          }).catch(() => {});
-        }
-        if (attachment) attachment.taskId = taskId;
-        console.log(`Backfill: created task ${taskId} for existing voicemail ${vm.id}`);
-      } catch (err) {
-        console.warn(`Backfill: failed to create task for ${vm.id}:`, (err as Error).message);
       }
     }
 

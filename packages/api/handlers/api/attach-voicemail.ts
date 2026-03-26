@@ -84,7 +84,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const taskId = `task-${randomUUID().slice(0, 12)}`;
     const todoType = CATEGORY_TO_TODO_TYPE[category] || 'CallBack';
     const callerLabel = callerName || callerNumber;
-    const title = `Voicemail from ${callerLabel} — ${category}`;
+    const title = `Voicemail — ${callerLabel} — ${category}`;
 
     await putItem({
       PK: `PROVIDER#${providerId}`,
