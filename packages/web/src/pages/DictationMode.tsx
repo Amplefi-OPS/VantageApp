@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Mic, Square, X, Loader2, AlertCircle, Save } from 'lucide-react'
-import { getUploadUrl, startTranscription, getTranscriptionResult, createNote } from '../api/endpoints'
+import { Mic, Square, X, Save, AlertCircle } from 'lucide-react'
+import { createNote } from '../api/endpoints'
 import { Button } from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
 
@@ -24,21 +24,10 @@ function formatTimer(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-function getMediaType(): string {
-  if (typeof MediaRecorder === 'undefined') return 'audio/webm'
-  if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus'
-  if (MediaRecorder.isTypeSupported('audio/webm')) return 'audio/webm'
-  if (MediaRecorder.isTypeSupported('audio/mp4')) return 'audio/mp4'
-  if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) return 'audio/ogg;codecs=opus'
-  return 'audio/webm'
-}
-
-function detectFormat(mimeType: string): 'webm' | 'mp4' | 'wav' | 'ogg' {
-  if (mimeType.includes('mp4')) return 'mp4'
-  if (mimeType.includes('ogg')) return 'ogg'
-  if (mimeType.includes('wav')) return 'wav'
-  return 'webm'
-}
+const SpeechRecognitionCtor =
+  typeof window !== 'undefined'
+    ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    : null
 
 export default function DictationMode({
   patientId,
@@ -50,19 +39,21 @@ export default function DictationMode({
   const queryClient = useQueryClient()
 
   const [isRecording, setIsRecording] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [processingStage, setProcessingStage] = useState<'uploading' | 'transcribing' | ''>('')
   const [recordingError, setRecordingError] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState(0)
   const [noteText, setNoteText] = useState('')
+  const [interimText, setInterimText] = useState('')
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [noteTitle, setNoteTitle] = useState('SOAP')
+  const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const speechRecRef = useRef<any>(null)
+  const isRecordingRef = useRef(false)
 
   const stopStream = useCallback(() => {
     if (streamRef.current) {
@@ -75,6 +66,11 @@ export default function DictationMode({
     return () => {
       stopStream()
       if (timerRef.current) clearInterval(timerRef.current)
+      if (speechRecRef.current) {
+        speechRecRef.current.onend = null
+        try { speechRecRef.current.abort() } catch {}
+        speechRecRef.current = null
+      }
     }
   }, [stopStream])
 
@@ -84,7 +80,11 @@ export default function DictationMode({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
 
-      const mimeType = getMediaType()
+      // Start MediaRecorder for audio capture
+      const mimeType =
+        typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus'
+          : 'audio/webm'
       const recorder = new MediaRecorder(stream, { mimeType })
       mediaRecorderRef.current = recorder
       audioChunksRef.current = []
@@ -93,8 +93,62 @@ export default function DictationMode({
         if (e.data.size > 0) audioChunksRef.current.push(e.data)
       }
 
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: mimeType })
+        const url = URL.createObjectURL(blob)
+        setAudioBlobUrl(url)
+      }
+
       recorder.start(250)
+
+      // Start Web Speech API for live transcription
+      if (SpeechRecognitionCtor) {
+        const recognition = new SpeechRecognitionCtor()
+        recognition.continuous = true
+        recognition.interimResults = true
+        recognition.lang = 'en-US'
+
+        recognition.onresult = (event: any) => {
+          let finalTranscript = ''
+          let interim = ''
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i]
+            if (result.isFinal) {
+              finalTranscript += result[0].transcript
+            } else {
+              interim += result[0].transcript
+            }
+          }
+
+          if (finalTranscript) {
+            setNoteText((prev) => prev + finalTranscript + ' ')
+            if (onTranscript) onTranscript(finalTranscript)
+          }
+          setInterimText(interim)
+        }
+
+        recognition.onerror = (event: any) => {
+          if (event.error === 'no-speech' || event.error === 'aborted') return
+          console.error('Speech recognition error:', event.error)
+          setRecordingError(`Speech recognition error: ${event.error}. You can type manually.`)
+        }
+
+        recognition.onend = () => {
+          // Auto-restart if still recording (browser stops after silence)
+          if (isRecordingRef.current) {
+            try {
+              recognition.start()
+            } catch {}
+          }
+        }
+
+        recognition.start()
+        speechRecRef.current = recognition
+      }
+
       setIsRecording(true)
+      isRecordingRef.current = true
       setElapsed(0)
 
       timerRef.current = setInterval(() => {
@@ -105,87 +159,36 @@ export default function DictationMode({
     }
   }
 
-  const processRecording = useCallback(async () => {
-    setIsProcessing(true)
-    setProcessingStage('uploading')
-
-    const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm'
-    const blob = new Blob(audioChunksRef.current, { type: mimeType })
-    const format = detectFormat(mimeType)
-
-    try {
-      const { uploadUrl, s3Key } = await getUploadUrl(format)
-
-      await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': blob.type },
-        body: blob,
-      })
-
-      setProcessingStage('transcribing')
-
-      const { jobName } = await startTranscription(s3Key, 'DICTATION')
-
-      // Poll for result
-      let attempts = 0
-      const maxAttempts = 40
-      const poll = async (): Promise<void> => {
-        if (attempts >= maxAttempts) {
-          setRecordingError('Transcription timed out — please type your note manually.')
-          setIsProcessing(false)
-          setProcessingStage('')
-          return
-        }
-        attempts++
-
-        const result = await getTranscriptionResult(jobName)
-
-        if (result.status === 'COMPLETED' && result.transcript) {
-          setNoteText((prev) => (prev ? prev + '\n\n' + result.transcript : result.transcript!))
-          if (onTranscript) onTranscript(result.transcript)
-          setIsProcessing(false)
-          setProcessingStage('')
-          toast('success', 'Transcription complete!')
-          queryClient.invalidateQueries({ queryKey: ['patient-dictations'] })
-          return
-        }
-
-        if (result.status === 'FAILED') {
-          setRecordingError('Transcription failed — please type your note manually.')
-          setIsProcessing(false)
-          setProcessingStage('')
-          return
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 3000))
-        return poll()
-      }
-
-      await poll()
-    } catch (err) {
-      console.error('Transcription pipeline error:', err)
-      setRecordingError('Transcription failed — please type your note manually.')
-      setIsProcessing(false)
-      setProcessingStage('')
-    }
-  }, [toast, queryClient, onTranscript])
-
   const stopRecording = useCallback(() => {
-    if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') return
-
-    const recorder = mediaRecorderRef.current
-    recorder.onstop = () => {
-      processRecording()
+    // Stop speech recognition
+    if (speechRecRef.current) {
+      speechRecRef.current.onend = null
+      try { speechRecRef.current.stop() } catch {}
+      speechRecRef.current = null
     }
-    recorder.stop()
+
+    // Commit any remaining interim text
+    setInterimText((current) => {
+      if (current) {
+        setNoteText((prev) => prev + current + ' ')
+      }
+      return ''
+    })
+
+    // Stop MediaRecorder
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop()
+    }
 
     stopStream()
     setIsRecording(false)
+    isRecordingRef.current = false
+
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = null
     }
-  }, [processRecording, stopStream])
+  }, [stopStream])
 
   const applyTemplate = (name: string) => {
     const template = NOTE_TEMPLATES[name]
@@ -201,6 +204,7 @@ export default function DictationMode({
       toast('error', 'Note is empty — record or type something first.')
       return
     }
+    if (isRecording) stopRecording()
     setIsSaving(true)
     try {
       await createNote({
@@ -230,11 +234,7 @@ export default function DictationMode({
         </div>
         <button
           onClick={() => {
-            if (mediaRecorderRef.current?.state === 'recording') {
-              mediaRecorderRef.current.stop()
-            }
-            stopStream()
-            if (timerRef.current) clearInterval(timerRef.current)
+            if (isRecording) stopRecording()
             onClose()
           }}
           className="p-2 rounded-lg hover:bg-light-gray dark:hover:bg-gray-700 transition-colors"
@@ -256,6 +256,14 @@ export default function DictationMode({
           >
             <X size={14} />
           </button>
+        </div>
+      )}
+
+      {/* Browser support warning */}
+      {!SpeechRecognitionCtor && (
+        <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-300 text-sm">
+          <AlertCircle size={18} className="shrink-0 mt-0.5" />
+          <span>Live transcription requires Chrome or Edge. Audio recording still works — type your note manually after recording.</span>
         </div>
       )}
 
@@ -291,8 +299,7 @@ export default function DictationMode({
         ) : (
           <button
             onClick={startRecording}
-            disabled={isProcessing}
-            className="w-14 h-14 rounded-full bg-slate-blue flex items-center justify-center shadow-lg hover:bg-slate-blue/90 transition-colors disabled:opacity-50"
+            className="w-14 h-14 rounded-full bg-slate-blue flex items-center justify-center shadow-lg hover:bg-slate-blue/90 transition-colors"
             aria-label="Start recording"
             data-testid="mic-button"
           >
@@ -306,39 +313,47 @@ export default function DictationMode({
             <span className="text-lg font-mono font-semibold text-charcoal dark:text-white">
               {formatTimer(elapsed)}
             </span>
-            <span className="text-sm text-warm-gray dark:text-gray-400">Recording...</span>
-          </div>
-        )}
-
-        {isProcessing && (
-          <div className="flex items-center gap-3" data-testid="processing-indicator">
-            <Loader2 size={20} className="text-slate-blue animate-spin" />
-            <span className="text-sm text-charcoal dark:text-white" data-testid="processing-stage">
-              {processingStage === 'uploading' ? 'Uploading audio\u2026' : 'Transcribing with AWS\u2026'}
+            <span className="text-sm text-warm-gray dark:text-gray-400">
+              {SpeechRecognitionCtor ? 'Recording — live transcription active' : 'Recording...'}
             </span>
           </div>
         )}
       </div>
 
-      {/* Textarea */}
-      <textarea
-        value={noteText}
-        onChange={(e) => setNoteText(e.target.value)}
-        placeholder="Transcribed text will appear here, or type manually..."
-        className="w-full min-h-[240px] p-4 rounded-lg border border-light-gray dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-white text-base resize-y focus:outline-none focus:ring-2 focus:ring-slate-blue"
-        data-testid="dictation-textarea"
-      />
+      {/* Audio playback after recording */}
+      {audioBlobUrl && !isRecording && (
+        <div className="p-3 bg-slate-blue/5 dark:bg-slate-blue/10 rounded-lg border border-slate-blue/20">
+          <p className="text-xs font-medium text-slate-blue mb-2">Recorded Audio</p>
+          <audio controls src={audioBlobUrl} className="w-full h-10" />
+        </div>
+      )}
+
+      {/* Textarea + interim text */}
+      <div>
+        <textarea
+          value={noteText}
+          onChange={(e) => setNoteText(e.target.value)}
+          placeholder={
+            SpeechRecognitionCtor
+              ? 'Tap the microphone to start dictating — text appears in real time...'
+              : 'Tap the microphone to record, then type your note here...'
+          }
+          className="w-full min-h-[240px] p-4 rounded-lg border border-light-gray dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-white text-base resize-y focus:outline-none focus:ring-2 focus:ring-slate-blue"
+          data-testid="dictation-textarea"
+        />
+        {interimText && (
+          <div className="px-4 py-1.5 text-sm text-warm-gray dark:text-gray-400 italic">
+            {interimText}
+          </div>
+        )}
+      </div>
 
       {/* Save / Cancel */}
-      <div className="flex items-center justify-end gap-3 pt-2">
+      <div className="flex items-center justify-end gap-3 pt-2 border-t border-light-gray dark:border-gray-700">
         <Button
           variant="ghost"
           onClick={() => {
-            if (mediaRecorderRef.current?.state === 'recording') {
-              mediaRecorderRef.current.stop()
-            }
-            stopStream()
-            if (timerRef.current) clearInterval(timerRef.current)
+            if (isRecording) stopRecording()
             onClose()
           }}
         >
@@ -347,7 +362,7 @@ export default function DictationMode({
         <Button
           onClick={saveNote}
           loading={isSaving}
-          disabled={isRecording || isProcessing || !noteText.trim()}
+          disabled={isRecording || !noteText.trim()}
           icon={<Save size={18} />}
           size="lg"
           data-testid="save-note-btn"

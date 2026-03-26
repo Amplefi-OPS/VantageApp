@@ -46,8 +46,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const callerName = (body.callerName as string) || null;
     const now = new Date().toISOString();
 
-    // Verify patient belongs to this provider
-    const patient = await getItem(`PROVIDER#${providerId}`, `PATIENT#${patientId}`);
+    // Verify patient exists (patients use PK=PATIENT#id, SK=PROFILE)
+    const patient = await getItem(`PATIENT#${patientId}`, 'PROFILE');
     if (!patient) {
       return badRequest('Patient not found');
     }
