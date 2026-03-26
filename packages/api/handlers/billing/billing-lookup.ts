@@ -66,6 +66,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     let customer: StripeCustomer | null = null;
     const isEmail = q.includes('@');
+    const isPhone = /^\+?\d[\d\s\-().]{6,}$/.test(q);
+    const isName = !isEmail && !isPhone;
 
     // 1. Search Stripe by email
     if (isEmail) {
@@ -79,7 +81,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     }
 
     // 2. Search Stripe by phone
-    if (!customer) {
+    if (!customer && isPhone) {
       const phone = normalizePhone(q);
       if (phone.length >= 10) {
         const res = await stripeGet<StripeSearchResponse>(
@@ -97,6 +99,16 @@ export const handler: APIGatewayProxyHandler = async (event) => {
             customer = res2.data.data[0];
           }
         }
+      }
+    }
+
+    // 3. Search Stripe by name
+    if (!customer && isName) {
+      const res = await stripeGet<StripeSearchResponse>(
+        `/customers/search?query=name%3A%27${encodeURIComponent(q)}%27&limit=1`,
+      );
+      if (res.ok && res.data.data?.length > 0) {
+        customer = res.data.data[0];
       }
     }
 
@@ -160,46 +172,43 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       }
     }
 
-    // 4. DynamoDB fallback — scan Vantage main table patients by email or phone
+    // 4. DynamoDB fallback — scan Vantage main table patients by email, phone, or name
     if (!customer) {
       try {
-        const filterParts: string[] = [];
-        const exprValues: Record<string, string> = {};
+        const patients = await queryItems({
+          IndexName: 'GSI2',
+          KeyConditionExpression: 'GSI2PK = :pk',
+          ExpressionAttributeValues: {
+            ':pk': 'PATIENT',
+          },
+        });
 
+        let match: Record<string, unknown> | undefined;
         if (isEmail) {
-          filterParts.push('email = :email');
-          exprValues[':email'] = q.toLowerCase();
-        } else {
+          match = patients.find((p) => (p.email as string || '').toLowerCase() === q.toLowerCase());
+        } else if (isPhone) {
           const phone = normalizePhone(q);
-          if (phone.length >= 10) {
-            filterParts.push('contains(phone, :phone)');
-            exprValues[':phone'] = phone;
-          }
+          match = patients.find((p) => normalizePhone((p.phone as string) || '') === phone);
+        } else {
+          // Name search: match first name, last name, or full name (case-insensitive)
+          const qLower = q.toLowerCase();
+          match = patients.find((p) => {
+            const first = ((p.firstName as string) || '').toLowerCase();
+            const last = ((p.lastName as string) || '').toLowerCase();
+            const full = `${first} ${last}`;
+            return first.includes(qLower) || last.includes(qLower) || full.includes(qLower);
+          });
         }
 
-        if (filterParts.length > 0) {
-          const patients = await queryItems({
-            IndexName: 'GSI2',
-            KeyConditionExpression: 'GSI2PK = :pk',
-            FilterExpression: filterParts.join(' OR '),
-            ExpressionAttributeValues: {
-              ':pk': 'PATIENT',
-              ...exprValues,
-            },
-            Limit: 1,
+        if (match) {
+          return success({
+            customerId: null,
+            firstName: (match.firstName as string) || '',
+            lastName: (match.lastName as string) || '',
+            email: (match.email as string) || '',
+            phone: (match.phone as string) || '',
+            paymentMethod: null,
           });
-
-          if (patients.length > 0) {
-            const p = patients[0];
-            return success({
-              customerId: null,
-              firstName: (p.firstName as string) || '',
-              lastName: (p.lastName as string) || '',
-              email: (p.email as string) || '',
-              phone: (p.phone as string) || '',
-              paymentMethod: null,
-            });
-          }
         }
       } catch (err) {
         console.warn('DynamoDB patient lookup failed (non-fatal):', (err as Error).message);

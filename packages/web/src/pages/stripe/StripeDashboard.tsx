@@ -1,8 +1,11 @@
 import { useState } from 'react'
-import { Search, CreditCard, DollarSign, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Search, CreditCard, DollarSign, AlertCircle, CheckCircle, Loader2, TrendingUp, UserX, BarChart3 } from 'lucide-react'
 import { lookupPatient, chargePatient, chargeNoShow } from '../../api/endpoints'
+import { listTransactions } from '../../api/stripe-endpoints'
 import type { BillingPatient } from '../../api/endpoints'
 import { Card } from '../../components/ui/Card'
+import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Modal } from '../../components/ui/Modal'
@@ -27,6 +30,25 @@ export default function StripeDashboard() {
   const [noShowResult, setNoShowResult] = useState(false)
   const [noShowError, setNoShowError] = useState('')
 
+  // Transactions for reports
+  const { data: txData, isLoading: txLoading } = useQuery({
+    queryKey: ['stripe-transactions'],
+    queryFn: listTransactions,
+  })
+
+  // Compute reports
+  const transactions = txData?.transactions || []
+  const succeeded = transactions.filter((t) => t.status === 'succeeded')
+  const totalRevenue = succeeded.reduce((sum, t) => sum + t.amount, 0)
+  const noShowTx = succeeded.filter((t) =>
+    (t.description || '').toLowerCase().includes('no-show') ||
+    (t.description || '').toLowerCase().includes('no show') ||
+    (t.metadata?.type === 'no_show') ||
+    t.amount === 3000
+  )
+  const noShowTotal = noShowTx.reduce((sum, t) => sum + t.amount, 0)
+  const regularRevenue = totalRevenue - noShowTotal
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
@@ -37,7 +59,7 @@ export default function StripeDashboard() {
       const result = await lookupPatient(query.trim())
       setPatient(result)
     } catch (err: any) {
-      setSearchError(err?.message || 'No patient found with that email or phone.')
+      setSearchError(err?.message || 'No patient found.')
     } finally {
       setSearching(false)
     }
@@ -103,7 +125,102 @@ export default function StripeDashboard() {
     <div>
       <h1 className="text-2xl font-bold text-charcoal dark:text-white mb-6">Billing</h1>
 
+      {/* Revenue Reports */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+              <TrendingUp size={20} className="text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <p className="text-xs text-warm-gray dark:text-gray-400">Total Revenue</p>
+              {txLoading ? (
+                <Loader2 size={16} className="animate-spin text-warm-gray mt-1" />
+              ) : (
+                <p className="text-xl font-bold text-charcoal dark:text-white">
+                  ${(totalRevenue / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </p>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+              <BarChart3 size={20} className="text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-xs text-warm-gray dark:text-gray-400">Services Revenue</p>
+              {txLoading ? (
+                <Loader2 size={16} className="animate-spin text-warm-gray mt-1" />
+              ) : (
+                <p className="text-xl font-bold text-charcoal dark:text-white">
+                  ${(regularRevenue / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </p>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
+              <UserX size={20} className="text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <p className="text-xs text-warm-gray dark:text-gray-400">No-Shows ({noShowTx.length})</p>
+              {txLoading ? (
+                <Loader2 size={16} className="animate-spin text-warm-gray mt-1" />
+              ) : (
+                <p className="text-xl font-bold text-charcoal dark:text-white">
+                  ${(noShowTotal / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </p>
+              )}
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Recent Transactions */}
+      {!txLoading && succeeded.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-warm-gray dark:text-gray-400 uppercase tracking-wide mb-3">
+            Recent Transactions
+          </h2>
+          <Card>
+            <div className="divide-y divide-light-gray dark:divide-gray-700">
+              {succeeded.slice(0, 10).map((tx) => (
+                <div key={tx.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                  <div>
+                    <p className="text-sm font-medium text-charcoal dark:text-white">
+                      {tx.customerName || tx.customerEmail || 'Unknown'}
+                    </p>
+                    <p className="text-xs text-warm-gray dark:text-gray-400">
+                      {tx.description || 'Payment'} · {new Date(tx.created * 1000).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {(tx.description || '').toLowerCase().includes('no-show') || (tx.description || '').toLowerCase().includes('no show') || tx.amount === 3000 ? (
+                      <Badge variant="red">No-Show</Badge>
+                    ) : (
+                      <Badge variant="green">Paid</Badge>
+                    )}
+                    <span className="text-sm font-semibold text-charcoal dark:text-white">
+                      ${(tx.amount / 100).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* Patient Search */}
+      <h2 className="text-sm font-semibold text-warm-gray dark:text-gray-400 uppercase tracking-wide mb-3">
+        Charge a Patient
+      </h2>
       <form onSubmit={handleSearch} className="flex gap-3 mb-6">
         <div className="flex-1 relative">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-gray" />
@@ -111,7 +228,7 @@ export default function StripeDashboard() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Find patient by email or phone\u2026"
+            placeholder="Search by name, email, or phone..."
             className="w-full pl-10 pr-4 py-3 rounded-lg border border-light-gray dark:border-gray-600 text-base bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-blue min-h-[48px]"
           />
         </div>
@@ -133,8 +250,8 @@ export default function StripeDashboard() {
           <div className="flex items-start gap-3 text-warm-gray dark:text-gray-400">
             <AlertCircle size={20} className="shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-charcoal dark:text-white">No patient found with that email or phone.</p>
-              <p className="text-sm mt-1">Have them complete the booking form at vantagerefinery.com first.</p>
+              <p className="font-medium text-charcoal dark:text-white">No patient found.</p>
+              <p className="text-sm mt-1">Try searching by first name, last name, email, or phone number.</p>
             </div>
           </div>
         </Card>
@@ -149,8 +266,8 @@ export default function StripeDashboard() {
                 {patient.firstName} {patient.lastName}
               </h2>
               <div className="mt-2 space-y-1 text-sm text-warm-gray dark:text-gray-300">
-                <p>Email: {patient.email}</p>
-                <p>Phone: {patient.phone}</p>
+                {patient.email && <p>Email: {patient.email}</p>}
+                {patient.phone && <p>Phone: {patient.phone}</p>}
               </div>
             </div>
 
@@ -191,7 +308,7 @@ export default function StripeDashboard() {
         </Card>
       )}
 
-      {/* ── Charge Modal ── */}
+      {/* Charge Modal */}
       <Modal open={showCharge} onClose={resetChargeModal} title="Charge Patient" size="sm">
         {chargeResult ? (
           <div className="text-center py-4">
@@ -253,7 +370,7 @@ export default function StripeDashboard() {
         )}
       </Modal>
 
-      {/* ── No-Show Modal ── */}
+      {/* No-Show Modal */}
       <Modal open={showNoShow} onClose={resetNoShowModal} title="Charge No-Show Fee" size="sm">
         {noShowResult ? (
           <div className="text-center py-4">
