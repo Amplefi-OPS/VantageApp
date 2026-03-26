@@ -233,6 +233,15 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadData(listNotesFn);
 
+    // ── Lambda: Delete Note ──
+    const deleteNoteFn = new lambdaNode.NodejsFunction(this, 'DeleteNoteFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-delete-note-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'delete-note.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadWriteData(deleteNoteFn);
+
     // ── Lambda: Dashboard Counts ──
     const dashboardCountsFn = new lambdaNode.NodejsFunction(this, 'DashboardCountsFn', {
       ...lambdaDefaults,
@@ -660,10 +669,12 @@ export class ApiStack extends cdk.Stack {
     const patientById = patients.addResource('{id}');
     patientById.addMethod('GET', new apigateway.LambdaIntegration(getPatientFn), authMethodOptions);
 
-    // GET /patients/{id}/notes  &  POST /patients/{id}/notes
+    // GET /patients/{id}/notes  &  POST /patients/{id}/notes  &  DELETE /patients/{id}/notes/{noteId}
     const patientNotes = patientById.addResource('notes');
     patientNotes.addMethod('GET', new apigateway.LambdaIntegration(listNotesFn), authMethodOptions);
     patientNotes.addMethod('POST', new apigateway.LambdaIntegration(createNoteFn), authMethodOptions);
+    const patientNoteById = patientNotes.addResource('{noteId}');
+    patientNoteById.addMethod('DELETE', new apigateway.LambdaIntegration(deleteNoteFn), authMethodOptions);
 
     // GET /dashboard/counts
     const dashboard = this.api.root.addResource('dashboard');

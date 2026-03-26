@@ -29,6 +29,7 @@ import {
   AlertCircle,
   RefreshCw,
   Loader2,
+  Trash2,
 } from 'lucide-react'
 import {
   getPatient,
@@ -48,6 +49,7 @@ import {
   chargePatient,
   chargeNoShow,
   createPaymentIntentForCharge,
+  deleteNote,
 } from '../api/endpoints'
 import type { DictationRecord, BillingPatient } from '../api/endpoints'
 import type { Appointment, SendFaxRequest } from '../api/types'
@@ -435,6 +437,15 @@ export default function PatientProfile() {
 
   const openChargeModal = () => { setShowChargeModal(true) }
   const openNoShowModal = () => { setShowNoShowModal(true) }
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: (noteId: string) => deleteNote(id!, noteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patient-notes'] })
+      toast('success', 'Note deleted.')
+    },
+    onError: () => toast('error', 'Failed to delete note.'),
+  })
 
   const rxSendMutation = useMutation({
     mutationFn: async () => {
@@ -1094,7 +1105,17 @@ export default function PatientProfile() {
                         {note.audioUrl && <Mic size={16} className="text-slate-blue shrink-0" />}
                         <h3 className="font-semibold text-charcoal dark:text-white">{note.title}</h3>
                       </div>
-                      <span className="text-xs text-warm-gray dark:text-gray-300">{formatDate(note.createdAt)}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-warm-gray dark:text-gray-300">{formatDate(note.createdAt)}</span>
+                        <button
+                          onClick={() => deleteNoteMutation.mutate(note.id)}
+                          disabled={deleteNoteMutation.isPending}
+                          className="p-1.5 rounded-md text-warm-gray hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          aria-label="Delete note"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                     {note.audioUrl && (
                       <audio

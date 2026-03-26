@@ -19,7 +19,7 @@ import type {
   UploadToS3Response,
   DashboardCounts,
 } from './types'
-import { apiGet, apiPost, apiPut, apiPatch, apiUpload } from './client'
+import { apiGet, apiPost, apiPut, apiPatch, apiDelete, apiUpload } from './client'
 
 // ── Dashboard ──────────────────────────────────────────
 
@@ -200,6 +200,10 @@ export async function listNotes(patientId: string): Promise<Note[]> {
 
 export async function createNote(req: CreateNoteRequest): Promise<Note> {
   return apiPost<Note>(`/patients/${req.patientId}/notes`, req)
+}
+
+export async function deleteNote(patientId: string, noteId: string): Promise<void> {
+  return apiDelete<void>(`/patients/${patientId}/notes/${noteId}`)
 }
 
 // ── Fax ────────────────────────────────────────────────
