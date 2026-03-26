@@ -129,7 +129,6 @@ export default function Fax() {
   }
 
   if (isLoading) return <LoadingSpinner />
-  if (isError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load faxes. Please refresh.</div>
 
   return (
     <div>
@@ -142,7 +141,7 @@ export default function Fax() {
 
       <Tabs
         tabs={[
-          { key: 'history', label: 'All', count: faxes?.length },
+          { key: 'history', label: 'All', count: faxes?.length ?? 0 },
           { key: 'Inbound', label: 'Inbound', count: statusCounts.Inbound },
           { key: 'Queued', label: 'Queued', count: statusCounts.Queued },
           { key: 'Sent', label: 'Sent', count: statusCounts.Sent },
@@ -153,11 +152,14 @@ export default function Fax() {
       />
 
       <div className="mt-4 space-y-3">
-        {filtered?.length === 0 && (
+        {(isError || !filtered || filtered.length === 0) && (
           <EmptyState
             icon={<Send size={48} />}
             title="No faxes"
-            description="Faxes you send will appear here."
+            description={isError
+              ? "Could not load fax history. You can still send a new fax."
+              : "Faxes you send will appear here."
+            }
             action={
               <Button onClick={() => setShowCompose(true)} icon={<Plus size={18} />}>
                 Send a Fax
