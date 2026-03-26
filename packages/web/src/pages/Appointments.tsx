@@ -382,7 +382,9 @@ export default function Appointments() {
                             variant="danger"
                             icon={<DollarSign size={14} />}
                             onClick={() =>
-                              navigate(`/billing/no-show?name=${encodeURIComponent(appt.patientName)}`)
+                              appt.patientId
+                                ? navigate(`/patients/${appt.patientId}?tab=billing&action=noshow`)
+                                : navigate(`/billing?search=${encodeURIComponent(appt.patientName)}`)
                             }
                           >
                             Charge $30 No-Show Fee
@@ -415,7 +417,9 @@ export default function Appointments() {
                             variant="secondary"
                             icon={<CreditCard size={14} />}
                             onClick={() =>
-                              navigate(`/billing/charge?name=${encodeURIComponent(appt.patientName)}`)
+                              appt.patientId
+                                ? navigate(`/patients/${appt.patientId}?tab=billing&action=charge`)
+                                : navigate(`/billing?search=${encodeURIComponent(appt.patientName)}`)
                             }
                           >
                             Collect Payment
