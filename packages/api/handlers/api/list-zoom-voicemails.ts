@@ -524,12 +524,13 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     }
 
     // ── Load patients for phone number matching ──
+    // Use GSI2 (all patients) instead of GSI1 (provider-scoped) so we match
+    // patients regardless of which provider created them.
     const patientItems = await queryItems({
-      IndexName: 'GSI1',
-      KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+      IndexName: 'GSI2',
+      KeyConditionExpression: 'GSI2PK = :pk',
       ExpressionAttributeValues: {
-        ':pk': `PROVIDER#${providerId}`,
-        ':sk': 'PATIENT#',
+        ':pk': 'PATIENT',
       },
     });
 

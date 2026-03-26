@@ -285,6 +285,9 @@ export default function Voicemails() {
         voicemailId: attachModal.id,
         patientId: selectedPatientId,
         isNewPatient: false,
+        callerNumber: attachModal.callerNumber,
+        callerName: attachModal.callerName,
+        category: attachModal.category,
       })
     } else if (attachMode === 'new' && newPatient.firstName && newPatient.lastName) {
       createPatientMutation.mutate(newPatient)

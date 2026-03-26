@@ -181,6 +181,9 @@ export interface AttachVoicemailRequest {
   voicemailId: string
   patientId: string
   isNewPatient: boolean
+  callerNumber?: string
+  callerName?: string
+  category?: string
 }
 
 export interface UpdateTodoRequest {
