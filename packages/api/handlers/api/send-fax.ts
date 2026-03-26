@@ -39,31 +39,28 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     // ── RX validation (prescription fields) ──
     const rx = body.rx_details as Record<string, unknown> | undefined;
     if (rx) {
+      // Coerce quantity/refills from string to number (frontend sends strings from inputs)
+      if (typeof rx.quantity === 'string') rx.quantity = parseInt(rx.quantity, 10);
+      if (typeof rx.refills === 'string') rx.refills = parseInt(rx.refills, 10);
+
       const rxErrors: string[] = [];
       if (!rx.medication || typeof rx.medication !== 'string') {
-        rxErrors.push('rx_details.medication is required and must be a string');
+        rxErrors.push('rx_details.medication is required');
       }
       if (!rx.dosage || typeof rx.dosage !== 'string') {
-        rxErrors.push('rx_details.dosage is required and must be a string');
+        rxErrors.push('rx_details.dosage is required');
       }
       if (!rx.directions || typeof rx.directions !== 'string') {
-        rxErrors.push('rx_details.directions is required and must be a string');
+        rxErrors.push('rx_details.directions is required');
       }
-      if (
-        rx.quantity === undefined || rx.quantity === null ||
-        typeof rx.quantity !== 'number' || !Number.isInteger(rx.quantity) || rx.quantity < 1
-      ) {
-        rxErrors.push('rx_details.quantity is required and must be a positive integer');
+      if (isNaN(rx.quantity as number) || (rx.quantity as number) < 1) {
+        rxErrors.push('rx_details.quantity must be a positive number');
       }
-      if (
-        rx.refills === undefined || rx.refills === null ||
-        typeof rx.refills !== 'number' || !Number.isInteger(rx.refills) ||
-        rx.refills < 0 || rx.refills > 12
-      ) {
-        rxErrors.push('rx_details.refills is required and must be an integer between 0 and 12');
+      if (isNaN(rx.refills as number) || (rx.refills as number) < 0 || (rx.refills as number) > 12) {
+        rxErrors.push('rx_details.refills must be between 0 and 12');
       }
       if (!rx.prescriberName || typeof rx.prescriberName !== 'string') {
-        rxErrors.push('rx_details.prescriberName is required and must be a string');
+        rxErrors.push('rx_details.prescriberName is required');
       }
       if (rxErrors.length > 0) {
         return badRequest(`Prescription validation failed: ${rxErrors.join('; ')}`);
