@@ -11,7 +11,7 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
 } from 'lucide-react'
-import { listFaxes, listAllPatients, sendFax, uploadToS3 } from '../api/endpoints'
+import { listFaxes, listAllPatients, sendFax, getUploadUrl } from '../api/endpoints'
 import type { SendFaxRequest } from '../api/types'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -71,8 +71,17 @@ export default function Fax() {
     mutationFn: async () => {
       let attachmentUrl: string | undefined
       if (file) {
-        const result = await uploadToS3(file, 'fax-attachments')
-        attachmentUrl = result.url
+        // Get presigned S3 URL and upload the file directly
+        const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf'
+        const format = (['pdf', 'png', 'jpg', 'jpeg'].includes(ext) ? ext : 'pdf') as 'pdf' | 'png' | 'jpg' | 'jpeg'
+        const { uploadUrl, s3Key } = await getUploadUrl(format as any)
+        await fetch(uploadUrl, {
+          method: 'PUT',
+          body: file,
+        })
+        // Build the S3 URL for the send-fax Lambda
+        const bucket = import.meta.env.VITE_S3_BUCKET || 'vantage-audio-dev-841722554807'
+        attachmentUrl = `https://${bucket}.s3.us-east-1.amazonaws.com/${s3Key}`
       }
       return sendFax({ ...form, attachmentUrl })
     },

@@ -17,13 +17,17 @@ import { success, badRequest, serverError } from '../../shared/response';
 const s3 = new S3Client({});
 const AUDIO_BUCKET_NAME = process.env.AUDIO_BUCKET_NAME!;
 
-const VALID_FORMATS = new Set(['wav', 'mp4', 'webm', 'ogg']);
+const VALID_FORMATS = new Set(['wav', 'mp4', 'webm', 'ogg', 'pdf', 'png', 'jpg', 'jpeg']);
 
 const FORMAT_CONTENT_TYPE: Record<string, string> = {
   wav: 'audio/wav',
   mp4: 'audio/mp4',
   webm: 'audio/webm',
   ogg: 'audio/ogg',
+  pdf: 'application/pdf',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
 };
 
 export const handler: APIGatewayProxyHandler = async (event) => {
@@ -36,7 +40,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     }
 
     const id = randomUUID();
-    const s3Key = `audio/dictation/${id}.${format}`;
+    const isDocument = ['pdf', 'png', 'jpg', 'jpeg'].includes(format);
+    const s3Key = isDocument
+      ? `fax-attachments/${id}.${format}`
+      : `audio/dictation/${id}.${format}`;
 
     const command = new PutObjectCommand({
       Bucket: AUDIO_BUCKET_NAME,
