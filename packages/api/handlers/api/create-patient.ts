@@ -49,25 +49,30 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       return badRequest('Missing required fields: firstName, lastName, phone');
     }
 
-    // Check for duplicate patient by phone or email
+    // Check for duplicate patient by normalized phone or email
     const email = body.email as string | undefined;
-    const existing = await queryItems({
+    const normalizeDigits = (p: string) => p.replace(/\D/g, '').replace(/^1(\d{10})$/, '$1');
+    const inputDigits = normalizeDigits(phone);
+
+    const allPatients = await queryItems({
       IndexName: 'GSI2',
       KeyConditionExpression: 'GSI2PK = :pk',
-      FilterExpression: email
-        ? 'phone = :phone OR email = :email'
-        : 'phone = :phone',
       ExpressionAttributeValues: {
         ':pk': 'PATIENT',
-        ':phone': phone,
-        ...(email ? { ':email': email } : {}),
       },
       ProjectionExpression: 'patientId, firstName, lastName, phone, email',
     });
-    if (existing.length > 0) {
-      const match = existing[0];
+
+    const match = allPatients.find((p) => {
+      const existingDigits = normalizeDigits((p.phone as string) || '');
+      if (inputDigits.length >= 10 && existingDigits.length >= 10 && inputDigits === existingDigits) return true;
+      if (email && p.email && (p.email as string).toLowerCase() === email.toLowerCase()) return true;
+      return false;
+    });
+
+    if (match) {
       return badRequest(
-        `A patient with this ${match.phone === phone ? 'phone number' : 'email'} already exists: ${match.firstName} ${match.lastName}`,
+        `A patient with this phone number already exists: ${match.firstName} ${match.lastName}`,
       );
     }
 

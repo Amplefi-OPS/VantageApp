@@ -196,13 +196,12 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       events = await fetchEvents(calendarId, token, qp);
     }
 
-    // Load patients from DynamoDB
+    // Load patients from DynamoDB (all patients via GSI2 to prevent duplicates)
     const patientItems = await queryItems({
-      IndexName: 'GSI1',
-      KeyConditionExpression: 'GSI1PK = :pk AND begins_with(GSI1SK, :sk)',
+      IndexName: 'GSI2',
+      KeyConditionExpression: 'GSI2PK = :pk',
       ExpressionAttributeValues: {
-        ':pk': `PROVIDER#${providerId}`,
-        ':sk': 'PATIENT#',
+        ':pk': 'PATIENT',
       },
     });
 
