@@ -1,6 +1,7 @@
 import type { APIGatewayProxyResult, APIGatewayProxyEvent } from 'aws-lambda';
 
 const PROD_ORIGINS = [
+  'https://main.d310usa2cmh4sh.amplifyapp.com',
   'https://main.dvufomlgdfium.amplifyapp.com',
   'https://providerdev.vantagerefinery.com',
 ];
