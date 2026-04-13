@@ -635,6 +635,7 @@ export class ApiStack extends cdk.Stack {
         allowOrigins: props.stageName === 'prod'
           ? ['https://providerdev.vantagerefinery.com']
           : [
+              'https://main.d310usa2cmh4sh.amplifyapp.com',
               'https://main.dvufomlgdfium.amplifyapp.com',
               'https://providerdev.vantagerefinery.com',
               'http://localhost:5173',
