@@ -63,6 +63,7 @@ export default function LoginPage() {
   const [suFirstName, setSuFirstName] = useState('')
   const [suLastName, setSuLastName] = useState('')
   const [suEmail, setSuEmail] = useState('')
+  const [suPhone, setSuPhone] = useState('')
   const [suPassword, setSuPassword] = useState('')
   const [suConfirmPwd, setSuConfirmPwd] = useState('')
   const [confirmCode, setConfirmCode] = useState('')
@@ -183,7 +184,7 @@ export default function LoginPage() {
       setError('Password must be at least 8 characters')
       return
     }
-    const result = await signUp(suEmail, suPassword, suFirstName, suLastName)
+    const result = await signUp(suEmail, suPassword, suFirstName, suLastName, suPhone)
     if (!result.success) {
       setError(result.error || 'Sign up failed')
     }
@@ -289,7 +290,7 @@ export default function LoginPage() {
                   MFA Verification
                 </h2>
                 <p className="text-sm text-warm-gray">
-                  Enter the 6-digit code sent to your email from noreply@vantagerefinery.com
+                  Enter the 6-digit code sent via SMS to your mobile phone.
                 </p>
               </div>
               <div>
@@ -395,6 +396,20 @@ export default function LoginPage() {
                   required
                   autoComplete="email"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-1">
+                  Mobile Phone
+                </label>
+                <Input
+                  type="tel"
+                  value={suPhone}
+                  onChange={(e) => setSuPhone(e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                  required
+                  autoComplete="tel"
+                />
+                <p className="text-xs text-warm-gray mt-1">Used for SMS verification codes when signing in.</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-charcoal mb-1">

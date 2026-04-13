@@ -33,7 +33,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   setNewPassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>
   verifyMfa: (code: string) => Promise<{ success: boolean; error?: string }>
-  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ success: boolean; error?: string }>
+  signUp: (email: string, password: string, firstName: string, lastName: string, phone: string) => Promise<{ success: boolean; error?: string }>
   confirmSignUp: (code: string) => Promise<{ success: boolean; error?: string }>
   changePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>
@@ -250,10 +250,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [challengeName])
 
-  const signUp = useCallback(async (email: string, password: string, firstName: string, lastName: string) => {
+  const signUp = useCallback(async (email: string, password: string, firstName: string, lastName: string, phone: string) => {
     setIsLoading(true)
     try {
-      const result = await cognitoSignUp(email, password, firstName, lastName)
+      const result = await cognitoSignUp(email, password, firstName, lastName, phone)
       if (result.success) {
         setPendingSignUpEmail(email)
         setConfirmationPending(true)

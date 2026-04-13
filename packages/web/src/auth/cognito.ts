@@ -420,6 +420,16 @@ export async function completeMfaChallenge(
   }
 }
 
+// ── Phone Number Formatting ──
+// Normalise a user-entered phone number to E.164 (+1XXXXXXXXXX for US/Canada).
+// Strips all non-digit characters, then prepends +1 if no country code present.
+function toE164(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('1') && digits.length === 11) return `+${digits}`;
+  if (digits.length === 10) return `+1${digits}`;
+  return `+${digits}`; // pass through as-is for international numbers
+}
+
 // ── Sign Up (uses library) ──
 
 export async function signUp(
@@ -427,6 +437,7 @@ export async function signUp(
   password: string,
   firstName: string,
   lastName: string,
+  phone: string,
 ): Promise<{ success: boolean; error?: string }> {
   if (!POOL_CONFIG.UserPoolId || !POOL_CONFIG.ClientId) {
     return { success: false, error: 'Cognito is not configured.' };
@@ -437,6 +448,7 @@ export async function signUp(
     new CognitoUserAttribute({ Name: 'email', Value: email }),
     new CognitoUserAttribute({ Name: 'given_name', Value: firstName }),
     new CognitoUserAttribute({ Name: 'family_name', Value: lastName }),
+    new CognitoUserAttribute({ Name: 'phone_number', Value: toE164(phone) }),
   ];
 
   return new Promise((resolve) => {

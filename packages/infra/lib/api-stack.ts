@@ -526,10 +526,9 @@ export class ApiStack extends cdk.Stack {
     }
 
     // ── Lambda: Initiate Password Reset (custom flow — bypasses Cognito ForgotPassword) ──
-    // USER_POOL_ID is hardcoded to avoid a new cross-stack CloudFormation import
-    // (the Auth stack is in a frozen rollback state and cannot export new values).
-    // The active pool ARN is also hardcoded for the same reason.
-    const activeUserPoolId = `us-east-1_z0Bp03PxX`;
+    // USER_POOL_ID is hardcoded to the active pool (vantage-prod-v1, us-east-1_6HV34dJMd).
+    // Pool was created manually with SMS MFA. Update here when pool changes.
+    const activeUserPoolId = `us-east-1_6HV34dJMd`;
     const activeUserPoolArn = `arn:aws:cognito-idp:us-east-1:${this.account}:userpool/${activeUserPoolId}`;
 
     const initiatePasswordResetFn = new lambdaNode.NodejsFunction(this, 'InitiatePasswordResetFn', {

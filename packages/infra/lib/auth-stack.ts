@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambdaNode from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import * as path from 'path';
@@ -53,6 +54,16 @@ export class AuthStack extends cdk.Stack {
       }),
     );
 
+    // ── IAM Role for Cognito SMS (required for SMS MFA) ──
+    const smsRole = new iam.Role(this, 'CognitoSmsRole', {
+      roleName: `vantage-cognito-sms-${props.stageName}`,
+      assumedBy: new iam.ServicePrincipal('cognito-idp.amazonaws.com'),
+    });
+    smsRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['sns:Publish'],
+      resources: ['*'],
+    }));
+
     // ── Cognito User Pool ──
     this.userPool = new cognito.UserPool(this, 'VantageUserPool', {
       userPoolName: `vantage-providers-${props.stageName}`,
@@ -65,6 +76,7 @@ export class AuthStack extends cdk.Stack {
         email: { required: true, mutable: true },
         givenName: { required: true, mutable: true },
         familyName: { required: true, mutable: true },
+        phoneNumber: { required: true, mutable: true },
       },
       customAttributes: {
         provider_id: new cognito.StringAttribute({ mutable: false }),
@@ -72,9 +84,11 @@ export class AuthStack extends cdk.Stack {
       },
       mfa: cognito.Mfa.REQUIRED,
       mfaSecondFactor: {
-        sms: false,
-        otp: true, // CDK requires at least one; we override to EMAIL_OTP below
+        sms: true,
+        otp: false,
       },
+      smsRole,
+      smsRoleExternalId: `vantage-providers-${props.stageName}`,
       passwordPolicy: {
         minLength: 8,
         requireLowercase: true,
@@ -83,25 +97,13 @@ export class AuthStack extends cdk.Stack {
         requireSymbols: true,
         tempPasswordValidity: cdk.Duration.days(1),
       },
-      accountRecovery: cognito.AccountRecovery.PHONE_AND_EMAIL, // Email code recovery (EMAIL_ONLY conflicts with Email MFA)
+      accountRecovery: cognito.AccountRecovery.PHONE_AND_EMAIL,
       standardThreatProtectionMode: cognito.StandardThreatProtectionMode.FULL_FUNCTION,
       lambdaTriggers: {
         preSignUp: preSignUpFn,
         postAuthentication: postAuthFn,
       },
       removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
-
-    // ── Override MFA to Email OTP (CDK L2 doesn't support EMAIL_OTP yet) ──
-    const cfnUserPool = this.userPool.node.defaultChild as cognito.CfnUserPool;
-    cfnUserPool.addPropertyOverride('MfaConfiguration', 'ON');
-    cfnUserPool.addPropertyOverride('EnabledMfas', ['EMAIL_OTP']);
-    // EmailMfaConfiguration (custom message/subject) is API-only, not supported
-    // in CloudFormation. Set via CLI: aws cognito-idp update-user-pool
-    cfnUserPool.addPropertyOverride('EmailConfiguration', {
-      EmailSendingAccount: 'DEVELOPER',
-      SourceArn: `arn:aws:ses:us-east-1:${this.account}:identity/vantagerefinery.com`,
-      From: 'noreply@vantagerefinery.com',
     });
 
     // ── User Pool Groups ──
@@ -139,7 +141,7 @@ export class AuthStack extends cdk.Stack {
     // ── Hosted UI Domain (for OAuth flows if needed) ──
     this.userPool.addDomain('CognitoDomain', {
       cognitoDomain: {
-        domainPrefix: `vantage-health-${props.stageName}`,
+        domainPrefix: `vantage-providers-${props.stageName}`,
       },
     });
 
