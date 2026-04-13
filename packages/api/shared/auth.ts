@@ -19,6 +19,16 @@ export function getCallerIdentity(event: APIGatewayProxyEvent): CallerIdentity {
 
   const claims = event.requestContext.authorizer?.claims;
   if (!claims) {
+    // Dev-only fallback: return demo identity when no Cognito claims present
+    if (process.env.STAGE === 'dev') {
+      return {
+        sub: 'demo',
+        email: 'demo@vantagerefinery.com',
+        providerId: 'demo',
+        role: 'provider',
+        groups: ['providers'],
+      };
+    }
     throw new Error('No authorizer claims found');
   }
 

@@ -22,6 +22,11 @@ function baseUrl(): string {
 }
 
 function authHeaders(): Record<string, string> {
+  // In demo mode, send a placeholder so the frontend doesn't trigger 401 logout.
+  // API Gateway in dev has no authorizer, so this passes through to Lambda.
+  if (sessionStorage.getItem('vantage-demo-mode')) {
+    return { Authorization: 'Bearer demo' }
+  }
   const auth = getAuthHeader()
   return auth ? { Authorization: auth } : {}
 }

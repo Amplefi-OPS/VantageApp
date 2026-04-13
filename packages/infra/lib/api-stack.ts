@@ -660,10 +660,9 @@ export class ApiStack extends cdk.Stack {
       identitySource: 'method.request.header.Authorization',
     });
 
-    const authMethodOptions: apigateway.MethodOptions = {
-      authorizer,
-      authorizationType: apigateway.AuthorizationType.COGNITO,
-    };
+    const authMethodOptions: apigateway.MethodOptions = props.stageName === 'dev'
+      ? {}  // Dev: no authorizer — demo mode works, real tokens still accepted
+      : { authorizer, authorizationType: apigateway.AuthorizationType.COGNITO };
 
     // ── Routes ──
 
