@@ -646,7 +646,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
           entityId: taskId,
           details: { voicemailId: vm.id, category, todoType, patientId: matchedPatient?.id || null },
         });
-        console.log(`Auto-created task ${taskId} for voicemail ${vm.id} → ${patientLabel}`);
+        console.log(`Auto-created task ${taskId} for voicemail ${vm.id} → ${callerLabel}`);
       } catch (err) {
         console.warn(`Failed to create task for voicemail ${vm.id}:`, (err as Error).message);
       }

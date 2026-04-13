@@ -63,7 +63,7 @@ export default function LoginPage() {
   const [suFirstName, setSuFirstName] = useState('')
   const [suLastName, setSuLastName] = useState('')
   const [suEmail, setSuEmail] = useState('')
-  const [suPhone, setSuPhone] = useState('')
+  const [suPhone, setSuPhone] = useState('+1')
   const [suPassword, setSuPassword] = useState('')
   const [suConfirmPwd, setSuConfirmPwd] = useState('')
   const [confirmCode, setConfirmCode] = useState('')
@@ -409,7 +409,10 @@ export default function LoginPage() {
                   required
                   autoComplete="tel"
                 />
-                <p className="text-xs text-warm-gray mt-1">Used for SMS verification codes when signing in.</p>
+                <p className="text-xs text-warm-gray mt-1">
+                  Enter your US mobile number — e.g. <span className="font-medium text-charcoal">+1 555 123 4567</span>.
+                  This is where your SMS sign-in codes will be sent every time you log in.
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-charcoal mb-1">

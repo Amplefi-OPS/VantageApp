@@ -84,7 +84,7 @@ export class AuthStack extends cdk.Stack {
         otp: false,
       },
       smsRole,
-      smsRoleExternalId: `vantage-providers-${props.stageName}`,
+      smsRoleExternalId: 'c6bbe966-6659-487e-8d1e-62cb84007705',
       passwordPolicy: {
         minLength: 8,
         requireLowercase: true,
