@@ -654,15 +654,20 @@ export class ApiStack extends cdk.Stack {
     });
 
     // ── Cognito Authorizer ──
-    const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'CognitoAuth', {
-      cognitoUserPools: [props.userPool],
-      authorizerName: `vantage-cognito-${props.stageName}`,
-      identitySource: 'method.request.header.Authorization',
-    });
+    // In dev stage, skip the authorizer entirely so demo mode works without Cognito.
+    // The authorizer construct must not be created at all in dev, otherwise CDK
+    // validation fails ("Authorizer must be attached to a RestApi").
+    const authorizer = props.stageName !== 'dev'
+      ? new apigateway.CognitoUserPoolsAuthorizer(this, 'CognitoAuth', {
+          cognitoUserPools: [props.userPool],
+          authorizerName: `vantage-cognito-${props.stageName}`,
+          identitySource: 'method.request.header.Authorization',
+        })
+      : undefined;
 
-    const authMethodOptions: apigateway.MethodOptions = props.stageName === 'dev'
-      ? {}  // Dev: no authorizer — demo mode works, real tokens still accepted
-      : { authorizer, authorizationType: apigateway.AuthorizationType.COGNITO };
+    const authMethodOptions: apigateway.MethodOptions = authorizer
+      ? { authorizer, authorizationType: apigateway.AuthorizationType.COGNITO }
+      : {};
 
     // ── Routes ──
 
