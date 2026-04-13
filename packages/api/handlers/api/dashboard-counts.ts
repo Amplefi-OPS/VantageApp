@@ -17,8 +17,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     getCallerIdentity(event); // authenticate + set CORS origin
 
-    // Practice-wide counts via GSI2 for all authenticated users
-    const [patients, tasks, voicemails] = await Promise.all([
+    // Practice-wide counts via GSI2 — use allSettled so partial failures
+    // return available data instead of a full 500.
+    const [patientsResult, tasksResult, voicemailsResult] = await Promise.allSettled([
       queryItems({
         IndexName: 'GSI2',
         KeyConditionExpression: 'GSI2PK = :pk',
@@ -36,6 +37,21 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         ExpressionAttributeValues: { ':pk': 'VOICEMAIL' },
       }),
     ]);
+
+    const patients = patientsResult.status === 'fulfilled' ? patientsResult.value : [];
+    const tasks = tasksResult.status === 'fulfilled' ? tasksResult.value : [];
+    const voicemails = voicemailsResult.status === 'fulfilled' ? voicemailsResult.value : [];
+
+    const partialFailure = [patientsResult, tasksResult, voicemailsResult].some(
+      (r) => r.status === 'rejected'
+    );
+    if (partialFailure) {
+      console.warn('Dashboard counts partial failure:', {
+        patients: patientsResult.status,
+        tasks: tasksResult.status,
+        voicemails: voicemailsResult.status,
+      });
+    }
 
     const now = new Date().toISOString();
     let openTodos = 0;
@@ -62,6 +78,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       openTodos,
       overdueTodos,
       totalPatients: patients.length,
+      partial: partialFailure || undefined,
     });
   } catch (err) {
     console.error('Dashboard counts error:', (err as Error).message);

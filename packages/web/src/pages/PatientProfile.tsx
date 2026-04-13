@@ -266,8 +266,9 @@ export default function PatientProfile() {
           dueDate: tomorrow.toISOString(),
           notes: `Patient did not show for ${appt.type} appointment. Charge $30 no-show fee.`,
         })
-      } catch {
-        console.warn('Failed to create no-show todo — appointment was still marked no-show')
+      } catch (err) {
+        console.warn('Failed to create no-show todo:', err)
+        toast('error', `No-show recorded but failed to create billing task for ${appt.patientName}. Please add it manually.`)
       }
     },
     onSuccess: () => {
@@ -297,8 +298,9 @@ export default function PatientProfile() {
           dueDate: new Date().toISOString(),
           notes: `Complete doctor's notes for ${appt.type} appointment.`,
         })
-      } catch {
-        console.warn('Failed to create notes todo — appointment was still marked complete')
+      } catch (err) {
+        console.warn('Failed to create notes todo:', err)
+        toast('error', `Appointment completed but failed to create notes task for ${appt.patientName}. Please add it manually.`)
       }
     },
     onSuccess: (_data, appt) => {
@@ -315,7 +317,7 @@ export default function PatientProfile() {
     },
   })
 
-  const { data: patient, isLoading, isError } = useQuery({
+  const { data: patient, isLoading, isError, error } = useQuery({
     queryKey: ['patient', id],
     queryFn: () => getPatient(id!),
     enabled: !!id,
@@ -383,7 +385,6 @@ export default function PatientProfile() {
     queryKey: ['billing', patient?.email, patient?.phone],
     queryFn: () => lookupPatient(patient!.email || patient!.phone),
     enabled: !!patient && (tab === 'billing' || showChargeModal || showNoShowModal),
-    retry: false,
   })
 
   // Billing handlers
@@ -477,7 +478,13 @@ export default function PatientProfile() {
   }
 
   if (isLoading) return <LoadingSpinner />
-  if (isError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load patient. Please refresh.</div>
+  if (isError) return (
+    <div className="text-center py-12">
+      <p className="text-warm-gray dark:text-gray-400 mb-2">Failed to load patient.</p>
+      <p className="text-xs text-red-400 font-mono mb-4">{error instanceof Error ? error.message : 'Unknown error'}</p>
+      <button onClick={() => window.location.reload()} className="text-sm text-slate-blue underline">Refresh</button>
+    </div>
+  )
   if (!patient) {
     return (
       <EmptyState

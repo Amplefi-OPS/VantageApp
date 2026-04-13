@@ -14,23 +14,27 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { data: counts, isLoading, isError } = useQuery({
+  const { data: counts, isLoading, isError, error } = useQuery({
     queryKey: ['dashboard-counts'],
     queryFn: getDashboardCounts,
     staleTime: 0,
     refetchInterval: 30000,
-    retry: 1,
   })
 
   const { data: voicemails } = useQuery({
     queryKey: ['voicemails'],
     queryFn: listVoicemails,
     refetchInterval: 30000,
-    retry: 1,
   })
 
   if (isLoading) return <LoadingSpinner />
-  if (isError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load dashboard. Please refresh.</div>
+  if (isError) return (
+    <div className="text-center py-12">
+      <p className="text-warm-gray dark:text-gray-400 mb-2">Failed to load dashboard.</p>
+      <p className="text-xs text-red-400 font-mono mb-4">{error instanceof Error ? error.message : 'Unknown error'}</p>
+      <button onClick={() => window.location.reload()} className="text-sm text-slate-blue underline">Refresh</button>
+    </div>
+  )
 
   const tiles = [
     {

@@ -142,7 +142,13 @@ export default function Todos() {
   const doneCount = todos?.filter((t) => t.status === 'Done').length ?? 0
 
   if (isLoading) return <LoadingSpinner />
-  if (isError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load to-dos. Please refresh.</div>
+  if (isError) return (
+    <div className="text-center py-12">
+      <p className="text-warm-gray dark:text-gray-400 mb-2">Failed to load to-dos.</p>
+      <p className="text-xs text-red-400 font-mono mb-4">{error instanceof Error ? error.message : 'Unknown error'}</p>
+      <button onClick={() => window.location.reload()} className="text-sm text-slate-blue underline">Refresh</button>
+    </div>
+  )
 
   return (
     <div>

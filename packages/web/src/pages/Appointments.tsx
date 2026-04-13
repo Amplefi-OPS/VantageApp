@@ -136,8 +136,10 @@ export default function Appointments() {
           dueDate: tomorrow.toISOString(),
           notes: `Patient did not show for ${appt.type} appointment. Charge $30 no-show fee.`,
         })
-      } catch {
-        console.warn('Failed to create no-show todo — appointment was still marked no-show')
+      } catch (err) {
+        console.warn('Failed to create no-show todo:', err)
+        // Surface to user — without this task the $30 fee won't be charged
+        toast('error', `No-show recorded but failed to create billing task for ${appt.patientName}. Please add it manually.`)
       }
     },
     onMutate: async (appt) => {
@@ -184,8 +186,9 @@ export default function Appointments() {
           dueDate: new Date().toISOString(),
           notes: `Complete doctor's notes for ${appt.type} appointment.`,
         })
-      } catch {
-        console.warn('Failed to create notes todo — appointment was still marked complete')
+      } catch (err) {
+        console.warn('Failed to create notes todo:', err)
+        toast('error', `Appointment completed but failed to create notes task for ${appt.patientName}. Please add it manually.`)
       }
     },
     onMutate: async (appt) => {
@@ -220,7 +223,7 @@ export default function Appointments() {
   })
 
   // Daily query — for "All" and "Cancelled" tabs
-  const { data: dayAppointments = [], isLoading: dayLoading, isError: dayError } = useQuery({
+  const { data: dayAppointments = [], isLoading: dayLoading, isError: dayError, error: dayErrorDetail } = useQuery({
     queryKey: ['appointments', selectedDate],
     queryFn: () => listAppointments(selectedDate),
     staleTime: 30_000,
@@ -271,7 +274,13 @@ export default function Appointments() {
   ]
 
   if (isLoading) return <LoadingSpinner />
-  if (dayError) return <div className="text-center py-12 text-warm-gray dark:text-gray-400">Failed to load appointments. Please refresh.</div>
+  if (dayError) return (
+    <div className="text-center py-12">
+      <p className="text-warm-gray dark:text-gray-400 mb-2">Failed to load appointments.</p>
+      <p className="text-xs text-red-400 font-mono mb-4">{dayErrorDetail instanceof Error ? dayErrorDetail.message : 'Unknown error'}</p>
+      <button onClick={() => window.location.reload()} className="text-sm text-slate-blue underline">Refresh</button>
+    </div>
+  )
 
   return (
     <div>

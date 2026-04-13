@@ -35,12 +35,10 @@ async function safeJson<T>(res: Response): Promise<T> {
   }
 }
 
-/** Handle 401 by clearing session — AuthProvider detects the missing tokens and shows login. */
+/** Handle 401 by firing a custom event so AuthProvider can logout immediately with a message. */
 function handleUnauthorized(res: Response) {
   if (res.status === 401) {
-    sessionStorage.removeItem('vantage-auth-tokens')
-    // Do NOT call window.location.replace — let AuthProvider handle the redirect
-    // by detecting the missing tokens on the next render cycle.
+    window.dispatchEvent(new CustomEvent('vantage-session-expired'))
   }
 }
 

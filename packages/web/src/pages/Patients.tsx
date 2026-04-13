@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Users, Search, ChevronRight, UserPlus, Loader2 } from 'lucide-react'
+import { useToast } from '../components/ui/Toast'
 import { listPatients } from '../api/endpoints'
 import type { Patient } from '../api/types'
 import { Card } from '../components/ui/Card'
@@ -16,6 +17,7 @@ const PAGE_SIZE = 25
 export default function Patients() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { toast } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [showNewPatient, setShowNewPatient] = useState(false)
@@ -54,10 +56,12 @@ export default function Patients() {
       const res = await listPatients(nextToken, PAGE_SIZE)
       setExtraPatients((prev) => [...prev, ...res.patients])
       setNextToken(res.nextToken)
+    } catch (err) {
+      toast('error', `Failed to load more patients: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setLoadingMore(false)
     }
-  }, [nextToken, loadingMore])
+  }, [nextToken, loadingMore, toast])
 
   const filtered = allPatients.filter((p) => {
     if (!search) return true

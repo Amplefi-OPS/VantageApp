@@ -5,6 +5,7 @@ import { queryClient } from './lib/queryClient'
 import { ToastProvider } from './components/ui/Toast'
 import { AuthProvider, useAuth } from './auth/AuthProvider'
 import { ConfirmDialog } from './components/ui/ConfirmDialog'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { Layout } from './components/Layout'
 import LoginPage from './auth/LoginPage'
 import Dashboard from './pages/Dashboard'
@@ -105,14 +106,16 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </AuthProvider>
-      </ToastProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </AuthProvider>
+        </ToastProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }

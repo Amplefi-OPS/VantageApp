@@ -123,22 +123,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, resetInactivityTimer])
 
-  // ── Token Refresh Interval ──
-  useEffect(() => {
-    if (!user || isDemoMode) return
-
-    // Check token validity every 5 minutes and auto-refresh if needed
-    const interval = setInterval(async () => {
-      const tokens = await getTokensAsync()
-      if (!tokens) {
-        // Refresh failed — session expired
-        performLogout('Your session expired. Please sign in again.')
-      }
-    }, 5 * 60 * 1000)
-
-    return () => clearInterval(interval)
-  }, [user, isDemoMode])
-
   // ── MFA Session Timeout (3 minutes) ──
   // If the user sits on the MFA screen too long, the Cognito challenge session
   // expires server-side. Clear local state and return to login.
@@ -193,6 +177,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setShowInactivityWarning(false)
     window.history.replaceState(null, '', '/dashboard')
   }, [])
+
+  // ── Token Refresh Interval ──
+  useEffect(() => {
+    if (!user || isDemoMode) return
+
+    // Check token validity every 5 minutes and auto-refresh if needed
+    const interval = setInterval(async () => {
+      const tokens = await getTokensAsync()
+      if (!tokens) {
+        performLogout('Your session expired. Please sign in again.')
+      }
+    }, 5 * 60 * 1000)
+
+    return () => clearInterval(interval)
+  }, [user, isDemoMode, performLogout])
+
+  // ── Immediate 401 Detection ──
+  // API client fires this event on any 401 response so we logout immediately
+  // instead of waiting for the next 5-minute token check.
+  useEffect(() => {
+    if (!user || isDemoMode) return
+    const handler = () => performLogout('Your session expired. Please sign in again.')
+    window.addEventListener('vantage-session-expired', handler)
+    return () => window.removeEventListener('vantage-session-expired', handler)
+  }, [user, performLogout])
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true)

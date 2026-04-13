@@ -114,6 +114,12 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const ebResult = await eb.send(new PutEventsCommand({ Entries: entries }));
     if (ebResult.FailedEntryCount && ebResult.FailedEntryCount > 0) {
       console.error('EventBridge PutEvents partial failure:', JSON.stringify(ebResult.Entries));
+      await sendSlackAlert('Billing EventBridge Partial Failure', 'critical', [
+        { label: 'Event ID', value: billingEventId },
+        { label: 'Failed', value: `${ebResult.FailedEntryCount} of ${entries.length} entries` },
+        { label: 'Submitted by', value: caller.email },
+      ]);
+      return serverError('Billing event partially failed to submit. Please try again or contact support.');
     }
 
     // Record billing event in DynamoDB
