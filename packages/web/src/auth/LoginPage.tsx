@@ -40,6 +40,20 @@ export default function LoginPage() {
     }
   }, [])
 
+  // Show messages from session expiry / inactivity logout
+  useEffect(() => {
+    const msg = sessionStorage.getItem('vantage-auth-msg')
+    if (msg) {
+      sessionStorage.removeItem('vantage-auth-msg')
+      setError(msg)
+    }
+  }, [])
+
+  // Clear stale errors when the active form changes
+  useEffect(() => {
+    setError('')
+  }, [mfaRequired, newPasswordRequired, signUpMode, confirmationPending])
+
   // Sign-up fields
   const [suFirstName, setSuFirstName] = useState('')
   const [suLastName, setSuLastName] = useState('')
@@ -544,9 +558,6 @@ export default function LoginPage() {
               {successMsg && (
                 <p className="text-sm text-green-700 bg-green-50 p-2 rounded">{successMsg}</p>
               )}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
-              </Button>
               {error && (
                 <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <svg className="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -555,6 +566,9 @@ export default function LoginPage() {
                   <p className="text-sm text-red-700 font-medium">{error}</p>
                 </div>
               )}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
               <p className="text-xs text-warm-gray text-center mt-3">
                 <button
                   type="button"

@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Auto-logout at 5 minutes
     inactivityTimerRef.current = setTimeout(() => {
-      performLogout()
+      performLogout('You were signed out due to inactivity.')
     }, INACTIVITY_TIMEOUT_MS)
   }, [user])
 
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const tokens = await getTokensAsync()
       if (!tokens) {
         // Refresh failed — session expired
-        performLogout()
+        performLogout('Your session expired. Please sign in again.')
       }
     }, 5 * 60 * 1000)
 
@@ -131,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!mfaRequired) return
 
     const timeout = setTimeout(() => {
+      sessionStorage.setItem('vantage-auth-msg', 'Verification code expired. Please sign in again.')
       clearPendingSession()
       setMfaRequired(false)
       setChallengeName('')
@@ -148,10 +149,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  const performLogout = useCallback(async () => {
+  const performLogout = useCallback(async (reason?: string) => {
     warningVisibleRef.current = false
     if (warningTimerRef.current) clearTimeout(warningTimerRef.current)
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current)
+    if (reason) sessionStorage.setItem('vantage-auth-msg', reason)
     await cognitoSignOut()
     queryClient.clear()
     setUser(null)
