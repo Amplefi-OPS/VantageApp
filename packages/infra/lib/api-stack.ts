@@ -525,6 +525,51 @@ export class ApiStack extends cdk.Stack {
       props.table.grantReadWriteData(fn);
     }
 
+    // ── Lambda: Initiate Password Reset (custom flow — bypasses Cognito ForgotPassword) ──
+    // USER_POOL_ID is hardcoded to avoid a new cross-stack CloudFormation import
+    // (the Auth stack is in a frozen rollback state and cannot export new values).
+    // The active pool ARN is also hardcoded for the same reason.
+    const activeUserPoolId = `us-east-1_z0Bp03PxX`;
+    const activeUserPoolArn = `arn:aws:cognito-idp:us-east-1:${this.account}:userpool/${activeUserPoolId}`;
+
+    const initiatePasswordResetFn = new lambdaNode.NodejsFunction(this, 'InitiatePasswordResetFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-initiate-password-reset-${props.stageName}`,
+      entry: path.join(lambdaDir, 'auth', 'initiate-password-reset.ts'),
+      handler: 'handler',
+      environment: {
+        ...commonEnv,
+        USER_POOL_ID: activeUserPoolId,
+        FROM_EMAIL: 'noreply@vantagerefinery.com',
+      },
+    });
+    props.table.grantReadWriteData(initiatePasswordResetFn);
+    initiatePasswordResetFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['cognito-idp:AdminGetUser'],
+      resources: [activeUserPoolArn],
+    }));
+    initiatePasswordResetFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['ses:SendEmail'],
+      resources: [`arn:aws:ses:us-east-1:${this.account}:identity/vantagerefinery.com`],
+    }));
+
+    // ── Lambda: Confirm Password Reset ──
+    const confirmPasswordResetFn = new lambdaNode.NodejsFunction(this, 'ConfirmPasswordResetFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-confirm-password-reset-${props.stageName}`,
+      entry: path.join(lambdaDir, 'auth', 'confirm-password-reset.ts'),
+      handler: 'handler',
+      environment: {
+        ...commonEnv,
+        USER_POOL_ID: activeUserPoolId,
+      },
+    });
+    props.table.grantReadWriteData(confirmPasswordResetFn);
+    confirmPasswordResetFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['cognito-idp:AdminSetUserPassword'],
+      resources: [activeUserPoolArn],
+    }));
+
     // ── Grant Secrets Manager read to Lambdas that need third-party credentials ──
     // Any Lambda that calls getSecrets() — directly or via shared/zoom, shared/google,
     // or shared/slack — must be listed here. Audit when adding new handlers.
@@ -741,6 +786,14 @@ export class ApiStack extends cdk.Stack {
     const notifications = this.api.root.addResource('notifications');
     const loginFailure = notifications.addResource('login-failure');
     loginFailure.addMethod('POST', new apigateway.LambdaIntegration(notifyLoginFailureFn));
+
+    // POST /auth/forgot-password  &  POST /auth/confirm-forgot-password
+    // (no auth — custom reset flow that works alongside EMAIL_OTP MFA)
+    const authResource = this.api.root.addResource('auth');
+    const forgotPasswordResource = authResource.addResource('forgot-password');
+    forgotPasswordResource.addMethod('POST', new apigateway.LambdaIntegration(initiatePasswordResetFn));
+    const confirmPasswordResource = authResource.addResource('confirm-forgot-password');
+    confirmPasswordResource.addMethod('POST', new apigateway.LambdaIntegration(confirmPasswordResetFn));
 
     // GET /transcription/upload-url  &  POST /transcription/start  &  GET /transcription/result
     const transcription = this.api.root.addResource('transcription');

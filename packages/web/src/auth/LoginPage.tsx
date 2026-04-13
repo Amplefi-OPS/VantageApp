@@ -61,6 +61,16 @@ export default function LoginPage() {
     }
   }
 
+  async function handleResendCode() {
+    setError('')
+    setForgotLoading(true)
+    const result = await forgotPassword(forgotEmail)
+    setForgotLoading(false)
+    if (!result.success) {
+      setError(result.error || 'Failed to resend reset code.')
+    }
+  }
+
   async function handleForgotReset(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -492,7 +502,7 @@ export default function LoginPage() {
                   {forgotLoading ? 'Resetting...' : 'Reset Password'}
                 </Button>
                 <p className="text-xs text-warm-gray text-center mt-2">
-                  <button type="button" onClick={() => setForgotStep('request')} className="text-slate-blue font-medium hover:underline">
+                  <button type="button" onClick={handleResendCode} disabled={forgotLoading} className="text-slate-blue font-medium hover:underline disabled:opacity-50">
                     Resend code
                   </button>
                   {' · '}

@@ -510,46 +510,38 @@ export async function changePassword(
   });
 }
 
-// ── Forgot Password (send reset code) ──
+// ── Custom Password Reset (replaces Cognito ForgotPassword which conflicts with EMAIL_OTP MFA) ──
+// These call our own API which uses SES + DynamoDB + AdminSetUserPassword.
+
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined || '').replace(/\/$/, '');
+
+async function resetApiCall(path: string, body: Record<string, string>): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) return { success: true };
+    const data = await res.json().catch(() => ({}));
+    return { success: false, error: (data as any).error || `Request failed (${res.status})` };
+  } catch {
+    return { success: false, error: 'Unable to reach the server. Please check your connection.' };
+  }
+}
 
 export async function forgotPassword(
   email: string,
 ): Promise<{ success: boolean; error?: string }> {
-  if (!POOL_CONFIG.ClientId) {
-    return { success: false, error: 'Cognito is not configured.' };
-  }
-  try {
-    await cognitoFetch('ForgotPassword', {
-      ClientId: POOL_CONFIG.ClientId,
-      Username: email,
-    });
-    return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || 'Failed to send reset code.' };
-  }
+  return resetApiCall('/auth/forgot-password', { email });
 }
-
-// ── Confirm Forgot Password (reset with code + new password) ──
 
 export async function confirmForgotPassword(
   email: string,
   code: string,
   newPassword: string,
 ): Promise<{ success: boolean; error?: string }> {
-  if (!POOL_CONFIG.ClientId) {
-    return { success: false, error: 'Cognito is not configured.' };
-  }
-  try {
-    await cognitoFetch('ConfirmForgotPassword', {
-      ClientId: POOL_CONFIG.ClientId,
-      Username: email,
-      ConfirmationCode: code,
-      Password: newPassword,
-    });
-    return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || 'Failed to reset password.' };
-  }
+  return resetApiCall('/auth/confirm-forgot-password', { email, code, newPassword });
 }
 
 // ── Sign Out ──
