@@ -9,7 +9,7 @@ import { Shield, KeyRound, UserPlus, Mail, LockKeyhole } from 'lucide-react'
 export default function LoginPage() {
   const {
     login, setNewPassword, verifyMfa, signUp, confirmSignUp, setSignUpMode,
-    forgotPassword, confirmForgotPassword,
+    forgotPassword, confirmForgotPassword, loginAsDemo,
     mfaRequired, newPasswordRequired, signUpMode, confirmationPending, isLoading,
   } = useAuth()
 
@@ -630,6 +630,18 @@ export default function LoginPage() {
           <br />
           All sessions are encrypted and audited.
         </p>
+
+        {!mfaRequired && !newPasswordRequired && !signUpMode && !confirmationPending && (
+          <div className="text-center mt-4">
+            <button
+              type="button"
+              onClick={loginAsDemo}
+              className="text-xs text-warm-gray hover:text-slate-blue underline underline-offset-2 transition-colors"
+            >
+              Enter Demo Mode
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

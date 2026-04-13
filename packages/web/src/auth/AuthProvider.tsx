@@ -25,12 +25,14 @@ interface AuthContextValue {
   user: AuthUser | null
   isLoggedIn: boolean
   isLoading: boolean
+  isDemoMode: boolean
   mfaRequired: boolean
   newPasswordRequired: boolean
   signUpMode: boolean
   confirmationPending: boolean
   showInactivityWarning: boolean
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  loginAsDemo: () => void
   setNewPassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>
   verifyMfa: (code: string) => Promise<{ success: boolean; error?: string }>
   signUp: (email: string, password: string, firstName: string, lastName: string, phone: string) => Promise<{ success: boolean; error?: string }>
@@ -51,8 +53,21 @@ export function useAuth() {
   return ctx
 }
 
+const DEMO_USER: AuthUser = {
+  sub: 'demo',
+  email: 'demo@vantagerefinery.com',
+  givenName: 'Demo',
+  familyName: 'Provider',
+  providerId: 'demo',
+  role: 'provider',
+  groups: ['providers'],
+}
+
+const DEMO_FLAG = 'vantage-demo-mode'
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [isDemoMode, setIsDemoMode] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [mfaRequired, setMfaRequired] = useState(false)
   const [newPasswordRequired, setNewPasswordRequired] = useState(false)
@@ -72,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Inactivity Timeout (HIPAA requirement) ──
   const resetInactivityTimer = useCallback(() => {
-    if (!user) return
+    if (!user || isDemoMode) return
 
     // Don't reset while warning is showing — user must click Stay/Sign Out
     if (warningVisibleRef.current) return
@@ -110,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Token Refresh Interval ──
   useEffect(() => {
-    if (!user) return
+    if (!user || isDemoMode) return
 
     // Check token validity every 5 minutes and auto-refresh if needed
     const interval = setInterval(async () => {
@@ -122,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 5 * 60 * 1000)
 
     return () => clearInterval(interval)
-  }, [user])
+  }, [user, isDemoMode])
 
   // ── MFA Session Timeout (3 minutes) ──
   // If the user sits on the MFA screen too long, the Cognito challenge session
@@ -143,16 +158,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check existing session on mount
   useEffect(() => {
-    if (isAuthenticated()) {
+    if (sessionStorage.getItem(DEMO_FLAG)) {
+      setUser(DEMO_USER)
+      setIsDemoMode(true)
+    } else if (isAuthenticated()) {
       setUser(getCurrentUser())
     }
     setIsLoading(false)
+  }, [])
+
+  const loginAsDemo = useCallback(() => {
+    sessionStorage.setItem(DEMO_FLAG, '1')
+    setIsDemoMode(true)
+    setUser(DEMO_USER)
   }, [])
 
   const performLogout = useCallback(async (reason?: string) => {
     warningVisibleRef.current = false
     if (warningTimerRef.current) clearTimeout(warningTimerRef.current)
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current)
+    sessionStorage.removeItem(DEMO_FLAG)
+    setIsDemoMode(false)
     if (reason) sessionStorage.setItem('vantage-auth-msg', reason)
     await cognitoSignOut()
     queryClient.clear()
@@ -300,12 +326,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoggedIn: !!user,
         isLoading,
+        isDemoMode,
         mfaRequired,
         newPasswordRequired,
         signUpMode,
         confirmationPending,
         showInactivityWarning,
         login,
+        loginAsDemo,
         setNewPassword,
         verifyMfa,
         signUp,
