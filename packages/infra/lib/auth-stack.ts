@@ -54,15 +54,11 @@ export class AuthStack extends cdk.Stack {
       }),
     );
 
-    // ── IAM Role for Cognito SMS (required for SMS MFA) ──
-    const smsRole = new iam.Role(this, 'CognitoSmsRole', {
-      roleName: `vantage-cognito-sms-${props.stageName}`,
-      assumedBy: new iam.ServicePrincipal('cognito-idp.amazonaws.com'),
-    });
-    smsRole.addToPolicy(new iam.PolicyStatement({
-      actions: ['sns:Publish'],
-      resources: ['*'],
-    }));
+    // ── IAM Role for Cognito SMS (pre-created in AWS console) ──
+    const smsRole = iam.Role.fromRoleArn(
+      this, 'CognitoSmsRole',
+      'arn:aws:iam::841722554807:role/service-role/CognitoIdpSNSServiceRole',
+    );
 
     // ── Cognito User Pool ──
     this.userPool = new cognito.UserPool(this, 'VantageUserPool', {
