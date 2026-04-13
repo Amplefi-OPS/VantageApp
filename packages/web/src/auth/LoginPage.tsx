@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from './AuthProvider'
 import { reportLoginFailure } from '../api/endpoints'
 import { Button } from '../components/ui/Button'
@@ -29,6 +29,7 @@ export default function LoginPage() {
   const [mfaCode, setMfaCode] = useState('')
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
+  const isMounted = useRef(false)
 
   // Force light mode on login page
   useEffect(() => {
@@ -49,8 +50,12 @@ export default function LoginPage() {
     }
   }, [])
 
-  // Clear stale errors when the active form changes
+  // Clear stale errors when the active form changes (skip initial mount)
   useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true
+      return
+    }
     setError('')
   }, [mfaRequired, newPasswordRequired, signUpMode, confirmationPending])
 
