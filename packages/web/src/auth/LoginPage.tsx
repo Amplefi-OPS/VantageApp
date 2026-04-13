@@ -63,7 +63,7 @@ export default function LoginPage() {
   const [suFirstName, setSuFirstName] = useState('')
   const [suLastName, setSuLastName] = useState('')
   const [suEmail, setSuEmail] = useState('')
-  const [suPhone, setSuPhone] = useState('+1')
+  const [suPhone, setSuPhone] = useState('')
   const [suPassword, setSuPassword] = useState('')
   const [suConfirmPwd, setSuConfirmPwd] = useState('')
   const [confirmCode, setConfirmCode] = useState('')
@@ -184,7 +184,11 @@ export default function LoginPage() {
       setError('Password must be at least 8 characters')
       return
     }
-    const result = await signUp(suEmail, suPassword, suFirstName, suLastName, suPhone)
+    if (suPhone.length !== 10) {
+      setError('Please enter a valid 10-digit US phone number.')
+      return
+    }
+    const result = await signUp(suEmail, suPassword, suFirstName, suLastName, '+1' + suPhone)
     if (!result.success) {
       setError(result.error || 'Sign up failed')
     }
@@ -401,17 +405,23 @@ export default function LoginPage() {
                 <label className="block text-sm font-medium text-charcoal mb-1">
                   Mobile Phone
                 </label>
-                <Input
-                  type="tel"
-                  value={suPhone}
-                  onChange={(e) => setSuPhone(e.target.value)}
-                  placeholder="+1 (555) 123-4567"
-                  required
-                  autoComplete="tel"
-                />
+                <div className="flex">
+                  <span className="flex items-center px-3 bg-light-gray border border-r-0 border-light-gray rounded-l-lg text-charcoal text-sm font-medium select-none">
+                    +1
+                  </span>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    value={suPhone.length === 0 ? '' : suPhone.length <= 3 ? suPhone : suPhone.length <= 6 ? `(${suPhone.slice(0,3)}) ${suPhone.slice(3)}` : `(${suPhone.slice(0,3)}) ${suPhone.slice(3,6)}-${suPhone.slice(6)}`}
+                    onChange={(e) => setSuPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="(555) 123-4567"
+                    required
+                    autoComplete="tel-national"
+                    className="flex-1 px-4 py-3 rounded-r-lg border border-light-gray bg-white text-charcoal placeholder:text-warm-gray focus:outline-none focus:ring-2 focus:ring-slate-blue focus:border-transparent min-h-[48px] text-base transition-colors"
+                  />
+                </div>
                 <p className="text-xs text-warm-gray mt-1">
-                  Enter your US mobile number — e.g. <span className="font-medium text-charcoal">+1 555 123 4567</span>.
-                  This is where your SMS sign-in codes will be sent every time you log in.
+                  SMS verification codes will be sent here every time you sign in.
                 </p>
               </div>
               <div>
