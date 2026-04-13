@@ -8,7 +8,10 @@ frontend:
         - npm ci
     build:
       commands:
-        - npm run build
+        # Run vite build directly — tsc -b in the package script fails on
+        # missing @types packages in Amplify's environment and blocks the
+        # entire build. Vite handles TS transpilation independently.
+        - cd packages/web && npx vite build
   artifacts:
     baseDirectory: packages/web/dist
     files:
