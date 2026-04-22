@@ -10,6 +10,7 @@
 
 import type { Handler } from 'aws-lambda';
 import { SFNClient, StartExecutionCommand } from '@aws-sdk/client-sfn';
+import { sendSlackAlert } from '../../shared/slack';
 
 const sfn = new SFNClient({});
 const STATE_MACHINE_ARN = process.env.STATE_MACHINE_ARN!;
@@ -58,4 +59,16 @@ export const handler: Handler<EventBridgeS3Event> = async (event) => {
   }));
 
   console.log(`Started voicemail transcription pipeline: ${executionName}`);
+
+  // Fail-safe Slack notification. Placed after sfn.send so Slack outages
+  // cannot delay or block transcription. No PHI — only internal IDs.
+  try {
+    await sendSlackAlert('New Voicemail', 'info', [
+      { label: 'Provider', value: providerId },
+      { label: 'VM ID', value: vmId },
+      { label: 'Received', value: event.time },
+    ]);
+  } catch (err) {
+    console.error('Slack alert failed (non-fatal):', (err as Error).message);
+  }
 };
