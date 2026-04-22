@@ -127,6 +127,15 @@ export class ApiStack extends cdk.Stack {
     });
     props.table.grantReadWriteData(listAcuityAppointmentsFn);
 
+    // ── Lambda: Pulse (workload gauge from Google Calendar) ──
+    const getPulseFn = new lambdaNode.NodejsFunction(this, 'GetPulseFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-get-pulse-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'get-pulse.ts'),
+      handler: 'handler',
+      environment: { ...commonEnv, },
+    });
+
     // ── Lambda: Cancel Appointment (Google Calendar) ──
     const cancelAcuityAppointmentFn = new lambdaNode.NodejsFunction(this, 'CancelAcuityAppointmentFn', {
       ...lambdaDefaults,
@@ -574,6 +583,7 @@ export class ApiStack extends cdk.Stack {
     // or shared/slack — must be listed here. Audit when adding new handlers.
     const secretConsumers = [
       listAcuityAppointmentsFn,   // shared/google
+      getPulseFn,                 // shared/google
       cancelAcuityAppointmentFn,  // shared/google
       noshowAcuityAppointmentFn,  // shared/google (may need in future)
       createAppointmentFn,        // shared/google
@@ -689,6 +699,10 @@ export class ApiStack extends cdk.Stack {
     const appointments = this.api.root.addResource('appointments');
     appointments.addMethod('GET', new apigateway.LambdaIntegration(listAcuityAppointmentsFn), authMethodOptions);
     appointments.addMethod('POST', new apigateway.LambdaIntegration(createAppointmentFn), authMethodOptions);
+
+    // GET /pulse (workload gauge)
+    const pulse = this.api.root.addResource('pulse');
+    pulse.addMethod('GET', new apigateway.LambdaIntegration(getPulseFn), authMethodOptions);
 
     // PATCH /appointments/{id}  &  PUT /appointments/{id}/cancel
     const appointmentById = appointments.addResource('{id}');

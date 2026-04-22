@@ -11,6 +11,7 @@ import {
 import { getDashboardCounts, listVoicemails } from '../api/endpoints'
 import { Card } from '../components/ui/Card'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { PulseStrip } from '../components/PulseStrip'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -82,6 +83,9 @@ export default function Dashboard() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-charcoal dark:text-white mb-6">Good morning</h1>
+
+      {/* Weekly workload pulse — Mon–Fri */}
+      <PulseStrip />
 
       {/* Alert: overdue todos */}
       {counts && counts.overdueTodos > 0 && (

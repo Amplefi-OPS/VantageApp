@@ -27,6 +27,20 @@ export async function getDashboardCounts(): Promise<DashboardCounts> {
   return apiGet<DashboardCounts>('/dashboard/counts')
 }
 
+export interface Pulse {
+  weekStart: string
+  weekEnd: string
+  total: number
+  done: number
+  remaining: number
+  newPatientCount: number
+  newPatientPercent: number
+}
+
+export async function getPulse(): Promise<Pulse> {
+  return apiGet<Pulse>('/pulse')
+}
+
 // ── Patients ───────────────────────────────────────────
 
 export interface PaginatedPatients {
