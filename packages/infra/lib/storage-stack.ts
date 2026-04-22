@@ -55,10 +55,14 @@ export class StorageStack extends cdk.Stack {
         {
           allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET, s3.HttpMethods.HEAD],
           allowedOrigins: props.stageName === 'prod'
-            ? ['https://providerdev.vantagerefinery.com']
+            ? [
+                'https://provider.vantagerefinery.com',
+                'https://providerdev.vantagerefinery.com',
+              ]
             : [
                 'https://main.d310usa2cmh4sh.amplifyapp.com',
                 'https://main.dvufomlgdfium.amplifyapp.com',
+                'https://provider.vantagerefinery.com',
                 'https://providerdev.vantagerefinery.com',
                 'http://localhost:5173',
                 'http://localhost:4173',

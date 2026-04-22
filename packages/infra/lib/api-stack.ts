@@ -535,10 +535,9 @@ export class ApiStack extends cdk.Stack {
     }
 
     // ── Lambda: Initiate Password Reset (custom flow — bypasses Cognito ForgotPassword) ──
-    // USER_POOL_ID is hardcoded to the active pool (vantage-prod-v1, us-east-1_6HV34dJMd).
-    // Pool was created manually with SMS MFA. Update here when pool changes.
-    const activeUserPoolId = `us-east-1_6HV34dJMd`;
-    const activeUserPoolArn = `arn:aws:cognito-idp:us-east-1:${this.account}:userpool/${activeUserPoolId}`;
+    // Uses the pool managed by the Auth stack (same one the frontend authenticates against).
+    const activeUserPoolId = props.userPool.userPoolId;
+    const activeUserPoolArn = props.userPool.userPoolArn;
 
     const initiatePasswordResetFn = new lambdaNode.NodejsFunction(this, 'InitiatePasswordResetFn', {
       ...lambdaDefaults,
@@ -643,10 +642,14 @@ export class ApiStack extends cdk.Stack {
       },
       defaultCorsPreflightOptions: {
         allowOrigins: props.stageName === 'prod'
-          ? ['https://providerdev.vantagerefinery.com']
+          ? [
+              'https://provider.vantagerefinery.com',
+              'https://providerdev.vantagerefinery.com',
+            ]
           : [
               'https://main.d310usa2cmh4sh.amplifyapp.com',
               'https://main.dvufomlgdfium.amplifyapp.com',
+              'https://provider.vantagerefinery.com',
               'https://providerdev.vantagerefinery.com',
               'http://localhost:5173',
               'http://localhost:4173',
