@@ -23,6 +23,7 @@ import { randomUUID } from 'crypto';
 import { getCallerIdentity, canAccessProvider } from '../../shared/auth';
 import { putItem, writeAuditLog } from '../../shared/dynamo';
 import { created, badRequest, forbidden, serverError, parseBody } from '../../shared/response';
+import { sendSlackAlert } from '../../shared/slack';
 
 const VALID_TYPES = new Set([
   'Schedule', 'Refill', 'CallBack', 'SendDocs', 'General', 'Dictation',
@@ -90,6 +91,15 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       entityId: taskId,
       details: { type, title, createdBy: caller.email },
     });
+
+    // Slack notification — no PHI. Task title is intentionally omitted
+    // because providers may paste patient references into it.
+    await sendSlackAlert('New Item', 'info', [
+      { label: 'Assignee', value: (body.assigned_to as string) || 'Unassigned' },
+      { label: 'Created by', value: caller.email },
+      { label: 'Priority', value: (body.priority as string) || 'Med' },
+      { label: 'Due', value: (body.due_date as string) || 'none' },
+    ]);
 
     return created({
       task_id: taskId,
