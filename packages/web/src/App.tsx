@@ -19,6 +19,7 @@ import Fax from './pages/Fax'
 import StripeDashboard from './pages/stripe/StripeDashboard'
 import ScheduleAppointment from './pages/ScheduleAppointment'
 import Settings from './pages/Settings'
+import EmrVoicemails from './pages/emr/Voicemails'
 import {
   getDashboardCounts,
   listVoicemails,
@@ -95,6 +96,7 @@ function AppRoutes() {
           <Route path="/patients" element={<Patients />} />
           <Route path="/patients/:id" element={<PatientProfile />} />
           <Route path="/fax" element={<Fax />} />
+          <Route path="/emr/voicemails" element={<EmrVoicemails />} />
           <Route path="/billing" element={<ProviderRoute><StripeDashboard /></ProviderRoute>} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

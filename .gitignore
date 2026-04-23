@@ -11,3 +11,4 @@ infra/cdk.out/
 packages/infra/cdk.out/
 cdk-outputs.json
 .claude/worktrees/intelligent-pike/
+tmp/

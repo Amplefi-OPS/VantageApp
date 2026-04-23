@@ -2,6 +2,8 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { StorageStack } from '../lib/storage-stack';
+import { EmrStorageStack } from '../lib/emr-storage-stack';
+import { EmrApiStack } from '../lib/emr-api-stack';
 import { AuthStack } from '../lib/auth-stack';
 import { ApiStack } from '../lib/api-stack';
 import { TranscriptionPipelineStack } from '../lib/pipeline-stack';
@@ -69,6 +71,22 @@ const billing = new BillingStack(app, `Vantage-Billing-${stageName}`, {
   env,
   stageName,
   table: storage.table,
+});
+
+// ── EMR Storage: isolated table + KMS + documents bucket (functional-medicine practice) ──
+const emrStorage = new EmrStorageStack(app, `Vantage-EmrStorage-${stageName}`, {
+  env,
+  stageName,
+});
+
+// ── EMR API: REST API on its own API Gateway; reuses the Vantage Cognito pool ──
+const emrApi = new EmrApiStack(app, `Vantage-EmrApi-${stageName}`, {
+  env,
+  stageName,
+  emrTable: emrStorage.table,
+  emrDocumentsBucket: emrStorage.documentsBucket,
+  emrKmsKey: emrStorage.kmsKey,
+  userPool: auth.userPool,
 });
 
 // ── Scheduled Tasks: Daily fax inbox check ──

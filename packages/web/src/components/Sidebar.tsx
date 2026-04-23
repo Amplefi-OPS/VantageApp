@@ -9,6 +9,7 @@ import {
   Settings,
   Calendar,
   LogOut,
+  Stethoscope,
 } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { useAuth } from '../auth/AuthProvider'
@@ -21,6 +22,7 @@ const links = [
   { to: '/patients', label: 'Patients', icon: Users },
   { to: '/fax', label: 'Fax', icon: Send },
   { to: '/billing', label: 'Billing', icon: CreditCard, providerOnly: true },
+  { to: '/emr/voicemails', label: 'EMR Voicemails', icon: Stethoscope },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
