@@ -10,6 +10,7 @@ import { Layout } from './components/Layout'
 import LoginPage from './auth/LoginPage'
 import Dashboard from './pages/Dashboard'
 import Voicemails from './pages/Voicemails'
+import Emails from './pages/Emails'
 import Todos from './pages/Todos'
 import Appointments from './pages/Appointments'
 import Dictations from './pages/Dictations'
@@ -88,6 +89,7 @@ function AppRoutes() {
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/voicemails" element={<Voicemails />} />
+          <Route path="/emails" element={<Emails />} />
           <Route path="/todos" element={<Todos />} />
           <Route path="/appointments" element={<Appointments />} />
           <Route path="/appointments/new" element={<ScheduleAppointment />} />

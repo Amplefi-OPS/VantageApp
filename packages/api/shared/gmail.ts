@@ -18,15 +18,17 @@ async function getGmailAccessToken(): Promise<string> {
     return cachedToken.token;
   }
   const secrets = await getSecrets();
-  if (!secrets.GOOGLE_CLIENT_ID || !secrets.GOOGLE_CLIENT_SECRET || !secrets.GMAIL_REFRESH_TOKEN) {
-    throw new Error('Gmail credentials not configured (need GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GMAIL_REFRESH_TOKEN)');
+  const clientId = secrets.GMAIL_CLIENT_ID || secrets.GOOGLE_CLIENT_ID;
+  const clientSecret = secrets.GMAIL_CLIENT_SECRET || secrets.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret || !secrets.GMAIL_REFRESH_TOKEN) {
+    throw new Error('Gmail credentials not configured (need GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN)');
   }
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: secrets.GOOGLE_CLIENT_ID,
-      client_secret: secrets.GOOGLE_CLIENT_SECRET,
+      client_id: clientId,
+      client_secret: clientSecret,
       refresh_token: secrets.GMAIL_REFRESH_TOKEN,
       grant_type: 'refresh_token',
     }),

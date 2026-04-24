@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   LayoutDashboard,
   Phone,
+  Mail,
   ClipboardList,
   Users,
   Send,
@@ -19,6 +20,7 @@ import { getSettings } from '../lib/settings'
 const links = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/voicemails', label: 'Voicemails', icon: Phone },
+  { to: '/emails', label: 'Emails', icon: Mail },
   { to: '/todos', label: 'To-Do List', icon: ClipboardList, todosBadge: true },
   { to: '/appointments', label: 'Appointments', icon: Calendar },
   { to: '/patients', label: 'Patients', icon: Users },

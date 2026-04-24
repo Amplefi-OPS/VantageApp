@@ -49,7 +49,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     setRequestOrigin(event.headers?.origin || event.headers?.Origin);
     const params = event.queryStringParameters || {};
 
-    const phone = (params.phone || '').replace(/\D/g, '');
+    const phone = (params.phone || '').replace(/\D/g, '').replace(/^1(\d{10})$/, '$1');
     const email = (params.email || '').trim().toLowerCase();
     const dob = (params.dob || '').trim();
     const q = (params.q || '').trim().toLowerCase();

@@ -197,7 +197,7 @@ function TranscriptDisplay({ vm, onTranscribed }: { vm: Voicemail; onTranscribed
 type EmrField = 'q' | 'phone' | 'email' | 'dob'
 
 function normDigits(s: string | undefined | null): string {
-  return (s ?? '').replace(/\D/g, '')
+  return (s ?? '').replace(/\D/g, '').replace(/^1(\d{10})$/, '$1')
 }
 function formatPhoneDigits(digits: string | undefined): string {
   if (!digits) return ''
