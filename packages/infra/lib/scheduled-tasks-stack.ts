@@ -4,7 +4,7 @@ import * as lambdaNode from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as logs from 'aws-cdk-lib/aws-logs';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
@@ -18,6 +18,17 @@ export class ScheduledTasksStack extends cdk.Stack {
     super(scope, id, props);
 
     const lambdaDir = path.join(__dirname, '..', '..', 'api', 'handlers');
+
+    const appSecret = secretsmanager.Secret.fromSecretNameV2(
+      this, 'AppCredentials', `vantage/credentials/${props.stageName}`,
+    );
+
+    const sharedBundling: lambdaNode.BundlingOptions = {
+      minify: true,
+      sourceMap: true,
+      target: 'node20',
+      externalModules: ['@aws-sdk/*'],
+    };
 
     // ── Lambda: Create daily "Check Fax Inbox" task ──
     const createDailyFaxTaskFn = new lambdaNode.NodejsFunction(this, 'CreateDailyFaxTaskFn', {
@@ -33,12 +44,7 @@ export class ScheduledTasksStack extends cdk.Stack {
         STAGE: props.stageName,
         PROVIDER_ID: 'dr-jane-001',
       },
-      bundling: {
-        minify: true,
-        sourceMap: true,
-        target: 'node20',
-        externalModules: ['@aws-sdk/*'],
-      },
+      bundling: sharedBundling,
     });
 
     props.table.grantReadWriteData(createDailyFaxTaskFn);
@@ -54,6 +60,31 @@ export class ScheduledTasksStack extends cdk.Stack {
         weekDay: 'MON-FRI',
       }),
       targets: [new targets.LambdaFunction(createDailyFaxTaskFn)],
+    });
+
+    // ── Lambda: Poll content@ Gmail inbox ──
+    const pollContentInboxFn = new lambdaNode.NodejsFunction(this, 'PollContentInboxFn', {
+      functionName: `vantage-poll-content-inbox-${props.stageName}`,
+      runtime: lambda.Runtime.NODEJS_20_X,
+      architecture: lambda.Architecture.ARM_64,
+      entry: path.join(lambdaDir, 'email', 'poll-content-inbox.ts'),
+      handler: 'handler',
+      memorySize: 256,
+      timeout: cdk.Duration.seconds(60),
+      environment: {
+        TABLE_NAME: props.table.tableName,
+        STAGE: props.stageName,
+        SECRET_NAME: `vantage/credentials/${props.stageName}`,
+      },
+      bundling: sharedBundling,
+    });
+    props.table.grantReadWriteData(pollContentInboxFn);
+    appSecret.grantRead(pollContentInboxFn);
+
+    new events.Rule(this, 'PollContentInboxRule', {
+      ruleName: `vantage-poll-content-inbox-${props.stageName}`,
+      schedule: events.Schedule.rate(cdk.Duration.minutes(5)),
+      targets: [new targets.LambdaFunction(pollContentInboxFn)],
     });
   }
 }

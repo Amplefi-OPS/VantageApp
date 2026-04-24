@@ -24,6 +24,7 @@ import { getCallerIdentity, canAccessProvider } from '../../shared/auth';
 import { putItem, writeAuditLog } from '../../shared/dynamo';
 import { created, badRequest, forbidden, serverError, parseBody } from '../../shared/response';
 import { sendSlackAlert } from '../../shared/slack';
+import { sendNotification, resolveStaffEmail, appUrl } from '../../shared/email-notifier';
 
 const VALID_TYPES = new Set([
   'Schedule', 'Refill', 'CallBack', 'SendDocs', 'General', 'Dictation',
@@ -100,6 +101,26 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       { label: 'Priority', value: (body.priority as string) || 'Med' },
       { label: 'Due', value: (body.due_date as string) || 'none' },
     ]);
+
+    // Email the assignee (best-effort; skipped if no staff-email mapping)
+    const assigneeEmail = await resolveStaffEmail(body.assigned_to as string | undefined);
+    if (assigneeEmail) {
+      await sendNotification({
+        to: assigneeEmail,
+        subject: `Vantage — New to-do: ${title}`,
+        text: [
+          `${caller.email} assigned you a to-do in Vantage:`,
+          '',
+          `Title: ${title}`,
+          `Priority: ${body.priority || 'Med'}`,
+          `Due: ${body.due_date || 'none'}`,
+          '',
+          `Open it: ${appUrl('/todos')}`,
+          '',
+          '— Vantage Refinery',
+        ].join('\n'),
+      });
+    }
 
     return created({
       task_id: taskId,

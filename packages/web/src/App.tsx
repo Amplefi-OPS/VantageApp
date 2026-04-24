@@ -37,7 +37,7 @@ function PrefetchOnAuth() {
     qc.prefetchQuery({ queryKey: ['dashboard-counts'], queryFn: getDashboardCounts })
     qc.prefetchQuery({ queryKey: ['voicemails'], queryFn: listVoicemails })
     qc.prefetchQuery({ queryKey: ['patients-paginated'], queryFn: () => listPatients(undefined, 25) })
-    qc.prefetchQuery({ queryKey: ['todos'], queryFn: listTodos })
+    qc.prefetchQuery({ queryKey: ['todos'], queryFn: () => listTodos() })
   }, [isLoggedIn, qc])
 
   return null

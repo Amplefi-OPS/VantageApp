@@ -343,7 +343,7 @@ export default function PatientProfile() {
 
   const { data: allTodos } = useQuery({
     queryKey: ['todos'],
-    queryFn: listTodos,
+    queryFn: () => listTodos(),
     enabled: tab === 'todos',
   })
 

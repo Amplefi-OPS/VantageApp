@@ -47,6 +47,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const status = params.status;
     const type = params.type;
     const dueBefore = params.due_before;
+    const assignedTo = params.assigned_to;
     const limit = Math.min(Math.max(parseInt(params.limit || '25', 10), 1), 100);
     let exclusiveStartKey: Record<string, unknown> | undefined;
     if (params.nextToken) {
@@ -98,6 +99,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     if (dueBefore) {
       tasks = tasks.filter((t) => t.due_date && t.due_date <= dueBefore);
+    }
+
+    if (assignedTo) {
+      tasks = tasks.filter((t) => t.assigned_to === assignedTo);
     }
 
     const nextToken = result.lastEvaluatedKey

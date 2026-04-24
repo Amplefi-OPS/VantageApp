@@ -111,8 +111,44 @@ export class ApiStack extends cdk.Stack {
       functionName: `vantage-create-task-${props.stageName}`,
       entry: path.join(lambdaDir, 'api', 'create-task.ts'),
       handler: 'handler',
+      environment: {
+        ...commonEnv,
+        NOTIFY_FROM_EMAIL: 'noreply@vantagerefinery.com',
+        APP_BASE_URL: 'https://providerdev.vantagerefinery.com',
+      },
     });
     props.table.grantReadWriteData(createTaskFn);
+    createTaskFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['ses:SendEmail'],
+      resources: [`arn:aws:ses:us-east-1:${this.account}:identity/vantagerefinery.com`],
+    }));
+
+    // ── Lambda: List Emails ──
+    const listEmailsFn = new lambdaNode.NodejsFunction(this, 'ListEmailsFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-list-emails-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'list-emails.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadData(listEmailsFn);
+
+    // ── Lambda: Attach Email ──
+    const attachEmailFn = new lambdaNode.NodejsFunction(this, 'AttachEmailFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-attach-email-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'attach-email.ts'),
+      handler: 'handler',
+      environment: {
+        ...commonEnv,
+        NOTIFY_FROM_EMAIL: 'noreply@vantagerefinery.com',
+        APP_BASE_URL: 'https://providerdev.vantagerefinery.com',
+      },
+    });
+    props.table.grantReadWriteData(attachEmailFn);
+    attachEmailFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['ses:SendEmail'],
+      resources: [`arn:aws:ses:us-east-1:${this.account}:identity/vantagerefinery.com`],
+    }));
 
     // Google Calendar + Zoom + Stripe credentials are fetched at runtime via Secrets Manager.
     // No secrets in Lambda environment variables.
@@ -605,6 +641,8 @@ export class ApiStack extends cdk.Stack {
       billingLookupFn,            // getSecrets (Stripe)
       billingDirectChargeFn,      // getSecrets (Stripe)
       billingNoShowFn,            // getSecrets (Stripe)
+      createTaskFn,               // resolveStaffEmail (STAFF_EMAILS_JSON)
+      attachEmailFn,              // resolveStaffEmail (STAFF_EMAILS_JSON)
     ];
     for (const fn of secretConsumers) {
       appSecret.grantRead(fn);
@@ -746,6 +784,12 @@ export class ApiStack extends cdk.Stack {
     const dashboard = this.api.root.addResource('dashboard');
     const dashboardCounts = dashboard.addResource('counts');
     dashboardCounts.addMethod('GET', new apigateway.LambdaIntegration(dashboardCountsFn), authMethodOptions);
+
+    // GET /emails  &  POST /emails/attach
+    const emails = this.api.root.addResource('emails');
+    emails.addMethod('GET', new apigateway.LambdaIntegration(listEmailsFn), authMethodOptions);
+    const emailsAttach = emails.addResource('attach');
+    emailsAttach.addMethod('POST', new apigateway.LambdaIntegration(attachEmailFn), authMethodOptions);
 
     // POST /voicemails/attach  &  PATCH /voicemails/{id}/archive
     const voicemails = this.api.root.addResource('voicemails');

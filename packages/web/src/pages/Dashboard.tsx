@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -7,14 +8,19 @@ import {
   Send,
   Settings,
   AlertTriangle,
+  Mail,
 } from 'lucide-react'
-import { getDashboardCounts, listVoicemails } from '../api/endpoints'
+import { getDashboardCounts, listVoicemails, listEmails } from '../api/endpoints'
+import type { Email } from '../api/types'
 import { Card } from '../components/ui/Card'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { PulseStrip } from '../components/PulseStrip'
+import { EmailAttachModal } from '../components/EmailAttachModal'
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const [attachEmail, setAttachEmail] = useState<Email | null>(null)
+
   const { data: counts, isLoading, isError, error } = useQuery({
     queryKey: ['dashboard-counts'],
     queryFn: getDashboardCounts,
@@ -26,6 +32,12 @@ export default function Dashboard() {
     queryKey: ['voicemails'],
     queryFn: listVoicemails,
     refetchInterval: 30000,
+  })
+
+  const { data: emails } = useQuery({
+    queryKey: ['emails', 'Unmatched'],
+    queryFn: () => listEmails('Unmatched'),
+    refetchInterval: 60000,
   })
 
   if (isLoading) return <LoadingSpinner />
@@ -86,6 +98,58 @@ export default function Dashboard() {
 
       {/* Weekly workload pulse — Mon–Fri */}
       <PulseStrip />
+
+      {/* Unmatched emails strip */}
+      {emails && emails.length > 0 && (
+        <Card className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Mail size={18} className="text-slate-blue" />
+              <h2 className="text-base font-semibold text-charcoal dark:text-white">
+                Unmatched emails
+              </h2>
+              <span className="text-xs text-warm-gray dark:text-gray-300">
+                {emails.length}
+              </span>
+            </div>
+          </div>
+          <ul className="divide-y divide-light-gray dark:divide-gray-700">
+            {emails.slice(0, 8).map((e) => (
+              <li key={e.id}>
+                <button
+                  onClick={() => setAttachEmail(e)}
+                  className="w-full text-left py-2.5 px-1 flex items-start gap-3 hover:bg-light-gray/50 dark:hover:bg-gray-700/40 rounded-md transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="text-sm font-medium text-charcoal dark:text-white truncate">
+                        {e.fromName || e.from}
+                      </p>
+                      <span className="text-xs text-warm-gray dark:text-gray-400 shrink-0">
+                        {new Date(e.receivedAt).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-charcoal dark:text-gray-200 truncate">
+                      {e.subject}
+                    </p>
+                    <p className="text-xs text-warm-gray dark:text-gray-400 truncate">
+                      {e.snippet}
+                    </p>
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      <EmailAttachModal
+        email={attachEmail}
+        onClose={() => setAttachEmail(null)}
+      />
 
       {/* Alert: overdue todos */}
       {counts && counts.overdueTodos > 0 && (

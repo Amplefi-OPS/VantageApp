@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   LayoutDashboard,
   Phone,
@@ -12,11 +13,13 @@ import {
 } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { useAuth } from '../auth/AuthProvider'
+import { listTodos } from '../api/endpoints'
+import { getSettings } from '../lib/settings'
 
 const links = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/voicemails', label: 'Voicemails', icon: Phone },
-  { to: '/todos', label: 'To-Do List', icon: ClipboardList },
+  { to: '/todos', label: 'To-Do List', icon: ClipboardList, todosBadge: true },
   { to: '/appointments', label: 'Appointments', icon: Calendar },
   { to: '/patients', label: 'Patients', icon: Users },
   { to: '/fax', label: 'Fax', icon: Send },
@@ -24,10 +27,37 @@ const links = [
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
+/**
+ * Best-effort: map the logged-in user to a display name in staffList.
+ * Returns the matching entry (e.g. "Lori") or null if no match — in which
+ * case the badge stays hidden.
+ */
+function resolveMyStaffName(givenName?: string, familyName?: string): string | null {
+  if (!givenName) return null
+  const staff = getSettings().staffList
+  const first = givenName.trim().toLowerCase()
+  const full = `${givenName} ${familyName || ''}`.trim().toLowerCase()
+  return (
+    staff.find((s) => s.toLowerCase() === first) ??
+    staff.find((s) => s.toLowerCase().endsWith(first)) ??
+    staff.find((s) => s.toLowerCase() === full) ??
+    null
+  )
+}
+
 export function Sidebar() {
   const { user, logout } = useAuth()
   const isProvider = user?.role === 'provider' || user?.groups?.includes('providers')
   const visibleLinks = links.filter((l) => !l.providerOnly || isProvider)
+
+  const myStaffName = resolveMyStaffName(user?.givenName, user?.familyName)
+  const { data: myTodos } = useQuery({
+    queryKey: ['todos', 'mine', myStaffName],
+    queryFn: () => listTodos({ assignedTo: myStaffName!, status: 'Open' }),
+    enabled: !!myStaffName,
+    refetchInterval: 60000,
+  })
+  const myTodoCount = myTodos?.length ?? 0
 
   return (
     <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 bg-white dark:bg-gray-800 border-r border-light-gray dark:border-gray-700 z-30">
@@ -56,7 +86,12 @@ export function Sidebar() {
             }
           >
             <link.icon size={22} />
-            <span>{link.label}</span>
+            <span className="flex-1">{link.label}</span>
+            {link.todosBadge && myTodoCount > 0 && (
+              <span className="ml-auto inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full text-xs font-semibold bg-slate-blue text-white">
+                {myTodoCount}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

@@ -64,7 +64,7 @@ export default function Todos() {
 
   const { data: todos, isLoading, isError, error } = useQuery({
     queryKey: ['todos'],
-    queryFn: listTodos,
+    queryFn: () => listTodos(),
     staleTime: 0,
   })
 

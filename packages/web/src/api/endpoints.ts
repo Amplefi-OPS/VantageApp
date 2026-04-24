@@ -11,8 +11,10 @@ import type {
   Fax,
   Appointment,
   RxDetails,
+  Email,
   CreatePatientRequest,
   AttachVoicemailRequest,
+  AttachEmailRequest,
   UpdateTodoRequest,
   CreateNoteRequest,
   SendFaxRequest,
@@ -167,8 +169,12 @@ function mapTaskToTodo(t: TaskApiItem): Todo {
   }
 }
 
-export async function listTodos(): Promise<Todo[]> {
-  const res = await apiGet<{ tasks: TaskApiItem[]; count: number }>('/tasks')
+export async function listTodos(filter?: { assignedTo?: string; status?: string }): Promise<Todo[]> {
+  const params = new URLSearchParams()
+  if (filter?.assignedTo) params.set('assigned_to', filter.assignedTo)
+  if (filter?.status) params.set('status', filter.status)
+  const qs = params.toString()
+  const res = await apiGet<{ tasks: TaskApiItem[]; count: number }>(`/tasks${qs ? `?${qs}` : ''}`)
   if (!res?.tasks || !Array.isArray(res.tasks)) {
     console.error('listTodos: unexpected response shape', res)
     return []
@@ -204,6 +210,24 @@ export async function createTodo(
   }
   const res = await apiPost<TaskApiItem>('/tasks', body)
   return mapTaskToTodo(res)
+}
+
+// ── Emails (content@ inbox) ────────────────────────────
+
+export async function listEmails(status: 'Unmatched' | 'Attached' | 'all' = 'Unmatched'): Promise<Email[]> {
+  const res = await apiGet<{ emails: Email[]; count: number }>(`/emails?status=${encodeURIComponent(status)}`)
+  return res.emails || []
+}
+
+export async function attachEmail(req: AttachEmailRequest): Promise<{
+  emailId: string
+  todoId: string
+  status: string
+  assignedTo: string | null
+  patientId: string | null
+  notified: boolean
+}> {
+  return apiPost('/emails/attach', req)
 }
 
 // ── Notes ──────────────────────────────────────────────

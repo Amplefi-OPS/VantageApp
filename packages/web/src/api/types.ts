@@ -123,6 +123,38 @@ export const RxDetailsSchema = z.object({
 })
 export type RxDetails = z.infer<typeof RxDetailsSchema>
 
+export const EmailStatus = z.enum(['Unmatched', 'Attached', 'Archived'])
+export type EmailStatus = z.infer<typeof EmailStatus>
+
+export const EmailSchema = z.object({
+  id: z.string(),
+  from: z.string(),
+  fromName: z.string().optional(),
+  subject: z.string(),
+  snippet: z.string(),
+  receivedAt: z.string(),
+  status: EmailStatus,
+  gmailThreadId: z.string().optional(),
+  attachedTodoId: z.string().optional(),
+  assignedTo: z.string().optional(),
+})
+export type Email = z.infer<typeof EmailSchema>
+
+export interface AttachEmailRequest {
+  emailId: string
+  action: 'attach' | 'create'
+  todoId?: string
+  newTodo?: {
+    title: string
+    type?: TodoType
+    patientId?: string
+    assignedTo: string
+    priority?: Priority
+    dueDate?: string
+    notes?: string
+  }
+}
+
 export const FaxSchema = z.object({
   id: z.string(),
   patientId: z.string().optional(),
