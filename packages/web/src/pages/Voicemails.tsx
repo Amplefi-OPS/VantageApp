@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Phone, Search, User, UserPlus, Play, Pause, Archive, FileText, Loader2 } from 'lucide-react'
+import { Phone, Search, User, UserPlus, Play, Pause, Archive, FileText, Loader2, Check } from 'lucide-react'
 import { listVoicemails, listAllPatients, attachVoicemail, archiveVoicemail, createPatient, transcribeVoicemail, getTranscriptionResult } from '../api/endpoints'
+import { searchPatients as emrSearchPatients, type EmrPatient } from '../api/emr'
 import type { Voicemail, Patient } from '../api/types'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -184,6 +185,190 @@ function TranscriptDisplay({ vm, onTranscribed }: { vm: Voicemail; onTranscribed
       >
         Transcribe
       </button>
+    </div>
+  )
+}
+
+// ── EMR patient picker (used inside the attach modal) ─────────────────────
+// Pulled inline rather than a separate file so the Voicemails page holds the
+// whole attach flow in one place during this tester-day iteration. If the
+// component gets reused elsewhere (intake form, new-todo modal), extract it.
+
+type EmrField = 'q' | 'phone' | 'email' | 'dob'
+
+function normDigits(s: string | undefined | null): string {
+  return (s ?? '').replace(/\D/g, '')
+}
+function formatPhoneDigits(digits: string | undefined): string {
+  if (!digits) return ''
+  const d = digits.replace(/\D/g, '')
+  if (d.length === 10) return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`
+  if (d.length === 11 && d.startsWith('1')) return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`
+  return digits
+}
+
+function EmrCandidateCard({
+  patient,
+  selected,
+  onSelect,
+}: {
+  patient: EmrPatient
+  selected: boolean
+  onSelect: () => void
+}) {
+  const name = `${patient.last_name}, ${patient.first_name}${patient.middle_name ? ' ' + patient.middle_name : ''}`
+  const cityState = [patient.address?.city, patient.address?.state].filter(Boolean).join(', ')
+  const phone = patient.mobile_phone || patient.home_phone
+  return (
+    <button
+      onClick={onSelect}
+      className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${
+        selected
+          ? 'border-slate-blue bg-slate-blue/10'
+          : 'border-light-gray dark:border-gray-600 hover:border-slate-blue hover:bg-slate-blue/5'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="font-semibold text-charcoal dark:text-white truncate">{name}</div>
+          <div className="text-sm text-warm-gray dark:text-gray-300 mt-0.5">
+            {patient.dob ? `DOB ${patient.dob}` : 'DOB —'}
+            {cityState && ` · ${cityState}`}
+          </div>
+          {phone && (
+            <div className="text-sm text-warm-gray dark:text-gray-300">{formatPhoneDigits(phone)}</div>
+          )}
+        </div>
+        {selected && <Check size={18} className="text-slate-blue shrink-0 mt-1" />}
+      </div>
+    </button>
+  )
+}
+
+function EmrPatientPicker({
+  callerNumber,
+  selectedPatientId,
+  onSelect,
+}: {
+  callerNumber?: string
+  selectedPatientId: string
+  onSelect: (id: string) => void
+}) {
+  const [field, setField] = useState<EmrField>('q')
+  const [query, setQuery] = useState('')
+  const [debounced, setDebounced] = useState('')
+
+  useEffect(() => {
+    const h = setTimeout(() => setDebounced(query.trim()), 250)
+    return () => clearTimeout(h)
+  }, [query])
+
+  const callerDigits = normDigits(callerNumber)
+  const autoMatch = useQuery({
+    queryKey: ['emr-match-phone', callerDigits],
+    queryFn: () => emrSearchPatients({ phone: callerDigits }),
+    enabled: callerDigits.length >= 10,
+    staleTime: 60_000,
+  })
+
+  const manualSearch = useQuery({
+    queryKey: ['emr-match-manual', field, debounced],
+    queryFn: () => emrSearchPatients({ [field]: debounced }),
+    enabled: debounced.length >= 2,
+    staleTime: 30_000,
+  })
+
+  const autoMatchHits = autoMatch.data ?? []
+  const manualHits = manualSearch.data ?? []
+
+  const placeholderByField: Record<EmrField, string> = {
+    q: 'Last name (prefix)',
+    phone: 'Phone digits, e.g. 7275551234',
+    email: 'email@example.com',
+    dob: 'YYYY-MM-DD',
+  }
+
+  return (
+    <div>
+      {/* Auto-match by caller ID */}
+      {callerDigits.length >= 10 && (
+        <section className="mb-4">
+          <h3 className="text-sm font-semibold text-charcoal dark:text-white mb-2">
+            Caller-ID match
+          </h3>
+          {autoMatch.isLoading && <div className="text-sm text-warm-gray">Searching…</div>}
+          {autoMatch.isSuccess && autoMatchHits.length === 0 && (
+            <div className="text-sm text-warm-gray dark:text-gray-400 italic">
+              No patient on file with this number. Search manually below.
+            </div>
+          )}
+          {autoMatch.isSuccess && autoMatchHits.length > 0 && (
+            <div className="space-y-2">
+              {autoMatchHits.length > 1 && (
+                <div className="text-xs text-warm-gray dark:text-gray-400 mb-1">
+                  {autoMatchHits.length} patients share this number — pick the right one:
+                </div>
+              )}
+              {autoMatchHits.map(p => (
+                <EmrCandidateCard
+                  key={p.patient_id}
+                  patient={p}
+                  selected={selectedPatientId === p.patient_id}
+                  onSelect={() => onSelect(p.patient_id)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Manual search */}
+      <section>
+        <h3 className="text-sm font-semibold text-charcoal dark:text-white mb-2">
+          Search manually
+        </h3>
+        <div className="flex gap-1 mb-3 text-xs">
+          {(['q', 'phone', 'email', 'dob'] as EmrField[]).map(f => (
+            <button
+              key={f}
+              onClick={() => { setField(f); setQuery('') }}
+              className={`px-2.5 py-1 rounded-md transition-colors ${
+                field === f
+                  ? 'bg-slate-blue text-white'
+                  : 'bg-light-gray dark:bg-gray-700 text-warm-gray hover:bg-slate-blue/10'
+              }`}
+            >
+              {f === 'q' ? 'Last name' : f === 'dob' ? 'DOB' : f === 'phone' ? 'Phone' : 'Email'}
+            </button>
+          ))}
+        </div>
+        <div className="relative mb-3">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-gray" />
+          <input
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder={placeholderByField[field]}
+            className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-light-gray dark:border-gray-600 bg-white dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-slate-blue"
+          />
+        </div>
+        {debounced.length >= 2 && manualSearch.isLoading && (
+          <div className="text-sm text-warm-gray py-2">Searching…</div>
+        )}
+        {manualSearch.isSuccess && manualHits.length === 0 && debounced.length >= 2 && (
+          <div className="text-sm text-warm-gray italic py-2">No matches.</div>
+        )}
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {manualHits.map(p => (
+            <EmrCandidateCard
+              key={p.patient_id}
+              patient={p}
+              selected={selectedPatientId === p.patient_id}
+              onSelect={() => onSelect(p.patient_id)}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
@@ -473,45 +658,11 @@ export default function Voicemails() {
             </div>
 
             {attachMode === 'existing' ? (
-              <div>
-                <div className="relative mb-3">
-                  <Search
-                    size={18}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-gray"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search patients..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-light-gray dark:border-gray-600 text-base bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-blue min-h-[48px]"
-                  />
-                </div>
-
-                <div className="max-h-60 overflow-y-auto space-y-1 border border-light-gray rounded-lg">
-                  {filteredPatients?.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => setSelectedPatientId(p.id)}
-                      className={`w-full text-left px-4 py-3 transition-colors min-h-[48px] ${
-                        selectedPatientId === p.id
-                          ? 'bg-slate-blue/10 text-slate-blue'
-                          : 'hover:bg-light-gray dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <span className="font-medium">
-                        {p.firstName} {p.lastName}
-                      </span>
-                      <span className="text-sm text-warm-gray dark:text-gray-300 ml-2">{p.phone}</span>
-                    </button>
-                  ))}
-                  {filteredPatients?.length === 0 && (
-                    <p className="px-4 py-3 text-warm-gray text-sm">
-                      No patients found. Try a different search or add a new patient.
-                    </p>
-                  )}
-                </div>
-              </div>
+              <EmrPatientPicker
+                callerNumber={attachModal.callerNumber}
+                selectedPatientId={selectedPatientId}
+                onSelect={setSelectedPatientId}
+              />
             ) : (
               <div className="space-y-3">
                 <Input

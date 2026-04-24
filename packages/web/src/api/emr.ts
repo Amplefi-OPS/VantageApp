@@ -94,6 +94,26 @@ export async function getEmrPatient(id: string): Promise<EmrPatient> {
   return emrGet<EmrPatient>(`/patients/${id}`)
 }
 
+/**
+ * Fetch the full EMR patient roster by paging through /patients. Used by pages
+ * that need to resolve patient names across many records (e.g. TODO list) and
+ * don't want one request per patient. At ~1,450 patients the full page count
+ * is ~15 round trips — acceptable on a long-cached query.
+ */
+export async function listAllEmrPatients(): Promise<EmrPatient[]> {
+  const out: EmrPatient[] = []
+  let nextToken: string | null = null
+  for (let i = 0; i < 50; i++) { // safety cap
+    const qs = new URLSearchParams({ limit: '100' })
+    if (nextToken) qs.set('nextToken', nextToken)
+    const res = await emrGet<PatientsResponse>(`/patients?${qs.toString()}`)
+    out.push(...res.patients)
+    if (!res.nextToken) break
+    nextToken = res.nextToken
+  }
+  return out
+}
+
 export async function attachVoicemail(
   voicemailId: string,
   patientId: string,

@@ -15,6 +15,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { listTodos, updateTodo, listAllPatients } from '../api/endpoints'
+import { listAllEmrPatients } from '../api/emr'
 import type { Todo } from '../api/types'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -76,6 +77,15 @@ export default function Todos() {
     queryFn: listAllPatients,
   })
 
+  // EMR patients are the going-forward roster; attach flows stamp EMR IDs on
+  // new TODOs, so we need to resolve names against both tables during
+  // migration. Legacy TODOs carry VantageApp IDs; resolved via `patients`.
+  const { data: emrPatients } = useQuery({
+    queryKey: ['emr-patients-all'],
+    queryFn: listAllEmrPatients,
+    staleTime: 5 * 60_000,
+  })
+
   const updateMutation = useMutation({
     mutationFn: updateTodo,
     onSuccess: () => {
@@ -99,9 +109,12 @@ export default function Todos() {
   }
 
   const getPatientName = (patientId?: string) => {
-    if (!patientId || !patients) return null
-    const p = patients.find((p) => p.id === patientId)
-    return p ? `${p.firstName} ${p.lastName}` : null
+    if (!patientId) return null
+    const va = patients?.find((p) => p.id === patientId)
+    if (va) return `${va.firstName} ${va.lastName}`
+    const emr = emrPatients?.find((p) => p.patient_id === patientId)
+    if (emr) return `${emr.first_name} ${emr.last_name}`
+    return null
   }
 
   const today = new Date().toISOString().slice(0, 10)
