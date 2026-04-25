@@ -230,6 +230,10 @@ export async function attachEmail(req: AttachEmailRequest): Promise<{
   return apiPost('/emails/attach', req)
 }
 
+export async function archiveEmail(emailId: string): Promise<{ id: string; status: string }> {
+  return apiPatch(`/emails/${emailId}/archive`, {})
+}
+
 // ── Notes ──────────────────────────────────────────────
 
 export async function listNotes(patientId: string): Promise<Note[]> {

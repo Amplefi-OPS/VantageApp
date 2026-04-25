@@ -16,6 +16,16 @@ interface Props {
 
 type Mode = 'create' | 'attach'
 
+/** Best-guess todo type from the email subject. Falls back to General. */
+function inferTodoType(subject: string): Todo['type'] {
+  const s = subject.toLowerCase()
+  if (/\b(refill|prescription|\brx\b|pharmacy|medication)\b/.test(s)) return 'Refill'
+  if (/\b(schedule|appointment|reschedule|booking|book\b)\b/.test(s)) return 'Schedule'
+  if (/\b(records|fax|send|forms?|paperwork)\b/.test(s)) return 'SendDocs'
+  if (/\b(call ?back|callback|return call|please call)\b/.test(s)) return 'CallBack'
+  return 'General'
+}
+
 export function EmailAttachModal({ email, onClose }: Props) {
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -35,7 +45,7 @@ export function EmailAttachModal({ email, onClose }: Props) {
       setTitle(email.subject || '')
       setAssignee(settings.staffList[0] || '')
       setPriority('Med')
-      setType('General')
+      setType(inferTodoType(email.subject || ''))
       setDueDate('')
       setTodoSearch('')
       setSelectedTodoId('')

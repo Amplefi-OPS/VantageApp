@@ -150,6 +150,15 @@ export class ApiStack extends cdk.Stack {
       resources: [`arn:aws:ses:us-east-1:${this.account}:identity/vantagerefinery.com`],
     }));
 
+    // ── Lambda: Archive Email ──
+    const archiveEmailFn = new lambdaNode.NodejsFunction(this, 'ArchiveEmailFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-archive-email-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'archive-email.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadWriteData(archiveEmailFn);
+
     // Google Calendar + Zoom + Stripe credentials are fetched at runtime via Secrets Manager.
     // No secrets in Lambda environment variables.
 
@@ -785,11 +794,14 @@ export class ApiStack extends cdk.Stack {
     const dashboardCounts = dashboard.addResource('counts');
     dashboardCounts.addMethod('GET', new apigateway.LambdaIntegration(dashboardCountsFn), authMethodOptions);
 
-    // GET /emails  &  POST /emails/attach
+    // GET /emails  &  POST /emails/attach  &  PATCH /emails/{id}/archive
     const emails = this.api.root.addResource('emails');
     emails.addMethod('GET', new apigateway.LambdaIntegration(listEmailsFn), authMethodOptions);
     const emailsAttach = emails.addResource('attach');
     emailsAttach.addMethod('POST', new apigateway.LambdaIntegration(attachEmailFn), authMethodOptions);
+    const emailById = emails.addResource('{id}');
+    const emailArchive = emailById.addResource('archive');
+    emailArchive.addMethod('PATCH', new apigateway.LambdaIntegration(archiveEmailFn), authMethodOptions);
 
     // POST /voicemails/attach  &  PATCH /voicemails/{id}/archive
     const voicemails = this.api.root.addResource('voicemails');
