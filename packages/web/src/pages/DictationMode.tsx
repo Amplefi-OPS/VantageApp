@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Mic, Square, X, Save, AlertCircle, Loader2 } from 'lucide-react'
-import { createNote, getUploadUrl } from '../api/endpoints'
+import { createNote, getUploadUrl, getPracticeSettings } from '../api/endpoints'
 import { Button } from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
 
@@ -49,6 +49,12 @@ export default function DictationMode({
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null)
   const [audioS3Url, setAudioS3Url] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [selectedApptType, setSelectedApptType] = useState<string>('')
+
+  const { data: practiceSettings } = useQuery({
+    queryKey: ['practice-settings'],
+    queryFn: getPracticeSettings,
+  })
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -235,10 +241,10 @@ export default function DictationMode({
         title: `${noteTitle} — ${new Date().toLocaleDateString()}`,
         body: noteText.trim(),
         audioUrl: audioS3Url || undefined,
+        appointmentType: selectedApptType || undefined,
       })
       toast('success', 'Note saved to patient record.')
-      queryClient.invalidateQueries({ queryKey: ['patient-notes'] })
-      queryClient.invalidateQueries({ queryKey: ['patient-dictations'] })
+      queryClient.invalidateQueries({ queryKey: ['patient-notes', patientId] })
       onClose()
     } catch (err) {
       console.error('Save note error:', err)
@@ -378,6 +384,25 @@ export default function DictationMode({
           </div>
         )}
       </div>
+
+      {/* Visit billing */}
+      {practiceSettings && practiceSettings.appointmentTypes.length > 0 && (
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-charcoal dark:text-white shrink-0">Bill for visit:</label>
+          <select
+            value={selectedApptType}
+            onChange={(e) => setSelectedApptType(e.target.value)}
+            className="flex-1 px-3 py-2 rounded-md border border-light-gray dark:border-gray-600 bg-white dark:bg-gray-700 text-charcoal dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-blue"
+          >
+            <option value="">— No billing —</option>
+            {practiceSettings.appointmentTypes.map((t) => (
+              <option key={t.name} value={t.name}>
+                {t.name} (${(t.amountCents / 100).toFixed(0)})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Save / Cancel */}
       <div className="flex items-center justify-end gap-3 pt-2 border-t border-light-gray dark:border-gray-700">

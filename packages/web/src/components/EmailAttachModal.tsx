@@ -68,7 +68,8 @@ export function EmailAttachModal({ email, onClose }: Props) {
   const mutation = useMutation({
     mutationFn: attachEmail,
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ['emails'] })
+      queryClient.refetchQueries({ queryKey: ['emails', 'Unmatched'] })
+      queryClient.invalidateQueries({ queryKey: ['emails', 'Attached'] })
       queryClient.invalidateQueries({ queryKey: ['todos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-counts'] })
       toast(

@@ -20,6 +20,7 @@ import type {
   SendFaxRequest,
   UploadToS3Response,
   DashboardCounts,
+  PracticeSettings,
 } from './types'
 import { apiGet, apiPost, apiPut, apiPatch, apiDelete, apiUpload } from './client'
 
@@ -451,6 +452,16 @@ export async function createPaymentIntentForCharge(
   saveCard?: boolean,
 ): Promise<{ clientSecret: string; paymentIntentId: string }> {
   return apiPost('/billing/payment-intent', { customerId, amount, description, saveCard })
+}
+
+// ── Practice Settings ──────────────────────────────────
+
+export async function getPracticeSettings(): Promise<PracticeSettings> {
+  return apiGet<PracticeSettings>('/settings/practice')
+}
+
+export async function updatePracticeSettings(settings: PracticeSettings): Promise<PracticeSettings> {
+  return apiPut<PracticeSettings>('/settings/practice', settings)
 }
 
 // ── Notifications ──────────────────────────────────────

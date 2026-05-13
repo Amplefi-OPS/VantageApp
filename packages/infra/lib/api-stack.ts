@@ -277,6 +277,10 @@ export class ApiStack extends cdk.Stack {
       handler: 'handler',
     });
     props.table.grantReadWriteData(createNoteFn);
+    createNoteFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['secretsmanager:GetSecretValue'],
+      resources: [appSecret.secretArn],
+    }));
 
     // ── Lambda: List Notes ──
     const listNotesFn = new lambdaNode.NodejsFunction(this, 'ListNotesFn', {
@@ -501,6 +505,24 @@ export class ApiStack extends cdk.Stack {
       props.table.grantWriteData(fn);
     }
 
+    // ── Lambda: Get Practice Settings ──
+    const getPracticeSettingsFn = new lambdaNode.NodejsFunction(this, 'GetPracticeSettingsFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-get-practice-settings-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'get-practice-settings.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadData(getPracticeSettingsFn);
+
+    // ── Lambda: Update Practice Settings ──
+    const updatePracticeSettingsFn = new lambdaNode.NodejsFunction(this, 'UpdatePracticeSettingsFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-update-practice-settings-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'update-practice-settings.ts'),
+      handler: 'handler',
+    });
+    props.table.grantReadWriteData(updatePracticeSettingsFn);
+
     // ── Lambda: Notify Login Failure (unauthenticated — user isn't logged in) ──
     const notifyLoginFailureFn = new lambdaNode.NodejsFunction(this, 'NotifyLoginFailureFn', {
       ...lambdaDefaults,
@@ -652,6 +674,7 @@ export class ApiStack extends cdk.Stack {
       billingNoShowFn,            // getSecrets (Stripe)
       createTaskFn,               // resolveStaffEmail (STAFF_EMAILS_JSON)
       attachEmailFn,              // resolveStaffEmail (STAFF_EMAILS_JSON)
+      updatePracticeSettingsFn,   // writeAuditLog (no external secrets, but consistent)
     ];
     for (const fn of secretConsumers) {
       appSecret.grantRead(fn);
@@ -858,6 +881,12 @@ export class ApiStack extends cdk.Stack {
     noShow.addMethod('POST', new apigateway.LambdaIntegration(billingNoShowFn), authMethodOptions);
     const billingPaymentIntent = billing.addResource('payment-intent');
     billingPaymentIntent.addMethod('POST', new apigateway.LambdaIntegration(billingPaymentIntentFn), authMethodOptions);
+
+    // GET /settings/practice  &  PUT /settings/practice
+    const settingsResource = this.api.root.addResource('settings');
+    const practiceSettings = settingsResource.addResource('practice');
+    practiceSettings.addMethod('GET', new apigateway.LambdaIntegration(getPracticeSettingsFn), authMethodOptions);
+    practiceSettings.addMethod('PUT', new apigateway.LambdaIntegration(updatePracticeSettingsFn), authMethodOptions);
 
     // POST /notifications/login-failure (no auth — user isn't logged in)
     const notifications = this.api.root.addResource('notifications');

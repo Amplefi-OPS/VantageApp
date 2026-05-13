@@ -21,12 +21,14 @@
 import type { Handler } from 'aws-lambda';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import {
+  getItem,
   updateItem,
   buildUpdateExpression,
   queryItems,
   writeAuditLog,
 } from '../../shared/dynamo';
 import { sendSlackAlert } from '../../shared/slack';
+import { sendNotification, resolveStaffEmail, appUrl } from '../../shared/email-notifier';
 
 const s3 = new S3Client({});
 const TRANSCRIPT_BUCKET = process.env.TRANSCRIPT_BUCKET!;
@@ -175,6 +177,146 @@ export const handler: Handler<VmCompleteInput> = async (input) => {
       suggestedMatches: suggestedPatientIds.length,
     },
   });
+
+  // ── Route notification email ──────────────────────────────────────────────
+  // Non-throwing — a broken email must never fail the pipeline.
+  try {
+    const vmRecord = await getItem(`PROVIDER#${providerId}`, `VOICEMAIL#${vmId}`);
+    const category  = (vmRecord?.category as string) || 'General';
+    const callerName = (vmRecord?.callerName as string) || '';
+    const callerNumber = (vmRecord?.callerNumber as string) || 'Unknown';
+    const caller = callerName || callerNumber;
+    const matched = suggestedPatientIds.length > 0;
+    const transcript = transcriptText.slice(0, 1200) + (transcriptText.length > 1200 ? '\n[truncated]' : '');
+
+    const vmUrl  = appUrl('/voicemails');
+    const drEmail    = await resolveStaffEmail('Dr. Joseph');
+    const adminEmail = await resolveStaffEmail('Admin');
+
+    let patientName = 'Unknown patient';
+    if (matched) {
+      try {
+        const p = await getItem(`PATIENT#${suggestedPatientIds[0]}`, 'PROFILE');
+        if (p?.firstName) patientName = `${p.firstName} ${p.lastName || ''}`.trim();
+      } catch { /* non-fatal */ }
+    }
+
+    if (!matched) {
+      // Unknown caller — Dr. Joseph matches manually
+      if (drEmail) {
+        await sendNotification({
+          to: drEmail,
+          subject: `Vantage — Unknown caller needs matching [${category}]`,
+          text: [
+            `A voicemail came in but we could not match the caller to a patient.`,
+            ``,
+            `Caller: ${caller}`,
+            `Category: ${category}`,
+            ``,
+            `Transcript:`,
+            transcript,
+            ``,
+            `Open voicemails to listen and match: ${vmUrl}`,
+          ].join('\n'),
+        });
+      }
+    } else if (category === 'Refills') {
+      // Admin verifies details first — Dr. Joseph gets FYI only
+      const patientUrl = appUrl(`/patients/${suggestedPatientIds[0]}`);
+      if (adminEmail) {
+        await sendNotification({
+          to: adminEmail,
+          subject: `Vantage — Refill request: ${patientName}`,
+          text: [
+            `Refill request received. Please verify before Dr. Joseph authorizes:`,
+            ``,
+            `  • Correct medication and exact dosage (check patient record)`,
+            `  • Pharmacy name and fax number on file`,
+            `  • Patient stated what they need clearly`,
+            ``,
+            `Patient: ${patientName}`,
+            `Caller: ${caller}`,
+            ``,
+            `Transcript:`,
+            transcript,
+            ``,
+            `Patient record: ${patientUrl}`,
+            `Listen to voicemail: ${vmUrl}`,
+          ].join('\n'),
+        });
+      }
+      if (drEmail) {
+        await sendNotification({
+          to: drEmail,
+          subject: `Vantage — FYI: Refill in progress for ${patientName}`,
+          text: [
+            `Heads-up only — no action needed yet.`,
+            `Admin is verifying the refill details for ${patientName}.`,
+            `You will receive a separate request to authorize once details are confirmed.`,
+            ``,
+            `Transcript:`,
+            transcript,
+          ].join('\n'),
+        });
+      }
+    } else if (category === 'Billing') {
+      // Admin handles — Dr. Joseph FYI only
+      const patientUrl = appUrl(`/patients/${suggestedPatientIds[0]}`);
+      if (adminEmail) {
+        await sendNotification({
+          to: adminEmail,
+          subject: `Vantage — Billing question: ${patientName}`,
+          text: [
+            `Billing question from ${patientName}.`,
+            ``,
+            `Caller: ${caller}`,
+            ``,
+            `Transcript:`,
+            transcript,
+            ``,
+            `Patient record: ${patientUrl}`,
+            `Listen to voicemail: ${vmUrl}`,
+          ].join('\n'),
+        });
+      }
+      if (drEmail) {
+        await sendNotification({
+          to: drEmail,
+          subject: `Vantage — FYI: Billing question from ${patientName}`,
+          text: [
+            `For your awareness — admin is handling this. No action needed.`,
+            ``,
+            `Patient: ${patientName}`,
+            ``,
+            `Transcript:`,
+            transcript,
+          ].join('\n'),
+        });
+      }
+    } else {
+      // Clinical, Scheduling, or General — Dr. Joseph directly
+      const patientUrl = appUrl(`/patients/${suggestedPatientIds[0]}`);
+      if (drEmail) {
+        await sendNotification({
+          to: drEmail,
+          subject: `Vantage — ${category}: ${patientName}`,
+          text: [
+            `Patient: ${patientName}`,
+            `Caller: ${caller}`,
+            `Category: ${category}`,
+            ``,
+            `Transcript:`,
+            transcript,
+            ``,
+            `Patient record: ${patientUrl}`,
+            `Listen to voicemail: ${vmUrl}`,
+          ].join('\n'),
+        });
+      }
+    }
+  } catch (err) {
+    console.error('[vm-complete] Routing email failed (non-fatal):', (err as Error).message);
+  }
 
   return {
     vmId,

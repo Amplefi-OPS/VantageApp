@@ -233,6 +233,16 @@ export interface CreateNoteRequest {
   title: string
   body: string
   audioUrl?: string
+  appointmentType?: string
+}
+
+export interface AppointmentType {
+  name: string
+  amountCents: number
+}
+
+export interface PracticeSettings {
+  appointmentTypes: AppointmentType[]
 }
 
 export interface Appointment {

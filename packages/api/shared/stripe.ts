@@ -63,3 +63,63 @@ export async function stripePost<T = unknown>(
   const data = (await res.json()) as T;
   return { data, ok: res.ok, status: res.status };
 }
+
+interface StripeCustomerSearchItem {
+  id: string;
+  email?: string | null;
+  invoice_settings?: { default_payment_method?: string | null };
+}
+
+export interface ChargeResult {
+  success: boolean;
+  reason?: 'no_customer' | 'no_payment_method' | 'charge_failed';
+  error?: string;
+  paymentIntentId?: string;
+}
+
+/**
+ * Look up a Stripe customer by email, then charge their default payment method.
+ * Returns a result object — never throws. Caller decides what to do on failure.
+ */
+export async function chargeCustomerByEmail(
+  email: string,
+  amountCents: number,
+  description: string,
+): Promise<ChargeResult> {
+  try {
+    const q = `email:'${email.replace(/'/g, "\\'")}'`;
+    const search = await stripeGet<{ data: StripeCustomerSearchItem[] }>(
+      `/customers/search?query=${encodeURIComponent(q)}&limit=1`,
+    );
+    if (!search.ok || !search.data.data?.length) {
+      return { success: false, reason: 'no_customer' };
+    }
+    const customer = search.data.data[0];
+    const pmId = customer.invoice_settings?.default_payment_method;
+    if (!pmId) {
+      return { success: false, reason: 'no_payment_method' };
+    }
+
+    const params: Record<string, string> = {
+      amount: String(amountCents),
+      currency: 'usd',
+      customer: customer.id,
+      payment_method: pmId,
+      confirm: 'true',
+      off_session: 'true',
+      description,
+    };
+    if (customer.email) params.receipt_email = customer.email;
+
+    const pi = await stripePost<{ id?: string; error?: { message: string } }>(
+      '/payment_intents',
+      params,
+    );
+    if (!pi.ok) {
+      return { success: false, reason: 'charge_failed', error: pi.data.error?.message || 'Stripe error' };
+    }
+    return { success: true, paymentIntentId: pi.data.id };
+  } catch (err) {
+    return { success: false, reason: 'charge_failed', error: (err as Error).message };
+  }
+}
