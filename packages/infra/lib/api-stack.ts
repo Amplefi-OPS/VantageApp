@@ -123,6 +123,23 @@ export class ApiStack extends cdk.Stack {
       resources: [`arn:aws:ses:us-east-1:${this.account}:identity/vantagerefinery.com`],
     }));
 
+    // ── Lambda: Start Visit (the unified appointment-started trigger) ──
+    const startVisitFn = new lambdaNode.NodejsFunction(this, 'StartVisitFn', {
+      ...lambdaDefaults,
+      functionName: `vantage-start-visit-${props.stageName}`,
+      entry: path.join(lambdaDir, 'api', 'start-visit.ts'),
+      handler: 'handler',
+      environment: {
+        ...commonEnv,
+        EVENT_BUS_NAME: `vantage-billing-${props.stageName}`,
+      },
+    });
+    props.table.grantReadWriteData(startVisitFn);
+    startVisitFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['events:PutEvents'],
+      resources: [`arn:aws:events:us-east-1:${this.account}:event-bus/vantage-billing-${props.stageName}`],
+    }));
+
     // ── Lambda: List Emails ──
     const listEmailsFn = new lambdaNode.NodejsFunction(this, 'ListEmailsFn', {
       ...lambdaDefaults,
@@ -767,6 +784,11 @@ export class ApiStack extends cdk.Stack {
     // PATCH /tasks/{task_id}
     const taskById = tasks.addResource('{task_id}');
     taskById.addMethod('PATCH', new apigateway.LambdaIntegration(updateTaskFn), authMethodOptions);
+
+    // POST /visits/start (the AppSheet "Start Visit" trigger)
+    const visits = this.api.root.addResource('visits');
+    const visitStart = visits.addResource('start');
+    visitStart.addMethod('POST', new apigateway.LambdaIntegration(startVisitFn), authMethodOptions);
 
     // GET /appointments (Google Calendar)  &  POST /appointments
     const appointments = this.api.root.addResource('appointments');

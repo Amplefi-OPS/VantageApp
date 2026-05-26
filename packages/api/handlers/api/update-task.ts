@@ -23,7 +23,7 @@ import { queryItems, updateItem, buildUpdateExpression, writeAuditLog } from '..
 import { success, badRequest, notFound, serverError, parseBody } from '../../shared/response';
 
 const VALID_STATUSES = new Set([
-  'Open', 'Done', 'AwaitingTranscription', 'DraftReady', 'TranscriptionFailed',
+  'Open', 'Done', 'Archived', 'AwaitingTranscription', 'DraftReady', 'TranscriptionFailed',
 ]);
 const VALID_PRIORITIES = new Set(['Low', 'Med', 'High']);
 

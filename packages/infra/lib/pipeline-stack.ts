@@ -122,13 +122,12 @@ export class TranscriptionPipelineStack extends cdk.Stack {
       outputPath: '$.Payload',
     });
 
-    // State 5: Handle failure
-    const handleFailure = new sfn.Pass(this, 'TranscriptionFailed', {
-      parameters: {
-        'status': 'FAILED',
-        'error.$': '$.error',
-        'jobName.$': '$.jobName',
-      },
+    // State 5: Handle failure — route to the same completion Lambda, which
+    // handles both COMPLETED and FAILED and updates DynamoDB accordingly.
+    // (Previously a no-op sfn.Pass that silently orphaned failed dictations.)
+    const handleFailure = new tasks.LambdaInvoke(this, 'HandleTranscriptionFailure', {
+      lambdaFunction: completeTranscriptionFn,
+      outputPath: '$.Payload',
     });
 
     // Choice: is job complete?

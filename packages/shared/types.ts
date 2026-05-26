@@ -21,7 +21,7 @@ export const TodoType = z.enum([
 ])
 export type TodoType = z.infer<typeof TodoType>
 
-export const TodoStatus = z.enum(['Open', 'Done'])
+export const TodoStatus = z.enum(['Open', 'Done', 'Archived'])
 export type TodoStatus = z.infer<typeof TodoStatus>
 
 export const Priority = z.enum(['Low', 'Med', 'High'])

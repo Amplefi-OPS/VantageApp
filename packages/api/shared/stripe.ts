@@ -50,14 +50,19 @@ export async function stripeGet<T = unknown>(path: string): Promise<{ data: T; o
 export async function stripePost<T = unknown>(
   path: string,
   params: Record<string, string>,
+  idempotencyKey?: string,
 ): Promise<{ data: T; ok: boolean; status: number }> {
   const key = await getStripeKey();
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${key}`,
+    'Content-Type': 'application/x-www-form-urlencoded',
+  };
+  // Stripe dedupes retried POSTs that carry the same Idempotency-Key —
+  // this is what prevents a replayed billing event from double-charging.
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
   const res = await fetch(`${STRIPE_BASE}${path}`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${key}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+    headers,
     body: new URLSearchParams(params).toString(),
   });
   const data = (await res.json()) as T;
