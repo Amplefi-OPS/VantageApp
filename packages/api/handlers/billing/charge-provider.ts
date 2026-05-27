@@ -17,6 +17,12 @@ export interface ChargeRequest {
   idempotency_key: string;
   requested_at: string;
   requested_by: string;
+  // Opaque Stripe refs (NOT PHI). Per PATIENT_IDENTITY_PAYMENT_CONTRACT.md the
+  // patient↔Stripe link is a stored customer id, not an email search.
+  stripe_customer_id?: string;
+  stripe_payment_method_id?: string;
+  // Original PaymentIntent id, required for refunds.
+  charge_external_id?: string;
 }
 
 export interface ChargeResult {

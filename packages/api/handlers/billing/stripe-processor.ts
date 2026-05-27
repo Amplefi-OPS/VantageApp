@@ -30,19 +30,42 @@ async function getStripeKey(): Promise<string> {
   return stripeApiKey;
 }
 
+const STRIPE_BASE = 'https://api.stripe.com/v1';
+
 /**
- * StripeChargeProvider
- *
- * In production, replace the stub calls with actual Stripe SDK usage:
- *   import Stripe from 'stripe';
- *   const stripe = new Stripe(apiKey);
- *   const charge = await stripe.charges.create({ ... });
+ * StripeChargeProvider — real Stripe REST integration (fetch-based, no SDK,
+ * consistent with packages/api/shared/stripe.ts). Charges are made against a
+ * stored Stripe customer id (opaque, NOT PHI) per
+ * PATIENT_IDENTITY_PAYMENT_CONTRACT.md — never an email/PHI search. The
+ * billing event's idempotency_key is sent as Stripe's Idempotency-Key so a
+ * replayed EventBridge event cannot double-charge.
  */
 class StripeChargeProvider implements IChargeProvider {
   private apiKey: string;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
+  }
+
+  private async post<T>(path: string, params: Record<string, string>, idempotencyKey?: string): Promise<{ data: T; ok: boolean }> {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.apiKey}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    };
+    if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
+    const res = await fetch(`${STRIPE_BASE}${path}`, {
+      method: 'POST',
+      headers,
+      body: new URLSearchParams(params).toString(),
+    });
+    return { data: (await res.json()) as T, ok: res.ok };
+  }
+
+  private async get<T>(path: string): Promise<{ data: T; ok: boolean }> {
+    const res = await fetch(`${STRIPE_BASE}${path}`, {
+      headers: { Authorization: `Bearer ${this.apiKey}` },
+    });
+    return { data: (await res.json()) as T, ok: res.ok };
   }
 
   async createCharge(request: ChargeRequest): Promise<ChargeResult> {
@@ -53,24 +76,44 @@ class StripeChargeProvider implements IChargeProvider {
       // NOTE: No PHI fields logged or sent
     });
 
-    // ── STUB: Replace with actual Stripe SDK call ──
-    // const stripe = new Stripe(this.apiKey);
-    // const charge = await stripe.charges.create({
-    //   amount: request.amount_cents,
-    //   currency: request.currency,
-    //   description: request.description,
-    //   metadata: {
-    //     billing_reference: request.billing_reference,
-    //     vantage_event_id: request.billing_event_id,
-    //   },
-    //   idempotencyKey: request.idempotency_key,
-    // });
-    // return { success: true, external_id: charge.id };
+    const customerId = request.stripe_customer_id;
+    if (!customerId) {
+      // No Stripe component — producer must route to the QuickBooks fallback
+      // (see PATIENT_IDENTITY_PAYMENT_CONTRACT.md §4).
+      return { success: false, error: 'no_stripe_customer' };
+    }
 
-    // Stub response
-    const stubId = `ch_stub_${Date.now()}`;
-    console.log(`[STUB] Stripe charge created: ${stubId} for ${request.amount_cents} ${request.currency}`);
-    return { success: true, external_id: stubId };
+    // Resolve the payment method: explicit, else the customer's default.
+    let paymentMethodId = request.stripe_payment_method_id;
+    if (!paymentMethodId) {
+      const cust = await this.get<{ invoice_settings?: { default_payment_method?: string | null } }>(
+        `/customers/${encodeURIComponent(customerId)}`,
+      );
+      paymentMethodId = cust.data.invoice_settings?.default_payment_method || undefined;
+    }
+    if (!paymentMethodId) {
+      return { success: false, error: 'no_payment_method' };
+    }
+
+    const pi = await this.post<{ id?: string; error?: { message: string } }>(
+      '/payment_intents',
+      {
+        amount: String(request.amount_cents),
+        currency: request.currency,
+        customer: customerId,
+        payment_method: paymentMethodId,
+        confirm: 'true',
+        off_session: 'true',
+        description: request.description,
+        'metadata[billing_reference]': request.billing_reference,
+        'metadata[vantage_event_id]': request.billing_event_id,
+      },
+      request.idempotency_key,
+    );
+    if (!pi.ok || !pi.data.id) {
+      return { success: false, error: pi.data.error?.message || 'Stripe charge failed' };
+    }
+    return { success: true, external_id: pi.data.id };
   }
 
   async refundCharge(request: ChargeRequest): Promise<RefundResult> {
@@ -79,21 +122,27 @@ class StripeChargeProvider implements IChargeProvider {
       amount: request.amount_cents,
     });
 
-    // ── STUB: Replace with actual Stripe SDK call ──
-    // const stripe = new Stripe(this.apiKey);
-    // const refund = await stripe.refunds.create({
-    //   charge: externalChargeId,
-    //   amount: request.amount_cents,
-    // });
-    // return { success: true, external_id: refund.id };
+    const paymentIntentId = request.charge_external_id;
+    if (!paymentIntentId) {
+      return { success: false, error: 'no_charge_reference' };
+    }
 
-    const stubId = `re_stub_${Date.now()}`;
-    console.log(`[STUB] Stripe refund created: ${stubId}`);
-    return { success: true, external_id: stubId };
+    const refund = await this.post<{ id?: string; error?: { message: string } }>(
+      '/refunds',
+      {
+        payment_intent: paymentIntentId,
+        amount: String(request.amount_cents),
+      },
+      request.idempotency_key,
+    );
+    if (!refund.ok || !refund.data.id) {
+      return { success: false, error: refund.data.error?.message || 'Stripe refund failed' };
+    }
+    return { success: true, external_id: refund.data.id };
   }
 
-  async recordEvent(request: ChargeRequest): Promise<RecordResult> {
-    // Stripe doesn't have a "record" concept — this is a no-op for Stripe
+  async recordEvent(_request: ChargeRequest): Promise<RecordResult> {
+    // Stripe doesn't have a "record" concept — bookkeeping goes to QuickBooks.
     console.log('Stripe recordEvent: no-op (use QuickBooks for bookkeeping)');
     return { success: true, external_id: `stripe_noop_${Date.now()}` };
   }
@@ -112,6 +161,9 @@ interface BillingDetail {
   idempotency_key: string;
   requested_at: string;
   requested_by: string;
+  stripe_customer_id?: string;
+  stripe_payment_method_id?: string;
+  charge_external_id?: string;
 }
 
 export const handler: Handler<EventBridgeEvent<'ChargeRequested' | 'RefundRequested' | 'RecordEvent', BillingDetail>> = async (event) => {
