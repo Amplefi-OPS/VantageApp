@@ -9,7 +9,7 @@
 
 import type { APIGatewayProxyHandler } from 'aws-lambda';
 import { success, serverError } from '../../shared/response';
-import { getGoogleAccessToken, getCalendarId } from '../../shared/google';
+import { getGoogleAccessToken, getCalendarIds } from '../../shared/google';
 
 const GCAL_BASE = 'https://www.googleapis.com/calendar/v3';
 
@@ -82,14 +82,18 @@ export const handler: APIGatewayProxyHandler = async () => {
     const { monday, friday } = workWeekBounds(now);
 
     const token = await getGoogleAccessToken();
-    const calendarId = await getCalendarId();
+    const calendarIds = await getCalendarIds();
 
-    const events = await fetchEvents(
-      calendarId,
-      token,
-      `${monday}T00:00:00Z`,
-      `${friday}T23:59:59Z`,
+    const rawResults = await Promise.all(
+      calendarIds.map((id) => fetchEvents(id, token, `${monday}T00:00:00Z`, `${friday}T23:59:59Z`)),
     );
+    const seen = new Set<string>();
+    const events: GoogleEvent[] = [];
+    for (const batch of rawResults) {
+      for (const e of batch) {
+        if (!seen.has(e.id)) { seen.add(e.id); events.push(e); }
+      }
+    }
 
     const active = events.filter((e) => e.status !== 'cancelled');
     const total = active.length;

@@ -26,6 +26,7 @@ export interface AppSecrets {
   GOOGLE_CLIENT_SECRET?: string;
   GOOGLE_REFRESH_TOKEN?: string;
   GOOGLE_CALENDAR_ID?: string;
+  GOOGLE_CALENDAR_IDS?: string;
   GMAIL_CLIENT_ID?: string;
   GMAIL_CLIENT_SECRET?: string;
   GMAIL_REFRESH_TOKEN?: string;

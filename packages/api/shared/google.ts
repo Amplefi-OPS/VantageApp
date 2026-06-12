@@ -52,7 +52,8 @@ export async function getGoogleAccessToken(): Promise<string> {
 }
 
 /**
- * Get the Google Calendar ID from Secrets Manager.
+ * Get the primary Google Calendar ID from Secrets Manager.
+ * Used for write operations (create/update/cancel).
  */
 export async function getCalendarId(): Promise<string> {
   const secrets = await getSecrets();
@@ -60,4 +61,19 @@ export async function getCalendarId(): Promise<string> {
     throw new Error('GOOGLE_CALENDAR_ID not configured in Secrets Manager');
   }
   return secrets.GOOGLE_CALENDAR_ID;
+}
+
+/**
+ * Get all Google Calendar IDs to read from.
+ * Reads GOOGLE_CALENDAR_IDS (comma-separated) if set, otherwise falls back to GOOGLE_CALENDAR_ID.
+ * Used for list/read operations to aggregate events across multiple calendars.
+ */
+export async function getCalendarIds(): Promise<string[]> {
+  const secrets = await getSecrets();
+  if (secrets.GOOGLE_CALENDAR_IDS) {
+    const ids = secrets.GOOGLE_CALENDAR_IDS.split(',').map((s) => s.trim()).filter(Boolean);
+    if (ids.length > 0) return ids;
+  }
+  if (secrets.GOOGLE_CALENDAR_ID) return [secrets.GOOGLE_CALENDAR_ID];
+  throw new Error('No Google Calendar IDs configured in Secrets Manager (need GOOGLE_CALENDAR_ID or GOOGLE_CALENDAR_IDS)');
 }

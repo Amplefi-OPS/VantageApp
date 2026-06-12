@@ -16,7 +16,7 @@ import { randomUUID } from 'crypto';
 import { getCallerIdentity } from '../../shared/auth';
 import { putItem, queryItems, writeAuditLog } from '../../shared/dynamo';
 import { success, serverError } from '../../shared/response';
-import { getGoogleAccessToken, getCalendarId } from '../../shared/google';
+import { getGoogleAccessToken, getCalendarIds } from '../../shared/google';
 
 const GCAL_BASE = 'https://www.googleapis.com/calendar/v3';
 
@@ -133,6 +133,21 @@ async function fetchEvents(calendarId: string, token: string, params: URLSearchP
   return all;
 }
 
+async function fetchFromAllCalendars(calendarIds: string[], token: string, params: URLSearchParams): Promise<GoogleEvent[]> {
+  const results = await Promise.all(calendarIds.map((id) => fetchEvents(id, token, params)));
+  const seen = new Set<string>();
+  const merged: GoogleEvent[] = [];
+  for (const batch of results) {
+    for (const e of batch) {
+      if (!seen.has(e.id)) {
+        seen.add(e.id);
+        merged.push(e);
+      }
+    }
+  }
+  return merged;
+}
+
 // ── Handler ──
 
 export const handler: APIGatewayProxyHandler = async (event) => {
@@ -143,7 +158,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const rawPhone = params.phone;
 
     const token = await getGoogleAccessToken();
-    const calendarId = await getCalendarId();
+    const calendarIds = await getCalendarIds();
 
     let phoneFilter: string | undefined;
     if (rawPhone) {
@@ -168,9 +183,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         maxResults: '250',
         showDeleted: 'true',
       });
-      const allEvents = await fetchEvents(calendarId, token, qp);
+      const rawEvents = await fetchFromAllCalendars(calendarIds, token, qp);
 
-      events = allEvents.filter((e) => {
+      events = rawEvents.filter((e) => {
         const { phone } = parseDescription(e.description || '');
         return phone ? normalizePhone(phone) === phoneFilter : false;
       });
@@ -193,7 +208,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         maxResults: '250',
         showDeleted: 'true',
       });
-      events = await fetchEvents(calendarId, token, qp);
+      events = await fetchFromAllCalendars(calendarIds, token, qp);
     }
 
     // Load patients from DynamoDB (all patients via GSI2 to prevent duplicates)

@@ -38,7 +38,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
 import { getItem, putItem, queryItems, writeAuditLog } from '../../shared/dynamo';
-import { getGoogleAccessToken, getCalendarId } from '../../shared/google';
+import { getGoogleAccessToken, getCalendarIds } from '../../shared/google';
 
 const eb = new EventBridgeClient({});
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME!;
@@ -166,20 +166,24 @@ export const handler: ScheduledHandler = async () => {
   const graceMs = GRACE_MINUTES * 60 * 1000;
 
   const token = await getGoogleAccessToken();
-  const calendarId = await getCalendarId();
+  const calendarIds = await getCalendarIds();
 
-  const events = await fetchEvents(
-    calendarId,
-    token,
-    new URLSearchParams({
-      timeMin: windowStart.toISOString(),
-      timeMax: nowIso,
-      singleEvents: 'true',
-      orderBy: 'startTime',
-      maxResults: '250',
-      showDeleted: 'true',
-    }),
-  );
+  const qp = new URLSearchParams({
+    timeMin: windowStart.toISOString(),
+    timeMax: nowIso,
+    singleEvents: 'true',
+    orderBy: 'startTime',
+    maxResults: '250',
+    showDeleted: 'true',
+  });
+  const rawResults = await Promise.all(calendarIds.map((id) => fetchEvents(id, token, qp)));
+  const seen = new Set<string>();
+  const events: GoogleEvent[] = [];
+  for (const batch of rawResults) {
+    for (const e of batch) {
+      if (!seen.has(e.id)) { seen.add(e.id); events.push(e); }
+    }
+  }
 
   // Phone → patient billing linkage (GSI2 'PATIENT', same as list-acuity).
   const patients = await queryItems({
